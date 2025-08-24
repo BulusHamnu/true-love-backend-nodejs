@@ -109,7 +109,7 @@ export async function login(req, res) {
     res.cookie("token", token, {
       secure: process.env.PRODUCTION === "True",
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "none",
       maxAge: 60 * 60 * 24 * 30,
     });
 
@@ -183,7 +183,7 @@ export async function logout(req, res) {
     res.cookie("token", "", {
       secure: process.env.PRODUCTION === "True",
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "none",
       maxAge: 0,
     });
 
