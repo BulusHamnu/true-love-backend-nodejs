@@ -7,6 +7,7 @@ import profileRoutes from "./src/routes/profileRoutes.js";
 import paymentRoutes from "./src/routes/payment.js";
 import morgan from "morgan";
 import path from "path";
+import cors from "cors"
 const dirname = import.meta.dirname;
 import cookieParser from "cookie-parser";
 const port = env.PORT;
@@ -15,6 +16,10 @@ const app = express();
 // App middleware
 app.use("/public", express.static(path.join(dirname, "public")));
 app.use(morgan("dev"));
+app.use(cors({
+  origin: 'https://true-love.lovable.app',
+  credentials : true
+}))
 app.use(cookieParser());
 app.use((req, res, next) => {
   // skip json parsing for stripe webhook route
