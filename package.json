@@ -1,0 +1,36 @@
+{
+  "name": "true-love-backend-nodejs",
+  "version": "1.0.0",
+  "description": "Nodejs backend for true love app",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BulusHamnu/true-love-backend-nodejs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/BulusHamnu/true-love-backend-nodejs/issues"
+  },
+  "homepage": "https://github.com/BulusHamnu/true-love-backend-nodejs#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.0",
+    "morgan": "^1.10.1",
+    "nodemailer": "^7.0.5",
+    "resend": "^6.0.1",
+    "stripe": "^18.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

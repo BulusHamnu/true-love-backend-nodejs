@@ -1,0 +1,59 @@
+import bcrypt from "bcryptjs";
+
+export const formatAmount = (amountCents) => {
+  try {
+    const amountDollars = parseInt(amountCents) / 100;
+    const amountFormatted = amountDollars.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+    });
+
+    return amountFormatted;
+  } catch (error) {
+    logError(`An error occur:`, error);
+    return "null";
+  }
+};
+
+// log function for info
+export const logInfo = (message, data) => {
+  console.log(
+    JSON.stringify({
+      Type: "Info",
+      TimeStamp: new Date().toISOString(),
+      Message: message || "Info",
+      Data: data || "",
+    })
+  );
+};
+
+// log function for error
+export const logError = (message, error) => {
+  console.log(
+    JSON.stringify({
+      Type: "Error",
+      TimeStamp: new Date().toISOString(),
+      Message: message,
+      Error: error || "",
+    })
+  );
+};
+
+// bcrypt hash password
+export const hashPassword = async (password) => {
+  try {
+    return await bcrypt.hash(password, 10);
+  } catch (error) {
+    logError("An error occur while hashing password", error.message);
+    return false;
+  }
+};
+
+// generate code function
+export const generateCode = (length = 6) => {
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += Math.floor(Math.random() * 10); // digit 0–9
+  }
+  return code;
+};
