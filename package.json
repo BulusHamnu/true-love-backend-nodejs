@@ -4,7 +4,8 @@
   "description": "Nodejs backend for true love app",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "stripe": "stripe listen --forward-to localhost:3000/stripe-webhook"
   },
   "repository": {
     "type": "git",
