@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "stripe": "stripe listen --forward-to localhost:3000/stripe-webhook"
+    "stripe": "stripe listen --forward-to localhost:3000/stripe-webhook",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
