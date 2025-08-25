@@ -100,6 +100,81 @@ export const templates = {
   `;
   },
 
+  // email template self confirmation for self-guided version
+  selfGuidedUserTemplate: (
+    user_name,
+    customer_name,
+    customer_email,
+    amount
+  ) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>New Payment Received</title>
+        <style>
+          body {
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+          }
+          .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #262626;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #444;
+          }
+          .header {
+            background-color: #ffcc00;
+            padding: 20px;
+            text-align: center;
+            color: #000;
+            font-size: 24px;
+            font-weight: bold;
+          }
+          .content {
+            padding: 20px;
+            line-height: 1.6;
+          }
+          .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+          }
+          .footer {
+            padding: 15px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            background-color: #1a1a1a;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            💛 Self-Guided Coaching Payment
+          </div>
+          <div class="content">
+            <p>Hello <strong>${user_name}</strong>,</p>
+            <p>🎉 A new payment has been received for the <span class="highlight">Self-Guided True Love Coaching Program</span>.</p>
+            <p><strong>Customer Name:</strong> ${customer_name}</p>
+            <p><strong>Email:</strong> ${customer_email}</p>
+            <p><strong>Amount Paid:</strong> ${amount}</p>
+            <p>This customer now has access to the self-guided journey inside the app. 🌟</p>
+          </div>
+          <div class="footer">
+            This is an automated payment notification.
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  },
+
   // default template for customer confirmation
   customerTemplate: (customer_name, amount) => {
     return `
@@ -176,6 +251,86 @@ export const templates = {
   </body>
   </html>
   `;
+  },
+
+  // email paymemt template for customer self guided version
+  selfGuidedCustomerTemplate: (customer_name, amount) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Payment Successful</title>
+        <style>
+          body {
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+          }
+          .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #262626;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #444;
+          }
+          .header {
+            background-color: #ffcc00;
+            padding: 20px;
+            text-align: center;
+            color: #000;
+            font-size: 24px;
+            font-weight: bold;
+          }
+          .content {
+            padding: 20px;
+            line-height: 1.6;
+          }
+          .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+          }
+          .cta {
+            display: inline-block;
+            background-color: #ffcc00;
+            color: #000;
+            padding: 12px 20px;
+            margin-top: 20px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 6px;
+          }
+          .footer {
+            padding: 15px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            background-color: #1a1a1a;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            💛 Welcome to Self-Guided Coaching!
+          </div>
+          <div class="content">
+            <p>Dear <strong>${customer_name}</strong>,</p>
+            <p>Thank you for purchasing the <span class="highlight">Self-Guided True Love Coaching Program</span>! 🌟</p>
+            <p>Your payment of <strong>${amount}</strong> has been received successfully.</p>
+            <p>You now have access to the self-guided journey inside our app — designed to help you grow, heal, and build the love life you deserve, at your own pace. 💫</p>
+            <p>Log in to the app to get started whenever you’re ready.</p>
+            <a href="https://true-love.lovable.app" class="cta">Open the App</a>
+          </div>
+          <div class="footer">
+            This email was sent from a no-reply address. Please do not reply directly.
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
   },
 
   // email verification template

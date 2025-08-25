@@ -2,6 +2,7 @@ import express from "express";
 import {
   createCheckOut,
   paymentSucessful,
+  createSelfGuidedCheckOut
 } from "../controllers/paymentController.js";
 import withAuth from "../middlewares/withAuth.js";
 
@@ -13,5 +14,7 @@ router.post(
   express.raw({ type: "application/json" }),
   paymentSucessful
 );
+
+router.get("/checkout-self-guided", withAuth, createSelfGuidedCheckOut);
 
 export default router;
