@@ -145,6 +145,12 @@ export async function paymentSucessful(req, res) {
           formatAmount(data.amount_subtotal)
         )
       );
+
+      const customerEmail = data.customer_details?.email;
+      await Profile.findOneAndUpdate(
+        { email: customerEmail },
+        { $set: { hasPremium: true } }
+      );
     } else if (
       event.type === "checkout.session.completed" &&
       data.metadata.site === "true-love"
