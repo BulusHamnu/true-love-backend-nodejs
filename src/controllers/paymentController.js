@@ -36,7 +36,7 @@ export async function createCheckOut(req, res) {
     });
 
     // res.redirect(session.url)
-    res.status(200).json({ url: session.url });
+    res.status(200).json({ status: true, data: { url: session.url } });
   } catch (error) {
     logError(`An error occur creating chechout.`, error.message);
 
