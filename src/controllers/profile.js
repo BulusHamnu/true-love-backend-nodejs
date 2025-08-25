@@ -82,3 +82,68 @@ export async function updateProfile(req, res) {
     });
   }
 }
+
+// get self-guided-progress
+export async function getProgramProgress(req, res) {
+  try {
+    // get user profile
+    const userProfile = await Profile.findOne({ userId: req.user.id });
+
+    res.status(200).json({
+      status: true,
+      message: "Self-guided program progress retrieved sucessfully",
+      data: userProfile.programProgress,
+    });
+  } catch (error) {
+    logError(
+      "An error occur retriving self-guided program progress.",
+      error.message
+    );
+    res.status(500).json({
+      status: false,
+      message: "An unexpected error occured.",
+      error: error.message,
+    });
+  }
+}
+
+// update self-guided-progress
+export async function updateProgramProgress(req, res) {
+  try {
+    const { weekNumber } = req.body;
+    if (!weekNumber)
+      return res.status(400).json({
+        status: false,
+        message: "Please provide the lastest week numnber.",
+      });
+
+    if (weekNumber > 6 || weekNumber < 0)
+      return res.status(400).json({
+        status: false,
+        message: "Week number cannot be less than 0 or greater than 6",
+      });
+
+    // get user profile
+    const userProfile = await Profile.findOneAndUpdate(
+      { userId: req.user.id },
+      { $set: { "programProgress.week": weekNumber } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "Self-guided progress update sucessfully.",
+      data: userProfile.programProgress,
+    });
+  } catch (error) {
+    logError(
+      "An error occur update self-guided program progress.",
+      error.message
+    );
+    res.status(500).json({
+      status: false,
+      message: "An unexpected error occured.",
+      error: error.message,
+    });
+  }
+}
