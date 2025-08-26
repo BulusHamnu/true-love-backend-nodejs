@@ -3,11 +3,19 @@ import Profile from "../models/profile.js";
 import { templates, sendEmail } from "../services/email.js";
 import sendResendEmail from "../services/resend.js";
 import { formatAmount, logError, logInfo } from "../utils/helpers.js";
+import Transaction from "../models/transactions.js";
+import User from "../models/user.js";
 
 // create checkout endpoint
 export async function createSelfGuidedCheckOut(req, res) {
   const userProfile = await Profile.findOne({ userId: req.user.id });
   try {
+    if (userProfile.hasPremium === true)
+      return res.status(409).json({
+        status: true,
+        message: "User already paid for the self-guided program.",
+      });
+
     // create stipe customer
     const customer = await stripe.customers.create({
       name: userProfile.fullName || "",
@@ -55,6 +63,12 @@ export async function createSelfGuidedCheckOut(req, res) {
 export async function createCheckOut(req, res) {
   const userProfile = await Profile.findOne({ userId: req.user.id });
   try {
+    if (userProfile.paidForCoaching === true)
+      return res.status(409).json({
+        status: true,
+        message: "User already paid for the coaching-program.",
+      });
+
     // create stipe customer
     const customer = await stripe.customers.create({
       name: userProfile.fullName || "",
@@ -123,6 +137,27 @@ export async function paymentSucessful(req, res) {
 
       logInfo("New payment submited for self-guided version!", logs);
 
+      // add the transaction
+      const user = await User.findOne({ email: data.customer_details?.email });
+
+      // if user exist saved the transaction record
+      if (user) {
+        await Transaction.create({
+          userId: user._id,
+          amount: data.amount_subtotal,
+          status: "paid",
+          type: "self-guided-program",
+          paymentIntent: data.payment_intent,
+          receipt: data.receipt_url,
+        });
+
+        // find users profile and update payment status
+        await Profile.findOneAndUpdate(
+          { userId: user._id },
+          { $set: { hasPremium: true } }
+        );
+      }
+
       // send confirmation emails
       // for tutor
       await sendEmail(
@@ -164,6 +199,27 @@ export async function paymentSucessful(req, res) {
       ].join(" ");
 
       logInfo("New payment submited!", logs);
+
+      // add the transaction
+      const user = await User.findOne({ email: data.customer_details?.email });
+
+      // if user exist saved the transaction record
+      if (user) {
+        await Transaction.create({
+          userId: user._id,
+          amount: data.amount_subtotal,
+          status: "paid",
+          type: "coaching-program",
+          paymentIntent: data.payment_intent,
+          receipt: data.receipt_url,
+        });
+
+        // find users profile and update payment status
+        await Profile.findOneAndUpdate(
+          { userId: user._id },
+          { $set: { paidForCoaching: true } }
+        );
+      }
 
       // send confirmation emails
       // for tutor
