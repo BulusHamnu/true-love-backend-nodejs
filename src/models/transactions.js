@@ -6,7 +6,15 @@ const transactionSchema = mongoose.Schema({
     ref: "Profile",
     required: true,
   },
-  amount: String,
+  amount: Number,
+  status: {
+    type: String,
+    enum: ["pending", "failed", "paid"],
+  },
+  type: {
+    type: String,
+    enum: ["coaching-program", "self-guided-program"],
+  },
   paymentIntent: String,
   receipt: String,
   createdAt: {

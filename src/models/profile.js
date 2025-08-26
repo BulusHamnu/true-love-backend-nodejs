@@ -28,6 +28,10 @@ const profileSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  paidForCoaching : {
+    type: Boolean,
+    default: false
+  },
   programProgress: {
     week: {
       type: Number,
