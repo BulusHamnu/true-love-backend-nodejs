@@ -1,7 +1,6 @@
 import { logError } from "../utils/helpers.js";
 import User from "../models/user.js";
 import Profile from "../models/profile.js";
-import mongoose from "mongoose";
 
 // get profile handler
 export async function getProfile(req, res) {
@@ -14,9 +13,7 @@ export async function getProfile(req, res) {
         .json({ status: true, message: "User does not exist." });
 
     // get user profile
-    console.log(req.user.id);
     const userProfile = await Profile.findOne({ userId: req.user.id });
-    console.log(userProfile);
 
     res.status(200).json({
       status: true,
@@ -45,7 +42,7 @@ export async function updateProfile(req, res) {
       .status(400)
       .json({ status: true, message: "User does not exist." });
 
-  const allowedFields = ["fullName", "email", "phone", "age", "hasPremium"];
+  const allowedFields = ["fullName", "phone", "age"];
 
   try {
     let data = req.body;
