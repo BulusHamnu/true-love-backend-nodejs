@@ -27,8 +27,8 @@ export async function signup(req, res) {
     const userExist = await User.findOne({ email: email });
     if (userExist)
       return res
-        .status(400)
-        .json({ status: true, message: "User already exist." });
+        .status(409)
+        .json({ status: false, message: "User already exist." });
 
     // hash user password
     const userPassword = await hashPassword(password);

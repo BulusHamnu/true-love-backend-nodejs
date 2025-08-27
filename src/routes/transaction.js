@@ -4,10 +4,21 @@ import {
   getTransaction,
 } from "../controllers/transactionController.js";
 import withAuth from "../middlewares/withAuth.js";
+import rateLimter from "../middlewares/rateLimiter.js";
 
 const router = express.Router();
 
-router.get("/", withAuth, getAllTransaction);
-router.get("/:id", withAuth, getTransaction);
+router.get(
+  "/",
+  withAuth,
+  rateLimter(60 * 60 * 1000, 25, "user-id"),
+  getAllTransaction
+);
+router.get(
+  "/:id",
+  withAuth,
+  rateLimter(60 * 60 * 1000, 25, "user-id"),
+  getTransaction
+);
 
 export default router;
