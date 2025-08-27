@@ -3,6 +3,7 @@ import User from "../models/user.js";
 import Profile from "../models/profile.js";
 import { profileUpdate } from "../utils/validators.js";
 import Joi from "joi";
+import sanitizeData from "../utils/sanitizeData.js";
 
 // get profile handler
 export async function getProfile(req, res) {
@@ -47,7 +48,7 @@ export async function updateProfile(req, res) {
   const allowedFields = ["fullName", "phone", "age"];
 
   try {
-    let data = req.body;
+    let data = sanitizeData(req.body);
 
     if (Object.keys(data).length === 0)
       return res
@@ -120,7 +121,8 @@ export async function getProgramProgress(req, res) {
 // update self-guided-progress
 export async function updateProgramProgress(req, res) {
   try {
-    const { weekNumber } = req.body;
+    const cleanData = sanitizeData(req.body)
+    const { weekNumber } = cleanData;
 
     const validator = Joi.number().required().min(0).max(6).label("weekNumber");
     const validate = validator.validate(weekNumber);

@@ -16,12 +16,14 @@ import {
   signupSchema,
 } from "../../utils/validators.js";
 import Joi from "joi";
+import sanitizeData from "../../utils/sanitizeData.js";
 
 // sign up handler
 export async function signup(req, res) {
   try {
     // validate body data
-    const { fullName, phone, age, password, email } = req.body;
+    const cleanData = sanitizeData(req.body);
+    const { fullName, phone, age, password, email } = cleanData;
     const validate = signupSchema.validate({
       fullName,
       phone,
@@ -272,7 +274,8 @@ export async function resendEmail(req, res) {
 // reset password handler
 export async function resetPassword(req, res) {
   try {
-    const { email, password } = req.body;
+    const cleanData = sanitizeData(req.body);
+    const { email, password } = cleanData;
 
     const validate = emailAndPasswordSchema.validate({
       email,
