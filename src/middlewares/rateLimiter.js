@@ -1,4 +1,4 @@
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 
 const rateLimter = (time, limit, key) => {
   return rateLimit({
@@ -16,7 +16,7 @@ const rateLimter = (time, limit, key) => {
         return req.user.id;
       }
 
-      return req.ip;
+      return ipKeyGenerator(req.ip);
     },
   });
 };

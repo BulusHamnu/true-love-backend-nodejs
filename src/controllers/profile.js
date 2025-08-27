@@ -9,7 +9,7 @@ export async function getProfile(req, res) {
     const user = await User.findOne({ email: req.user.email });
     if (!user)
       return res
-        .status(400)
+        .status(404)
         .json({ status: true, message: "User does not exist." });
 
     // get user profile
@@ -39,7 +39,7 @@ export async function updateProfile(req, res) {
   const user = await User.findOne({ email: req.user.email });
   if (!user)
     return res
-      .status(400)
+      .status(404)
       .json({ status: true, message: "User does not exist." });
 
   const allowedFields = ["fullName", "phone", "age"];
