@@ -1,6 +1,8 @@
 import { logError } from "../utils/helpers.js";
 import User from "../models/user.js";
 import Profile from "../models/profile.js";
+import { profileUpdate } from "../utils/validators.js";
+import Joi from "joi";
 
 // get profile handler
 export async function getProfile(req, res) {
@@ -58,6 +60,17 @@ export async function updateProfile(req, res) {
       delete data[key];
     });
 
+    // validate body
+    const validate = profileUpdate.validate({
+      fullName: data.fullName,
+      phone: data.phone,
+      age: data.age,
+    });
+    if (validate.error)
+      return res
+        .status(400)
+        .json({ status: false, message: validate.error.message });
+
     // update user
     const updateUser = await Profile.findOneAndUpdate(
       { email: req.user.email },
@@ -108,16 +121,14 @@ export async function getProgramProgress(req, res) {
 export async function updateProgramProgress(req, res) {
   try {
     const { weekNumber } = req.body;
-    if (!weekNumber)
-      return res.status(400).json({
-        status: false,
-        message: "Please provide the lastest week numnber.",
-      });
 
-    if (weekNumber > 6 || weekNumber < 0)
+    const validator = Joi.number().required().min(0).max(6).label("weekNumber");
+    const validate = validator.validate(weekNumber);
+
+    if (validate.error)
       return res.status(400).json({
         status: false,
-        message: "Week number cannot be less than 0 or greater than 6",
+        message: validate.error.message,
       });
 
     // get user profile

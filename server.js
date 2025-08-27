@@ -6,6 +6,7 @@ import authRoutes from "./src/routes/authRoutes.js";
 import profileRoutes from "./src/routes/profileRoutes.js";
 import paymentRoutes from "./src/routes/payment.js";
 import transactionRoutes from "./src/routes/transaction.js";
+import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import cors from "cors";
@@ -15,6 +16,7 @@ const port = env.PORT;
 const app = express();
 
 // App middleware
+app.use(helmet());
 app.use("/public", express.static(path.join(dirname, "public")));
 app.use(morgan("dev"));
 app.use(

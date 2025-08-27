@@ -1,12 +1,12 @@
 
 # all request should includes credencails
-# https://true-love-backend-nodejs.onrender.com/
+# http://localhost:3000/
 
-GET https://true-love-backend-nodejs.onrender.com/
+GET http://localhost:3000/
 
 ###
 # sign up a new user
-POST https://true-love-backend-nodejs.onrender.com/api/auth/signup
+POST http://localhost:3000/api/auth/signup
 Content-Type: application/json
 
 {
@@ -52,7 +52,7 @@ Content-Type: application/json
 ###
 
 # verify user email address from the code that was send in the email when signing up
-POST https://true-love-backend-nodejs.onrender.com/api/auth/verify-email
+POST http://localhost:3000/api/auth/verify-email
 Content-Type: application/json
 
 {
@@ -95,7 +95,7 @@ Content-Type: application/json
 ###
 
 # resend email verification code
-POST https://true-love-backend-nodejs.onrender.com/api/auth/resend-email
+POST http://localhost:3000/api/auth/resend-email
 Content-Type: application/json
 Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ21haWwuY29tIiwiaWQiOiI2OGFiODAxY2QzYTJmNDczODMyNWNkYTEiLCJpc1ZlcmlmaWVkIjp0cnVlLCJpYXQiOjE3NTYwNzAwODMsImV4cCI6MTc1ODY2MjA4M30.FomW-yq50dDTHocu3vVS8erZ45mBo9i_JlOh2zjuGac
 
@@ -116,7 +116,7 @@ Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ
 ###
 
 # get user profile
-GET https://true-love-backend-nodejs.onrender.com/api/me
+GET http://localhost:3000/api/me
 Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ21haWwuY29tIiwiaWQiOiI2OGFiOGFiNzlmMWE5NTY3NWNjZjc5YzMiLCJpc1ZlcmlmaWVkIjp0cnVlLCJpYXQiOjE3NTYwNzI3NDYsImV4cCI6MTc1ODY2NDc0Nn0.9UqO0owEPHyilAoFCuv-TVqg2Y03YkZa-mDRMCtSZvQ
 
 # response example 200
@@ -150,7 +150,7 @@ Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ
 ###
 
 # update user profile
-PATCH  https://true-love-backend-nodejs.onrender.com/api/me
+PATCH  http://localhost:3000/api/me
 Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ21haWwuY29tIiwiaWQiOiI2OGFiOGFiNzlmMWE5NTY3NWNjZjc5YzMiLCJpc1ZlcmlmaWVkIjp0cnVlLCJpYXQiOjE3NTYwNzI3NDYsImV4cCI6MTc1ODY2NDc0Nn0.9UqO0owEPHyilAoFCuv-TVqg2Y03YkZa-mDRMCtSZvQ
 Content-Type: application/json
 
@@ -193,12 +193,41 @@ Content-Type: application/json
 
 ###
 
-// user forget password and request for reset
-POST https://true-love-backend-nodejs.onrender.com/api/auth/forget-password
+# get user program progress
+GET http://localhost:3000/api/me/self-guided-progress
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ21haWwuY29tIiwiaWQiOiI2OGFiOTQwNGQ1OGIyMDJhYTVjMjM0YTEiLCJpc1ZlcmlmaWVkIjp0cnVlLCJpYXQiOjE3NTYzMTc2MDIsImV4cCI6MTc1ODkwOTYwMn0.1tMM6rs1H66_DCTmhKdCJm9AWHFgDApVfF60xRHE0EE
+
+# response example 200
+# {
+#   "status": true,
+#   "message": "Self-guided program progress retrieved sucessfully",
+#   "data": {
+#     "week": 2,
+#     "totalWeek": 6
+#   }
+# }
+
+
+###
+
+# update user program progress
+PATCH http://localhost:3000/api/me/self-guided-progress
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ21haWwuY29tIiwiaWQiOiI2OGFiOTQwNGQ1OGIyMDJhYTVjMjM0YTEiLCJpc1ZlcmlmaWVkIjp0cnVlLCJpYXQiOjE3NTYzMTc2MDIsImV4cCI6MTc1ODkwOTYwMn0.1tMM6rs1H66_DCTmhKdCJm9AWHFgDApVfF60xRHE0EE
 Content-Type: application/json
 
 {
-  "email" : "hamnubulus@gmail.com"
+  "weekNumber" : 7
+}
+
+
+###
+
+// user forget password and request for reset
+POST http://localhost:3000/api/auth/forget-password
+Content-Type: application/json
+
+{
+    "car" : "hamnubulus@gmail.com"
 }
 
 # response example 200
@@ -221,7 +250,7 @@ Content-Type: application/json
 ###
 
 # code is verify and now front can send new password
-POST https://true-love-backend-nodejs.onrender.com/api/auth/verify-password-reset-code
+POST http://localhost:3000/api/auth/verify-password-reset-code
 Content-Type: application/json
 
 {
@@ -249,7 +278,7 @@ Content-Type: application/json
 ###
 
 # send new password
-POST https://true-love-backend-nodejs.onrender.com/api/auth/reset-password
+POST http://localhost:3000/api/auth/reset-password
 Content-Type: application/json
 
 {
@@ -282,7 +311,7 @@ Content-Type: application/json
 ###
 
 # log user in
-POST https://true-love-backend-nodejs.onrender.com/api/auth/login
+POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
@@ -316,7 +345,7 @@ Content-Type: application/json
 ###
 
 # log a user out
-POST https://true-love-backend-nodejs.onrender.com/api/auth/logout
+POST http://localhost:3000/api/auth/logout
 Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ21haWwuY29tIiwiaWQiOiI2OGFiOGFiNzlmMWE5NTY3NWNjZjc5YzMiLCJpc1ZlcmlmaWVkIjp0cnVlLCJpYXQiOjE3NTYwNzI3NDYsImV4cCI6MTc1ODY2NDc0Nn0.9UqO0owEPHyilAoFCuv-TVqg2Y03YkZa-mDRMCtSZvQ
 
 
@@ -330,7 +359,7 @@ Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ
 
 ### create stripe checkout
 
-GET https://true-love-backend-nodejs.onrender.com/api/payment/create-checkout
+GET http://localhost:3000/api/payment/create-checkout
 Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ21haWwuY29tIiwiaWQiOiI2OGFiOTQwNGQ1OGIyMDJhYTVjMjM0YTEiLCJpc1ZlcmlmaWVkIjp0cnVlLCJpYXQiOjE3NTYxMzExMDQsImV4cCI6MTc1ODcyMzEwNH0.1yCL7zzuFsEd7eqc1rkLgpMwLihkDO87GVVdPUyzkWM
 
 # response example 200
@@ -400,7 +429,7 @@ Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ
 
 ###
 
-PATCH https://true-love-backend-nodejs.onrender.com/api/me/self-guided-progress
+PATCH http://localhost:3000/api/me/self-guided-progress
 Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ21haWwuY29tIiwiaWQiOiI2OGFiOTQwNGQ1OGIyMDJhYTVjMjM0YTEiLCJpc1ZlcmlmaWVkIjp0cnVlLCJpYXQiOjE3NTYxMzExMDQsImV4cCI6MTc1ODcyMzEwNH0.1yCL7zzuFsEd7eqc1rkLgpMwLihkDO87GVVdPUyzkWM
 Content-Type: application/json
 
@@ -439,13 +468,13 @@ Content-Type: application/json
 ###
 
 # Stripe webhook
-POST https://true-love-backend-nodejs.onrender.com/api/payment/stripe-webhook
+POST http://localhost:3000/api/payment/stripe-webhook
 
 
 ###
 
 # get all transaction
-GET https://true-love-backend-nodejs.onrender.com/api/transactions
+GET http://localhost:3000/api/transactions
 Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ21haWwuY29tIiwiaWQiOiI2OGFiOTQwNGQ1OGIyMDJhYTVjMjM0YTEiLCJpc1ZlcmlmaWVkIjp0cnVlLCJpYXQiOjE3NTYxMzExMDQsImV4cCI6MTc1ODcyMzEwNH0.1yCL7zzuFsEd7eqc1rkLgpMwLihkDO87GVVdPUyzkWM
 
 # response type 200
@@ -496,7 +525,7 @@ Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ
 ### 
 # get all transaction
 
-GET https://true-love-backend-nodejs.onrender.com/api/transactions/68ae10fde704fe2eaf6dd727
+GET http://localhost:3000/api/transactions/68ae10fde704fe2eaf6dd727
 Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhbW51YnVsdXNAZ21haWwuY29tIiwiaWQiOiI2OGFiOTQwNGQ1OGIyMDJhYTVjMjM0YTEiLCJpc1ZlcmlmaWVkIjp0cnVlLCJpYXQiOjE3NTYxMzExMDQsImV4cCI6MTc1ODcyMzEwNH0.1yCL7zzuFsEd7eqc1rkLgpMwLihkDO87GVVdPUyzkWM
 
 # response type 200

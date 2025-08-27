@@ -11,16 +11,29 @@ import { templates, sendEmail } from "../../services/email.js";
 import { env } from "../../../confiq/index.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import {
+  emailAndPasswordSchema,
+  signupSchema,
+} from "../../utils/validators.js";
+import Joi from "joi";
 
 // sign up handler
 export async function signup(req, res) {
   try {
+    // validate body data
     const { fullName, phone, age, password, email } = req.body;
-    if (!fullName || !phone || !age || !password || !email)
+    const validate = signupSchema.validate({
+      fullName,
+      phone,
+      age,
+      password,
+      email,
+    });
+
+    if (validate.error)
       return res.status(400).json({
         status: false,
-        message:
-          "Please provide all required feilds: fullName, phone, age, password and email.",
+        message: validate.error.message,
       });
 
     // check if user already exist
@@ -79,10 +92,15 @@ export async function signup(req, res) {
 export async function login(req, res) {
   try {
     const { password, email } = req.body;
-    if (!password || !email)
+    const validate = emailAndPasswordSchema.validate({
+      email,
+      password,
+    });
+
+    if (validate.error)
       return res
         .status(400)
-        .json({ status: false, message: "Missing email or password field." });
+        .json({ status: false, message: validate.error.message });
 
     // check if user already exist
     const user = await User.findOne({ email: email });
@@ -131,10 +149,14 @@ export async function login(req, res) {
 export async function forgetPassword(req, res) {
   try {
     const { email } = req.body;
-    if (!email)
+
+    // validate email with Joi
+    const validator = Joi.string().email().required().label("email");
+    const validate = validator.validate(email);
+    if (validate.error)
       return res
         .status(400)
-        .json({ status: false, message: "Please provide an email." });
+        .json({ status: false, message: validate.error.message });
 
     // check if user already exist
     const user = await User.findOne({ email: email });
@@ -251,10 +273,16 @@ export async function resendEmail(req, res) {
 export async function resetPassword(req, res) {
   try {
     const { email, password } = req.body;
-    if (!password || !email)
+
+    const validate = emailAndPasswordSchema.validate({
+      email,
+      password,
+    });
+
+    if (validate.error)
       return res
         .status(400)
-        .json({ status: false, message: "Missing email or password field." });
+        .json({ status: false, message: validate.error.message });
 
     // check if user already exist
     const user = await User.findOne({ email: email });
