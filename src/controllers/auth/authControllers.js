@@ -69,7 +69,7 @@ export async function signup(req, res) {
     });
 
     // send verfication email
-    await sendEmail(
+    await sendResendEmail(
       email,
       "Please verify your email address",
       templates.emailVerificationTemplate(fullName, verficationCode)
@@ -178,7 +178,7 @@ export async function forgetPassword(req, res) {
     await user.save();
 
     // send verfication email
-    await sendEmail(
+    await sendResendEmail(
       email,
       "Reset Your Password",
       templates.passwordVerificationTemplate("", verficationCode)
@@ -251,7 +251,7 @@ export async function resendEmail(req, res) {
     await user.save();
 
     // send verfication email
-    await sendEmail(
+    await sendResendEmail(
       email,
       "Please verify your email address",
       templates.emailVerificationTemplate(user.fullName, verficationCode)
@@ -308,7 +308,7 @@ export async function resetPassword(req, res) {
     await user.save();
 
     // send verfication email
-    await sendEmail(
+    await sendResendEmail(
       email,
       "Password reset sucessfully.",
       templates.paswordResetSucessful()

@@ -160,7 +160,7 @@ export async function paymentSucessful(req, res) {
 
       // send confirmation emails
       // for tutor
-      await sendEmail(
+      await sendResendEmail(
         env.TOTUR_EMAIL,
         "Payment For True Love Self-Guided Version",
         templates.selfGuidedUserTemplate(
@@ -172,7 +172,7 @@ export async function paymentSucessful(req, res) {
       );
 
       // for customer
-      await sendEmail(
+      await sendResendEmail(
         data.customer_details?.email || "No Provided",
         "Payment Successful",
         templates.selfGuidedCustomerTemplate(
