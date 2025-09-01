@@ -155,7 +155,7 @@ export async function paymentSucessful(req, res) {
         await Profile.findOneAndUpdate(
           { userId: user._id },
           {
-            $set: { paidForCoaching: true, hasPremium: true },
+            $set: { paidForCoaching: true },
             $push: { transactions: newTransaction._id },
           }
         );

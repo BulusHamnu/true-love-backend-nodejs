@@ -21,7 +21,7 @@ app.use("/public", express.static(path.join(dirname, "public")));
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: "https://true-love.lovable.app",
+    origin: "https://true-love.app",
     credentials: true,
   })
 );
