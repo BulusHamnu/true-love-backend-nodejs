@@ -8,7 +8,7 @@ import User from "../models/user.js";
 
 // create checkout endpoint
 export async function createSelfGuidedCheckOut(req, res) {
-  const userProfile = await Profile.findOne({ userId: req.user.id });
+  const userProfile = req.userProfile;
   try {
     if (userProfile.hasPremium === true)
       return res.status(409).json({
@@ -61,8 +61,8 @@ export async function createSelfGuidedCheckOut(req, res) {
 
 // create checkout endpoint
 export async function createCheckOut(req, res) {
-  const userProfile = await Profile.findOne({ userId: req.user.id });
   try {
+    const userProfile = req.userProfile;
     if (userProfile.paidForCoaching === true)
       return res.status(409).json({
         status: true,
@@ -165,7 +165,7 @@ export async function paymentSucessful(req, res) {
         "Payment For True Love Self-Guided Version",
         templates.selfGuidedUserTemplate(
           "David Prorok",
-          data.customer_details?.name || "No Provided",
+          data.customer_details?.name || "new user",
           data.customer_details?.email || "No Provided",
           formatAmount(data.amount_subtotal)
         )
@@ -173,7 +173,7 @@ export async function paymentSucessful(req, res) {
 
       // for customer
       await sendResendEmail(
-        data.customer_details?.email || "No Provided",
+        data.customer_details?.email || "cupid’s pick",
         "Payment Successful",
         templates.selfGuidedCustomerTemplate(
           data.customer_details?.name || "No Provided",
@@ -217,7 +217,7 @@ export async function paymentSucessful(req, res) {
         // find users profile and update payment status
         await Profile.findOneAndUpdate(
           { userId: user._id },
-          { $set: { paidForCoaching: true } }
+          { $set: { paidForCoaching: true, hasPremium: true } }
         );
       }
 

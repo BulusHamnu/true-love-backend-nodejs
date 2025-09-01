@@ -4,15 +4,17 @@ import {
   paymentSucessful,
   createSelfGuidedCheckOut,
 } from "../controllers/paymentController.js";
-import withAuth from "../middlewares/withAuth.js";
+// import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
+import autoCreateUser from "../middlewares/autoCreateUser.js";
 
 const router = express.Router();
 
+// the client wants users to make purchase even without signing up
 router.get(
   "/create-checkout",
-  withAuth,
-  rateLimter(60 * 60 * 1000, 5, "user-id"),
+  rateLimter(60 * 60 * 1000, 5, "pi"),
+  autoCreateUser,
   createCheckOut
 );
 router.post(
@@ -23,8 +25,8 @@ router.post(
 
 router.get(
   "/checkout-self-guided",
-  withAuth,
-  rateLimter(60 * 60 * 1000, 5, "user-id"),
+  rateLimter(60 * 60 * 1000, 5, "ip"),
+  autoCreateUser,
   createSelfGuidedCheckOut
 );
 

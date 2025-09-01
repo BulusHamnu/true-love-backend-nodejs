@@ -94,7 +94,11 @@ export async function signup(req, res) {
 export async function login(req, res) {
   try {
     const { password, email } = req.body;
-    const validate = emailAndPasswordSchema.validate({
+    const validator = Joi.object({
+      email: Joi.string().email().required(),
+      password: Joi.string().required(),
+    });
+    const validate = validator.validate({
       email,
       password,
     });
@@ -109,14 +113,14 @@ export async function login(req, res) {
     if (!user)
       return res
         .status(404)
-        .json({ status: true, message: "User does not exist." });
+        .json({ status: false, message: "User does not exist." });
 
     // compare password
     const passwordCorrect = await bcrypt.compare(password, user.password);
     if (!passwordCorrect)
       return res
         .status(400)
-        .json({ status: true, message: "Incorect password" });
+        .json({ status: false, message: "Incorect password" });
 
     // generate token: no refresh token, just token and save in cookies
     const token = jwt.sign(
