@@ -142,7 +142,7 @@ export async function paymentSucessful(req, res) {
 
       // if user exist saved the transaction record
       if (user) {
-        await Transaction.create({
+        const newTransaction = await Transaction.create({
           userId: user._id,
           amount: data.amount_subtotal,
           status: "paid",
@@ -154,7 +154,10 @@ export async function paymentSucessful(req, res) {
         // find users profile and update payment status
         await Profile.findOneAndUpdate(
           { userId: user._id },
-          { $set: { hasPremium: true } }
+          {
+            $set: { paidForCoaching: true, hasPremium: true },
+            $push: { transactions: newTransaction._id },
+          }
         );
       }
 
@@ -205,7 +208,7 @@ export async function paymentSucessful(req, res) {
 
       // if user exist saved the transaction record
       if (user) {
-        await Transaction.create({
+        const newTransaction = await Transaction.create({
           userId: user._id,
           amount: data.amount_subtotal,
           status: "paid",
@@ -217,7 +220,8 @@ export async function paymentSucessful(req, res) {
         // find users profile and update payment status
         await Profile.findOneAndUpdate(
           { userId: user._id },
-          { $set: { paidForCoaching: true, hasPremium: true } }
+          { $set: { paidForCoaching: true, hasPremium: true } },
+          { $push: { transactions: newTransaction._id } }
         );
       }
 
