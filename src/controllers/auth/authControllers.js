@@ -256,7 +256,7 @@ export async function resendEmail(req, res) {
 
     // send verfication email
     await sendResendEmail(
-      email,
+      req.user.email,
       "Please verify your email address",
       templates.emailVerificationTemplate(user.fullName, verficationCode)
     );
