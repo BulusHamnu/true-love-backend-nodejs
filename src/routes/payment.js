@@ -11,7 +11,7 @@ import autoCreateUser from "../middlewares/autoCreateUser.js";
 const router = express.Router();
 
 // the client wants users to make purchase even without signing up
-router.get(
+router.post(
   "/create-checkout",
   rateLimter(60 * 60 * 1000, 5, "pi"),
   autoCreateUser,
@@ -23,7 +23,7 @@ router.post(
   paymentSucessful
 );
 
-router.get(
+router.post(
   "/checkout-self-guided",
   rateLimter(60 * 60 * 1000, 5, "ip"),
   autoCreateUser,
