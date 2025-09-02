@@ -155,9 +155,10 @@ export async function paymentSucessful(req, res) {
         await Profile.findOneAndUpdate(
           { userId: user._id },
           {
-            $set: { paidForCoaching: true },
+            $set: { hasPremium: true },
             $push: { transactions: newTransaction._id },
-          }
+          },
+          { new: true }
         );
       }
 
@@ -182,12 +183,6 @@ export async function paymentSucessful(req, res) {
           data.customer_details?.name || "No Provided",
           formatAmount(data.amount_subtotal)
         )
-      );
-
-      const customerEmail = data.customer_details?.email;
-      await Profile.findOneAndUpdate(
-        { email: customerEmail },
-        { $set: { hasPremium: true } }
       );
     } else if (
       event.type === "checkout.session.completed" &&
@@ -220,8 +215,11 @@ export async function paymentSucessful(req, res) {
         // find users profile and update payment status
         await Profile.findOneAndUpdate(
           { userId: user._id },
-          { $set: { paidForCoaching: true, hasPremium: true } },
-          { $push: { transactions: newTransaction._id } }
+          {
+            $set: { paidForCoaching: true, hasPremium: true },
+            $push: { transactions: newTransaction._id },
+          },
+          { new: true }
         );
       }
 
