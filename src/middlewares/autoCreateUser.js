@@ -54,7 +54,7 @@ export default async function autoCreateUser(req, res, next) {
     sendResendEmail(
       email,
       "Welcome To True-Love App",
-      templates.defaultPasswordTemplate(newUserProfile.fullName, newUser.email)
+      templates.defaultPasswordTemplate("Cupid's chosen", password)
     );
 
     // set res cookies for 30d
