@@ -33,13 +33,39 @@ const profileSchema = new mongoose.Schema({
     default: false,
   },
   programProgress: {
-    week: {
+    currentWeek: {
       type: Number,
       default: 0,
     },
     totalWeek: {
       type: Number,
       default: 6,
+    },
+    reflectionMessages: {
+      week1: {
+        type: String,
+        default: "",
+      },
+      week2: {
+        type: String,
+        default: "",
+      },
+      week3: {
+        type: String,
+        default: "",
+      },
+      week4: {
+        type: String,
+        default: "",
+      },
+      week5: {
+        type: String,
+        default: "",
+      },
+      week6: {
+        type: String,
+        default: "",
+      },
     },
   },
   createdAt: {

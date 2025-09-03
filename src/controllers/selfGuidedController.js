@@ -32,10 +32,14 @@ export async function getProgramProgress(req, res) {
 export async function updateProgramProgress(req, res) {
   try {
     const cleanData = sanitizeData(req.body);
-    const { weekNumber } = cleanData;
+    const { currentWeek } = cleanData;
 
-    const validator = Joi.number().required().min(0).max(6).label("weekNumber");
-    const validate = validator.validate(weekNumber);
+    const validator = Joi.number()
+      .required()
+      .min(0)
+      .max(6)
+      .label("currentWeek");
+    const validate = validator.validate(currentWeek);
 
     if (validate.error)
       return res.status(400).json({
@@ -46,7 +50,7 @@ export async function updateProgramProgress(req, res) {
     // get user profile
     const userProfile = await Profile.findOneAndUpdate(
       { userId: req.user.id },
-      { $set: { "programProgress.week": weekNumber } },
+      { $set: { "programProgress.currentWeek": currentWeek } },
       { new: true }
     );
 
@@ -70,17 +74,19 @@ export async function updateProgramProgress(req, res) {
 
 export async function reflectionCorner(req, res) {
   try {
-    const { userMessage } = req.body;
+    const { message } = req.body;
+    const weekNumber = req.params.weekNumber;
+
     // validate and sanitize data
-    const validator = Joi.string().required().label("userMessage");
-    const validate = validator.validate(userMessage);
+    const validator = Joi.string().required().label("message");
+    const validate = validator.validate(message);
     if (validate.error)
       return res
         .status(400)
         .json({ status: false, message: validate.error.message });
 
     // get openai response
-    const response = await postReflectionStory(userMessage);
+    const response = await postReflectionStory(message);
     if (!response.status)
       return res
         .status(500)
@@ -88,7 +94,7 @@ export async function reflectionCorner(req, res) {
     res.status(200).json({
       status: true,
       message: "ChatGPT reflection response",
-      data: { message: response.message },
+      data: { message: response.message + " " + weekNumber },
     });
   } catch (error) {
     logError("An error occur while generating response.");

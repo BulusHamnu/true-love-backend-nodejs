@@ -22,7 +22,7 @@ router.patch(
   updateProgramProgress
 );
 router.post(
-  "/reflection-corner",
+  "/reflection-messages/:weekNumber",
   // withAuth,
   rateLimter(60 * 60 * 1000, 20, "user-id"),
   reflectionCorner
