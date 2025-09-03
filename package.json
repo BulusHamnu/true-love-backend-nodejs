@@ -33,6 +33,7 @@
     "mongoose": "^8.18.0",
     "morgan": "^1.10.1",
     "nodemailer": "^7.0.5",
+    "openai": "^5.19.1",
     "resend": "^6.0.1",
     "stripe": "^18.4.0",
     "xss": "^1.0.15"

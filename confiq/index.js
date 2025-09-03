@@ -26,4 +26,5 @@ export const env = {
   SELF_GUIDED_NAME: process.env.SELF_GUIDED_NAME,
   SELF_GUIDED_PRODUCT_ID: process.env.SELF_GUIDED_PRODUCT_ID,
   SELF_GUIDED_PRICE_ID: process.env.SELF_GUIDED_PRICE_ID,
+  OPEN_API_KEY: process.env.OPEN_API_KEY,
 };

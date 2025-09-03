@@ -4,6 +4,7 @@ import { logInfo, logError } from "./src/utils/helpers.js";
 import connectDb from "./confiq/db.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import profileRoutes from "./src/routes/profileRoutes.js";
+import selfGuidedRoutes from "./src/routes/selfGuided.js";
 import paymentRoutes from "./src/routes/payment.js";
 import transactionRoutes from "./src/routes/transaction.js";
 import helmet from "helmet";
@@ -44,6 +45,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/me", profileRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/self-guided", selfGuidedRoutes);
 
 // Start the server
 app.listen(port, async () => {
