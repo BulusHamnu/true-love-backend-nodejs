@@ -27,5 +27,8 @@ const userSchema = new mongoose.Schema({
   },
 });
 
+// create an indexes
+userSchema.index({ email: 1 });
+
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;

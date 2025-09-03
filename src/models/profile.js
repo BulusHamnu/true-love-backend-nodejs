@@ -28,9 +28,9 @@ const profileSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  paidForCoaching : {
+  paidForCoaching: {
     type: Boolean,
-    default: false
+    default: false,
   },
   programProgress: {
     week: {
@@ -47,6 +47,10 @@ const profileSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// create an indexes
+profileSchema.index({ email: 1 });
+profileSchema.index({ userId: 1 });
 
 const Profile =
   mongoose.models.Profile || mongoose.model("Profile", profileSchema);
