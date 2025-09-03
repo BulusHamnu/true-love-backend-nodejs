@@ -105,3 +105,29 @@ export async function reflectionCorner(req, res) {
     });
   }
 }
+
+export async function getAllReflectionMessages(req, res) {
+  try {
+    const userProfile = await Profile.findOne({ userId: req.user.id });
+    if (!userProfile)
+      res
+        .status(404)
+        .json({ status: false, message: "User profile not found." });
+
+    res.status(200).json({
+      status: true,
+      message: "Reflection messages retrive successfully.",
+      data: userProfile.programProgress.reflectionMessages,
+    });
+  } catch (error) {
+    logError(
+      "An error occur while retriving reflection messages",
+      error.message
+    );
+    res.status(500).json({
+      status: false,
+      message: "An error occur while retriving reflection messages",
+      error: error.message,
+    });
+  }
+}
