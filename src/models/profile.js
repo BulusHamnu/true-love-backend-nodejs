@@ -43,32 +43,18 @@ const profileSchema = new mongoose.Schema({
         default: 6,
       },
     },
-    reflectionMessages: {
-      week1: {
-        type: String,
-        default: "",
+    reflectionMessages: [
+      {
+        weekNumber: {
+          type: Number,
+          required: true,
+        },
+        message: {
+          type: String,
+          default: "",
+        },
       },
-      week2: {
-        type: String,
-        default: "",
-      },
-      week3: {
-        type: String,
-        default: "",
-      },
-      week4: {
-        type: String,
-        default: "",
-      },
-      week5: {
-        type: String,
-        default: "",
-      },
-      week6: {
-        type: String,
-        default: "",
-      },
-    },
+    ],
   },
   createdAt: {
     type: Date,
