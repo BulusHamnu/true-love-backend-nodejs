@@ -4,7 +4,8 @@ import Profile from "../models/profile.js";
 import jwt from "jsonwebtoken";
 import Joi from "joi";
 import { env } from "../../confiq/index.js";
-import { sendEmail } from "../services/email.js";
+import { templates, sendEmail } from "../services/email.js";
+import sendResendEmail from "../services/resend.js";
 
 export default async function autoCreateUser(req, res, next) {
   try {
@@ -50,10 +51,10 @@ export default async function autoCreateUser(req, res, next) {
     );
 
     // send verfication email
-    sendEmail(
+    sendResendEmail(
       email,
       "Welcome To True-Love App",
-      `<p>Because you did'nt sign up before marking a purchase, an automatic account was created for you. here is your default password if you want to login: ${password}. Don't forget to change it later, thank you.<p/>`
+      templates.defaultPasswordTemplate(newUserProfile.fullName, newUser.email)
     );
 
     // set res cookies for 30d
