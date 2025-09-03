@@ -185,7 +185,7 @@ export async function forgetPassword(req, res) {
     await sendResendEmail(
       email,
       "Reset Your Password",
-      templates.passwordVerificationTemplate("", verficationCode)
+      templates.passwordVerificationTemplate(verficationCode)
     );
 
     res.status(200).json({
@@ -315,7 +315,7 @@ export async function resetPassword(req, res) {
     await sendResendEmail(
       email,
       "Password reset sucessfully.",
-      templates.paswordResetSucessful()
+      templates.paswordResetSucessful(user.fullName)
     );
 
     res.status(200).json({

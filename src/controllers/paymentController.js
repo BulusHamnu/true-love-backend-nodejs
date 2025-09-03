@@ -167,21 +167,21 @@ export async function paymentSucessful(req, res) {
       await sendResendEmail(
         env.TOTUR_EMAIL,
         "Payment For True Love Self-Guided Version",
-        templates.selfGuidedUserTemplate(
+        templates.selfGuidedtutorTemplate(
           "David Prorok",
           data.customer_details?.name || "new user",
           data.customer_details?.email || "No Provided",
-          formatAmount(data.amount_subtotal)
+          formatAmount(data.amount_subtotal),
+          `${new Date().toLocaleDateString()}`
         )
       );
 
       // for customer
       await sendResendEmail(
-        data.customer_details?.email || "cupid’s pick",
+        data.customer_details?.email,
         "Payment Successful",
         templates.selfGuidedCustomerTemplate(
-          data.customer_details?.name || "No Provided",
-          formatAmount(data.amount_subtotal)
+          data.customer_details?.name || "cupid’s pick"
         )
       );
     } else if (
@@ -228,21 +228,21 @@ export async function paymentSucessful(req, res) {
       await sendResendEmail(
         env.TOTUR_EMAIL,
         "Payment For True Love Transformation Program",
-        templates.userTemplate(
+        templates.tutorTemplate(
           "David Prorok",
-          data.customer_details?.name || "No Provided",
+          data.customer_details?.name || "new user",
           data.customer_details?.email || "No Provided",
-          formatAmount(data.amount_subtotal)
+          formatAmount(data.amount_subtotal),
+          `${new Date().toLocaleDateString()}`
         )
       );
 
       // for customer
       await sendResendEmail(
-        data.customer_details?.email || "No Provided",
+        data.customer_details?.email,
         "Payment Successful",
         templates.customerTemplate(
-          data.customer_details?.name || "No Provided",
-          formatAmount(data.amount_subtotal)
+          data.customer_details?.name || "cupid’s pick"
         )
       );
     }
