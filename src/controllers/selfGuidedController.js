@@ -13,7 +13,7 @@ export async function getProgramProgress(req, res) {
     res.status(200).json({
       status: true,
       message: "Self-guided program progress retrieved sucessfully",
-      data: userProfile.programProgress,
+      data: userProfile.selfGuidedProgram.programProgress,
     });
   } catch (error) {
     logError(
@@ -50,14 +50,14 @@ export async function updateProgramProgress(req, res) {
     // get user profile
     const userProfile = await Profile.findOneAndUpdate(
       { userId: req.user.id },
-      { $set: { "programProgress.currentWeek": currentWeek } },
+      { $set: { "selfGuidedProgram.programProgress.currentWeek": currentWeek } },
       { new: true }
     );
 
     res.status(200).json({
       status: true,
       message: "Self-guided progress update sucessfully.",
-      data: userProfile.programProgress,
+      data: userProfile.selfGuidedProgram.programProgress,
     });
   } catch (error) {
     logError(
@@ -117,7 +117,7 @@ export async function getAllReflectionMessages(req, res) {
     res.status(200).json({
       status: true,
       message: "Reflection messages retrive successfully.",
-      data: userProfile.programProgress.reflectionMessages,
+      data: userProfile.selfGuidedProgram.reflectionMessages,
     });
   } catch (error) {
     logError(
