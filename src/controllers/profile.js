@@ -16,7 +16,9 @@ export async function getProfile(req, res) {
         .json({ status: true, message: "User does not exist." });
 
     // get user profile
-    const userProfile = await Profile.findOne({ userId: req.user.id });
+    const userProfile = await Profile.findOne({ userId: req.user.id }).populate(
+      "transactions"
+    );
 
     res.status(200).json({
       status: true,
@@ -121,7 +123,7 @@ export async function getProgramProgress(req, res) {
 // update self-guided-progress
 export async function updateProgramProgress(req, res) {
   try {
-    const cleanData = sanitizeData(req.body)
+    const cleanData = sanitizeData(req.body);
     const { weekNumber } = cleanData;
 
     const validator = Joi.number().required().min(0).max(6).label("weekNumber");
