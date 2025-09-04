@@ -23,6 +23,14 @@ export async function createSelfGuidedCheckOut(req, res) {
       phone: userProfile.phone || "",
     });
 
+    // get coupon
+    const coupons = [];
+    if (req.body.coupon) {
+      coupons.push({
+        coupon: req.body.coupon,
+      });
+    }
+
     // create stripe checkout
     const session = await stripe.checkout.sessions.create({
       line_items: [
@@ -31,6 +39,7 @@ export async function createSelfGuidedCheckOut(req, res) {
           quantity: 1,
         },
       ],
+      discounts: [...coupons],
       // customer details
       customer: customer.id,
       phone_number_collection: { enabled: true },
@@ -50,7 +59,11 @@ export async function createSelfGuidedCheckOut(req, res) {
       `An error occur creating stripe chechout for self-guided part`,
       error.message
     );
-
+    if (error.message.includes("No such coupon"))
+      return res.status(400).json({
+        status: false,
+        message: "Coupon is invalid or not available.",
+      });
     res.status(500).json({
       status: false,
       message: "An error occur.",
