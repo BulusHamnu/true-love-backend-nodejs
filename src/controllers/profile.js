@@ -16,15 +16,13 @@ export async function getProfile(req, res) {
         .json({ status: true, message: "User does not exist." });
 
     // get user profile
-    const userProfile = await Profile.findOne({ userId: req.user.id }).populate(
-      "transactions"
-    );
+    const userProfile = await Profile.findOne({ userId: req.user.id })
 
     res.status(200).json({
       status: true,
       message: "Profile retrieved sucessfully",
       data: {
-        ...userProfile.toObject(),
+        ...userProfile.removeUnwantedFields(),
         isVerified: user.isVerified,
       },
     });
@@ -84,7 +82,10 @@ export async function updateProfile(req, res) {
     res.status(200).json({
       status: true,
       message: "Profile updated sucessfully.",
-      data: { ...updateUser.toObject(), isVerified: user.isVerified },
+      data: {
+        ...updateUser.removeUnwantedFields(),
+        isVerified: user.isVerified,
+      },
     });
   } catch (error) {
     logError("An error occur while updating user profile", error.message);
@@ -95,5 +96,3 @@ export async function updateProfile(req, res) {
     });
   }
 }
-
-

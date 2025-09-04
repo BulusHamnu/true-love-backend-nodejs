@@ -80,6 +80,14 @@ const profileSchema = new mongoose.Schema({
 profileSchema.index({ email: 1 });
 profileSchema.index({ userId: 1 });
 
+// remove unwanted feilds methods
+profileSchema.methods.removeUnwantedFields = function () {
+  const obj = this.toObject();
+  delete obj.selfGuidedProgram;
+  delete obj.transactions;
+  return obj;
+};
+
 const Profile =
   mongoose.models.Profile || mongoose.model("Profile", profileSchema);
 export default Profile;

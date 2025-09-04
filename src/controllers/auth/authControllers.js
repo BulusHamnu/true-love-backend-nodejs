@@ -78,7 +78,10 @@ export async function signup(req, res) {
     res.status(201).json({
       status: true,
       message: "User created sucessfully.",
-      data: userProfile,
+      data: {
+        ...userProfile.removeUnwantedFields(),
+        isVerified: newUser.isVerified,
+      },
     });
   } catch (error) {
     logError("An error occur while signing up", error.message);
@@ -366,8 +369,8 @@ export async function verifyEmail(req, res) {
       status: true,
       message: "Email verify sucessful",
       data: {
-        ...userProfile.toObject(),
-        isVerified: true,
+        ...userProfile.removeUnwantedFields(),
+        isVerified: user.isVerified,
       },
     });
   } catch (error) {
