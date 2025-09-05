@@ -87,8 +87,7 @@ export async function signup(req, res) {
     logError("An error occur while signing up", error.message);
     res.status(500).json({
       status: false,
-      message: "An unexpected error occured.",
-      error: error.message,
+      message: "An unexpected error occurred. Please try again later.",
     });
   }
 }
@@ -122,7 +121,7 @@ export async function login(req, res) {
     const passwordCorrect = await bcrypt.compare(password, user.password);
     if (!passwordCorrect)
       return res
-        .status(400)
+        .status(401)
         .json({ status: false, message: "Incorect password" });
 
     // generate token: no refresh token, just token and save in cookies
@@ -149,7 +148,6 @@ export async function login(req, res) {
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }
@@ -199,8 +197,7 @@ export async function forgetPassword(req, res) {
     logError("An error occur while sending code", error.message);
     res.status(500).json({
       status: false,
-      message: "An unexpected error occured.",
-      error: error.message,
+      message: "An unexpected error occured."
     });
   }
 }
@@ -208,7 +205,7 @@ export async function forgetPassword(req, res) {
 // logout handler
 export async function logout(req, res) {
   try {
-    if (!req.user?.email) return res.status(400).end();
+    if (!req.user?.email) return res.status(401).end();
 
     // delete token cookies
     res.cookie("token", "", {
@@ -227,7 +224,6 @@ export async function logout(req, res) {
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }
@@ -239,12 +235,12 @@ export async function resendEmail(req, res) {
     const user = await User.findOne({ email: req.user.email });
     if (!user)
       return res
-        .status(400)
+        .status(404)
         .json({ status: true, message: "User does not exist." });
 
     // check if user is already verfied
     if (user.isVerified)
-      return res.status(400).json({
+      return res.status(409).json({
         status: false,
         message: "User is already verified",
       });
@@ -273,7 +269,6 @@ export async function resendEmail(req, res) {
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }
@@ -329,8 +324,7 @@ export async function resetPassword(req, res) {
     logError("An error occur while reseting password", error.message);
     res.status(500).json({
       status: false,
-      message: "An unexpected error occured.",
-      error: error.message,
+      message: "An unexpected error occured."
     });
   }
 }
@@ -353,7 +347,7 @@ export async function verifyEmail(req, res) {
 
     if (!user)
       return res
-        .status(400)
+        .status(422)
         .json({ status: true, message: "Code expired or code is invalid" });
 
     // verify user
@@ -378,7 +372,6 @@ export async function verifyEmail(req, res) {
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }
@@ -401,7 +394,7 @@ export async function verifyPasswordResetCode(req, res) {
 
     if (!user)
       return res
-        .status(400)
+        .status(422)
         .json({ status: false, message: "Code expired or code is invalid" });
 
     res.status(200).json({
@@ -413,7 +406,6 @@ export async function verifyPasswordResetCode(req, res) {
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }

@@ -67,7 +67,6 @@ export async function createSelfGuidedCheckOut(req, res) {
     res.status(500).json({
       status: false,
       message: "An error occur.",
-      error: error.message,
     });
   }
 }
@@ -117,7 +116,6 @@ export async function createCheckOut(req, res) {
     res.status(500).json({
       status: false,
       message: "An error occur.",
-      error: error.message,
     });
   }
 }

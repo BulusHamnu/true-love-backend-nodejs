@@ -52,7 +52,6 @@ export async function getTransaction(req, res) {
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }

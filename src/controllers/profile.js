@@ -31,7 +31,6 @@ export async function getProfile(req, res) {
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }
@@ -92,7 +91,6 @@ export async function updateProfile(req, res) {
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }

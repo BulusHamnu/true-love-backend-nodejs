@@ -24,7 +24,6 @@ export async function getSelfGuidedProgram(req, res) {
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }
@@ -74,7 +73,6 @@ export async function updateSelfGuidedProgram(req, res) {
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }
