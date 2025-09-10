@@ -1,4 +1,3 @@
-import { logError } from "../utils/helpers.js";
 import Profile from "../models/profile.js";
 import Joi from "joi";
 import sanitizeData from "../utils/sanitizeData.js";
@@ -17,10 +16,7 @@ export async function getSelfGuidedProgram(req, res) {
       data: userProfile.selfGuidedProgram,
     });
   } catch (error) {
-    logError(
-      "An error occur retriving self-guided program progress.",
-      error.message
-    );
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -69,7 +65,7 @@ export async function updateSelfGuidedProgram(req, res) {
       data: userProfile.selfGuidedProgram,
     });
   } catch (error) {
-    logError("An error occur update self-guided program.", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",

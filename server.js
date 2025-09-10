@@ -13,13 +13,22 @@ import path from "path";
 import cors from "cors";
 const dirname = import.meta.dirname;
 import cookieParser from "cookie-parser";
+import { logger } from "./src/utils/helpers.js";
 const port = env.PORT;
 const app = express();
 
 // App middleware
 app.use(helmet());
 app.use("/public", express.static(path.join(dirname, "public")));
-app.use(morgan("dev"));
+app.use(
+  morgan("dev", {
+    stream: {
+      write: (log) => {
+        logger.http(log.trim());
+      },
+    },
+  })
+);
 app.use(
   cors({
     origin: "https://true-love.app",
@@ -50,5 +59,5 @@ app.use("/api/self-guided", selfGuidedRoutes);
 // Start the server
 app.listen(port, async () => {
   await connectDb();
-  logInfo(`Server listening on: http://localhost:${port}`);
+  logger.info(`Server listening on: http://localhost:${port}`);
 });

@@ -2,7 +2,7 @@ import { env, stripe } from "../../confiq/index.js";
 import Profile from "../models/profile.js";
 import { templates, sendEmail } from "../services/email.js";
 import sendResendEmail from "../services/resend.js";
-import { formatAmount, logError, logInfo } from "../utils/helpers.js";
+import { formatAmount, logger } from "../utils/helpers.js";
 import Transaction from "../models/transactions.js";
 import User from "../models/user.js";
 
@@ -52,13 +52,15 @@ export async function createSelfGuidedCheckOut(req, res) {
       },
     });
 
+    logger.info("Checkout for self-guided program requested", {
+      customerId: customer.id,
+      customerEmail: customer.email,
+    });
+
     // res.redirect(session.url)
     res.status(200).json({ status: true, data: { url: session.url } });
   } catch (error) {
-    logError(
-      `An error occur creating stripe chechout for self-guided part`,
-      error.message
-    );
+    logger.error(error);
     if (error.message.includes("No such coupon"))
       return res.status(400).json({
         status: false,
@@ -108,10 +110,14 @@ export async function createCheckOut(req, res) {
       },
     });
 
-    // res.redirect(session.url)
+    logger.info("Checkout for coaching program requested", {
+      customerId: customer.id,
+      customerEmail: customer.email,
+    });
+
     res.status(200).json({ status: true, data: { url: session.url } });
   } catch (error) {
-    logError(`An error occur creating chechout.`, error.message);
+    logger.error(error);
 
     res.status(500).json({
       status: false,
@@ -138,15 +144,13 @@ export async function paymentSucessful(req, res) {
       event.type === "checkout.session.completed" &&
       data.metadata.site === "self-guided-true-love"
     ) {
-      const logs = [
-        data.amount_subtotal,
-        formatAmount(data.payment_status),
-        data.customer_details?.email,
-        data.customer_details?.name,
-        data.customer_details?.phone,
-      ].join(" ");
-
-      logInfo("New payment submited for self-guided version!", logs);
+      logger.info("New payment submited for self-guided version!", {
+        amount: formatAmount(data.amount_subtotal),
+        status: data.payment_status,
+        email: data.customer_details?.email,
+        name: data.customer_details?.name,
+        phoneNo: data.customer_details?.phone,
+      });
 
       // add the transaction
       const user = await User.findOne({ email: data.customer_details?.email });
@@ -199,15 +203,13 @@ export async function paymentSucessful(req, res) {
       event.type === "checkout.session.completed" &&
       data.metadata.site === "true-love"
     ) {
-      const logs = [
-        data.amount_subtotal,
-        formatAmount(data.payment_status),
-        data.customer_details?.email,
-        data.customer_details?.name,
-        data.customer_details?.phone,
-      ].join(" ");
-
-      logInfo("New payment submited!", logs);
+      logInfo("New payment submited!", {
+        amount: formatAmount(data.amount_subtotal),
+        status: data.payment_status,
+        email: data.customer_details?.email,
+        name: data.customer_details?.name,
+        phone: data.customer_details?.phone,
+      });
 
       // add the transaction
       const user = await User.findOne({ email: data.customer_details?.email });
@@ -260,11 +262,11 @@ export async function paymentSucessful(req, res) {
 
     res.send();
   } catch (error) {
-    logError("An error occur in the webhook.", error);
-    res.status(500).json({
+    logger(error);
+    /* res.status(500).json({
       status: false,
       messaseg: "An error occur.",
       error: error.message,
-    });
+    }); */
   }
 }

@@ -1,4 +1,5 @@
 import { rateLimit, ipKeyGenerator } from "express-rate-limit";
+import { logger } from "../utils/helpers.js";
 
 const rateLimter = (time, limit, key) => {
   return rateLimit({
@@ -6,6 +7,10 @@ const rateLimter = (time, limit, key) => {
     limit: limit,
     legacyHeaders: false,
     handler: (req, res) => {
+      logger.warn("Too many requests.", {
+        route: req.originalUrl,
+        identifier: res.user ? res.user?.email : req.ip,
+      });
       res.status(403).json({
         status: false,
         message: "Too many request please try again later.",

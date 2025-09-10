@@ -16,11 +16,10 @@ export default async function (req, res, next) {
     // call the route handler
     next();
   } catch (error) {
-    logError("An error while decoding data", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }

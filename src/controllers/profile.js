@@ -1,4 +1,4 @@
-import { logError } from "../utils/helpers.js";
+import { logError, logger } from "../utils/helpers.js";
 import User from "../models/user.js";
 import Profile from "../models/profile.js";
 import { profileUpdate } from "../utils/validators.js";
@@ -16,7 +16,7 @@ export async function getProfile(req, res) {
         .json({ status: true, message: "User does not exist." });
 
     // get user profile
-    const userProfile = await Profile.findOne({ userId: req.user.id })
+    const userProfile = await Profile.findOne({ userId: req.user.id });
 
     res.status(200).json({
       status: true,
@@ -27,7 +27,7 @@ export async function getProfile(req, res) {
       },
     });
   } catch (error) {
-    logError("An error occur retriving user profile", error.message);
+    logger.error(error.message);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -87,7 +87,7 @@ export async function updateProfile(req, res) {
       },
     });
   } catch (error) {
-    logError("An error occur while updating user profile", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",

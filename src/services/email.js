@@ -23,7 +23,7 @@ export const sendEmail = async (to, subject, html) => {
     });
     return true;
   } catch (error) {
-    console.log(`An error occur: ${error}`);
+    logger.error(error);
     return false;
   }
 };
@@ -2237,5 +2237,3 @@ export const templates = {
     `;
   },
 };
-
-

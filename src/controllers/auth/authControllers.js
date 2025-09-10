@@ -1,9 +1,4 @@
-import {
-  logInfo,
-  logError,
-  hashPassword,
-  generateCode,
-} from "../../utils/helpers.js";
+import { hashPassword, generateCode, logger } from "../../utils/helpers.js";
 import User from "../../models/user.js";
 import Profile from "../../models/profile.js";
 import sendResendEmail from "../../services/resend.js";
@@ -75,6 +70,8 @@ export async function signup(req, res) {
       templates.emailVerificationTemplate(fullName, verficationCode)
     );
 
+    logger.info("New user created ", { email, fullName: userProfile.fullName });
+
     res.status(201).json({
       status: true,
       message: "User created sucessfully.",
@@ -84,7 +81,7 @@ export async function signup(req, res) {
       },
     });
   } catch (error) {
-    logError("An error occur while signing up", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occurred. Please try again later.",
@@ -139,12 +136,14 @@ export async function login(req, res) {
       maxAge: 60 * 60 * 24 * 30,
     });
 
+    logger.info("User login successful", { email: user.email });
+
     res.status(200).json({
       status: true,
       message: "Login sucessful, token is set in the cookie header.",
     });
   } catch (error) {
-    logError("An error while verifying data", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -172,6 +171,8 @@ export async function forgetPassword(req, res) {
         .status(404)
         .json({ status: true, message: "User does not exist." });
 
+    logger.info("Password reset requested", { email });
+
     // generate verification code
     const verficationCode = generateCode(6);
 
@@ -194,10 +195,10 @@ export async function forgetPassword(req, res) {
       message: "Password reset email was sent sucessfully.",
     });
   } catch (error) {
-    logError("An error occur while sending code", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
-      message: "An unexpected error occured."
+      message: "An unexpected error occured.",
     });
   }
 }
@@ -220,7 +221,7 @@ export async function logout(req, res) {
       message: "User logout sucessfully",
     });
   } catch (error) {
-    logError("An error occur while trying to log user out", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -245,6 +246,10 @@ export async function resendEmail(req, res) {
         message: "User is already verified",
       });
 
+    logger.info("Email verification requested", {
+      email: req.user.email,
+    });
+
     // generate verification code
     const verficationCode = generateCode(6);
 
@@ -265,7 +270,7 @@ export async function resendEmail(req, res) {
       message: "Email was sent sucessfully.",
     });
   } catch (error) {
-    logError("An error while resending email", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -309,6 +314,10 @@ export async function resetPassword(req, res) {
     user.password = newPassword;
     await user.save();
 
+    logger.info("User password reset sucessful", {
+      email: user.email,
+    });
+
     // send verfication email
     await sendResendEmail(
       email,
@@ -321,10 +330,10 @@ export async function resetPassword(req, res) {
       message: "Password was reset sucessfully.",
     });
   } catch (error) {
-    logError("An error occur while reseting password", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
-      message: "An unexpected error occured."
+      message: "An unexpected error occured.",
     });
   }
 }
@@ -356,6 +365,8 @@ export async function verifyEmail(req, res) {
     user.emailVerification.expireAt = null;
     await user.save();
 
+    logger.info("Email verification sucessful", { email: user.email });
+
     // get user profile
     const userProfile = await Profile.findOne({ userId: user._id });
 
@@ -368,7 +379,7 @@ export async function verifyEmail(req, res) {
       },
     });
   } catch (error) {
-    logError("An error occur while verifying email", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -402,7 +413,7 @@ export async function verifyPasswordResetCode(req, res) {
       message: "Code is valid",
     });
   } catch (error) {
-    logError("An error occur verifying code.", error.message);
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",

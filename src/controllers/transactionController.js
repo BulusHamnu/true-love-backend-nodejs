@@ -16,14 +16,10 @@ export async function getAllTransaction(req, res) {
       data: userTransactions,
     });
   } catch (error) {
-    logError(
-      "An error occur while retriving user transaction sucessfully",
-      error.message
-    );
+    logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
-      error: error.message,
     });
   }
 }
@@ -48,7 +44,7 @@ export async function getTransaction(req, res) {
       data: userTransaction,
     });
   } catch (error) {
-    logError("An error occur while retrieving transaction", error.message);
+    logger.error(error.message);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",

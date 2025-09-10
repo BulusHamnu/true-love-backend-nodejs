@@ -1,4 +1,8 @@
-import { generateCode, hashPassword, logError } from "../utils/helpers.js";
+import {
+  generateCode,
+  hashPassword,
+  logger,
+} from "../utils/helpers.js";
 import User from "../models/user.js";
 import Profile from "../models/profile.js";
 import jwt from "jsonwebtoken";
@@ -43,6 +47,8 @@ export default async function autoCreateUser(req, res, next) {
       email,
     });
 
+    logger.info("New user created", { email: newUserProfile.email });
+
     // generate token: no refresh token, just token and save in cookies
     const token = jwt.sign(
       { email, id: newUser._id, isVerified: newUser.isVerified },
@@ -68,8 +74,7 @@ export default async function autoCreateUser(req, res, next) {
     req.userProfile = newUserProfile;
     next();
   } catch (error) {
-    console.log(error);
-    logError("An error occur while creating default a user account", error);
+    logger.error(error);
     return { status: false, newUserProfile: null, loginToken: null };
   }
 }
