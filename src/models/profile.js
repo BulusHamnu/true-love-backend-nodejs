@@ -5,6 +5,10 @@ const profileSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
+  stripeCustomerId: {
+    type: String,
+    default: "",
+  },
   fullName: {
     type: String,
     required: true,

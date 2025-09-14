@@ -1,6 +1,26 @@
 import bcrypt from "bcryptjs";
 import winston from "winston";
 const { createLogger, transports, format, printf, colorize } = winston;
+import { stripe } from "../../confiq/index.js";
+
+// create stipe customer
+export async function createStripeCustomer(userProfile) {
+  try {
+    const customer = await stripe.customers.create({
+      name: userProfile.name || "",
+      email: userProfile.email || "",
+      phone: userProfile.phone || "",
+    });
+
+    userProfile.stripeCustomerId = customer.id;
+    await userProfile.save();
+
+    return customer.id;
+  } catch (error) {
+    logger.error(error);
+    return "";
+  }
+}
 
 export const formatAmount = (amountCents) => {
   try {

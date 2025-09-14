@@ -2,13 +2,18 @@ import { env, stripe } from "../../confiq/index.js";
 import Profile from "../models/profile.js";
 import { templates, sendEmail } from "../services/email.js";
 import sendResendEmail from "../services/resend.js";
-import { formatAmount, logger } from "../utils/helpers.js";
+import {
+  formatAmount,
+  logger,
+  createStripeCustomer,
+} from "../utils/helpers.js";
 import Transaction from "../models/transactions.js";
 import User from "../models/user.js";
 
 // create checkout endpoint
 export async function createSelfGuidedCheckOut(req, res) {
   const userProfile = req.userProfile;
+  let customerId = userProfile.stripeCustomerId;
   try {
     if (userProfile.hasPremium === true)
       return res.status(409).json({
@@ -16,12 +21,9 @@ export async function createSelfGuidedCheckOut(req, res) {
         message: "User already paid for the self-guided program.",
       });
 
-    // create stipe customer
-    const customer = await stripe.customers.create({
-      name: userProfile.fullName || "",
-      email: userProfile.email || "",
-      phone: userProfile.phone || "",
-    });
+    if (!customerId) {
+      customerId = await createStripeCustomer(userProfile);
+    }
 
     // get coupon
     const coupons = [];
@@ -41,7 +43,7 @@ export async function createSelfGuidedCheckOut(req, res) {
       ],
       discounts: [...coupons],
       // customer details
-      customer: customer.id,
+      customer: customerId,
       phone_number_collection: { enabled: true },
       mode: "payment",
       success_url: `${env.FRONTEND_URL}/self-guided-success`,
@@ -53,8 +55,8 @@ export async function createSelfGuidedCheckOut(req, res) {
     });
 
     logger.info("Checkout for self-guided program requested", {
-      customerId: customer.id,
-      customerEmail: customer.email,
+      customerId: customerId,
+      customerEmail: userProfile.email,
     });
 
     // res.redirect(session.url)
@@ -77,18 +79,17 @@ export async function createSelfGuidedCheckOut(req, res) {
 export async function createCheckOut(req, res) {
   try {
     const userProfile = req.userProfile;
+    let customerId = userProfile.stripeCustomerId;
+
     if (userProfile.paidForCoaching === true)
       return res.status(409).json({
         status: true,
         message: "User already paid for the coaching-program.",
       });
 
-    // create stipe customer
-    const customer = await stripe.customers.create({
-      name: userProfile.fullName || "",
-      email: userProfile.email || "",
-      phone: userProfile.phone || "",
-    });
+    if (!customerId) {
+      customerId = await createStripeCustomer(userProfile);
+    }
 
     // create stripe checkout
     const session = await stripe.checkout.sessions.create({
@@ -99,7 +100,7 @@ export async function createCheckOut(req, res) {
         },
       ],
       // customer details
-      customer: customer.id,
+      customer: customerId,
       phone_number_collection: { enabled: true },
       mode: "payment",
       success_url: `${env.FRONTEND_URL}/success`,
@@ -111,8 +112,8 @@ export async function createCheckOut(req, res) {
     });
 
     logger.info("Checkout for coaching program requested", {
-      customerId: customer.id,
-      customerEmail: customer.email,
+      customerId: customerId,
+      customerEmail: userProfile.email,
     });
 
     res.status(200).json({ status: true, data: { url: session.url } });
