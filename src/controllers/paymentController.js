@@ -206,12 +206,12 @@ export async function paymentSucessful(req, res) {
       event.type === "checkout.session.completed" &&
       data.metadata.site === "true-love"
     ) {
-      logInfo("New payment submited!", {
+      logger.info("New payment submited for self-guided version!", {
         amount: formatAmount(data.amount_subtotal),
         status: data.payment_status,
         email: data.customer_details?.email,
         name: data.customer_details?.name,
-        phone: data.customer_details?.phone,
+        phoneNo: data.customer_details?.phone,
       });
 
       // add the transaction
