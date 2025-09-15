@@ -1,6 +1,10 @@
 import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 import { logger } from "../utils/helpers.js";
 
+const getClientIp = (req) => {
+  return req.headers?.["x-forwarded-for"]?.split(",")[0].trim() || req.ip;
+};
+
 const rateLimter = (time, limit, key) => {
   return rateLimit({
     windowMs: time,
@@ -9,7 +13,7 @@ const rateLimter = (time, limit, key) => {
     handler: (req, res) => {
       logger.warn("Too many requests.", {
         route: req.originalUrl,
-        identifier: res.user ? res.user?.email : req.ip,
+        identifier: req.user ? req.user?.email : req.ip,
       });
       res.status(403).json({
         status: false,
@@ -17,11 +21,11 @@ const rateLimter = (time, limit, key) => {
       });
     },
     keyGenerator: (req, res) => {
-      if (key === "user-id" && res.user && res.user.id) {
+      if (key === "user-id" && req.user && req.user.id) {
         return req.user.id;
       }
 
-      return ipKeyGenerator(req.ip);
+      return getClientIp(req.ip);
     },
   });
 };

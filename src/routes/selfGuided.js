@@ -13,13 +13,13 @@ const router = express.Router();
 router.get(
   "/",
   withAuth,
-  rateLimter(60 * 60 * 1000, 25, "user-id"),
+  rateLimter(5 * 60 * 1000, 25, "user-id"),
   getSelfGuidedProgram
 );
 router.patch(
   "/",
   withAuth,
-  rateLimter(60 * 60 * 1000, 20, "user-id"),
+  rateLimter(5 * 60 * 1000, 20, "user-id"),
   updateSelfGuidedProgram
 );
 

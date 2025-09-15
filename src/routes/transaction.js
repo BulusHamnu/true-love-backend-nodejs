@@ -11,13 +11,13 @@ const router = express.Router();
 router.get(
   "/",
   withAuth,
-  rateLimter(60 * 60 * 1000, 25, "user-id"),
+  rateLimter(5 * 60 * 1000, 25, "user-id"),
   getAllTransaction
 );
 router.get(
   "/:id",
   withAuth,
-  rateLimter(60 * 60 * 1000, 25, "user-id"),
+  rateLimter(5 * 60 * 1000, 25, "user-id"),
   getTransaction
 );
 

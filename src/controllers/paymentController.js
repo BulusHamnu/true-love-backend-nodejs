@@ -41,8 +41,7 @@ export async function createSelfGuidedCheckOut(req, res) {
           quantity: 1,
         },
       ],
-      // discounts: [...coupons],
-      allow_promotion_codes : true,
+      allow_promotion_codes: true,
       // customer details
       customer: customerId,
       phone_number_collection: { enabled: true },
@@ -142,6 +141,8 @@ export async function paymentSucessful(req, res) {
     );
 
     const data = event.data.object;
+    logger.info("Stripe webhook received.", { paymentEventType: data.type });
+
     if (
       event.type === "checkout.session.completed" &&
       data.metadata.site === "self-guided-true-love"

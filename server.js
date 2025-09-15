@@ -36,6 +36,7 @@ app.use(
   })
 );
 app.use(cookieParser());
+app.set('trust proxy', true)
 app.use((req, res, next) => {
   // skip json parsing for stripe webhook route
   if (req.originalUrl === "/api/payment/stripe-webhook") {
