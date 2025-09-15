@@ -13,7 +13,7 @@ const router = express.Router();
 // the client wants users to make purchase even without signing up
 router.post(
   "/create-checkout",
-  rateLimter(60 * 60 * 1000, 5, "pi"),
+  rateLimter(3 * 60 * 1000, 10, "ip"),
   autoCreateUser,
   createCheckOut
 );
@@ -25,7 +25,7 @@ router.post(
 
 router.post(
   "/checkout-self-guided",
-  rateLimter(60 * 60 * 1000, 5, "ip"),
+  rateLimter(3 * 60 * 1000, 10, "ip"),
   autoCreateUser,
   createSelfGuidedCheckOut
 );

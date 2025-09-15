@@ -41,7 +41,8 @@ export async function createSelfGuidedCheckOut(req, res) {
           quantity: 1,
         },
       ],
-      discounts: [...coupons],
+      // discounts: [...coupons],
+      allow_promotion_codes : true,
       // customer details
       customer: customerId,
       phone_number_collection: { enabled: true },
