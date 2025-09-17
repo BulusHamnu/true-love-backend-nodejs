@@ -19,9 +19,13 @@ const profileSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: true,
+    default: "",
+    // required: true,
   },
-  age: Number,
+  age: {
+    type: Number,
+    default: null,
+  },
   transactions: [
     {
       type: mongoose.Schema.Types.ObjectId,

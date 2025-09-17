@@ -42,8 +42,8 @@ export default async function autoCreateUser(req, res, next) {
     const newUserProfile = await Profile.create({
       userId: newUser._id,
       fullName: "Not provided",
-      phone: "000000000000",
-      age: 0,
+      // phone: "000000000000",
+      // age: 0,
       email,
     });
 

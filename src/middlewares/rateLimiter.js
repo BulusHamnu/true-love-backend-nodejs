@@ -25,7 +25,7 @@ const rateLimter = (time, limit, key) => {
         return req.user.id;
       }
 
-      return getClientIp(req.ip);
+      return ipKeyGenerator(getClientIp(req));
     },
   });
 };
