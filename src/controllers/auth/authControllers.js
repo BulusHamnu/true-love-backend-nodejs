@@ -153,7 +153,7 @@ export async function signupWithGoogle(req, res) {
     ); */
 
     const token = jwt.sign(
-      { email: newUser.email, id: newUser._id, isVerified: newUser.isVerified },
+      { email: newUser.email, id: newUser.id, isVerified: newUser.isVerified },
       env.SECRET_KEY,
       { expiresIn: "30d" }
     );

@@ -46,6 +46,7 @@ export default async function createNewUser({
     return {
       error: false,
       newUser: {
+        id: newUser._id,
         ...userProfile.removeUnwantedFields(),
         isVerified: newUser.isVerified,
       },
