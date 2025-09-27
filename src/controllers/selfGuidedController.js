@@ -1,5 +1,5 @@
 import Profile from "../models/profile.js";
-import Joi from "joi";
+import { logger } from "../utils/helpers.js";
 import sanitizeData from "../utils/sanitizeData.js";
 import postReflectionStory from "../services/openai.js";
 import { selfGuidedValidator } from "../utils/validators.js";
@@ -9,6 +9,12 @@ export async function getSelfGuidedProgram(req, res) {
   try {
     // get user profile
     const userProfile = await Profile.findOne({ userId: req.user.id });
+
+    if (!userProfile.hasPremium)
+      return res.status(400).json({
+        status: false,
+        message: "You do not have access to the self-guided program.",
+      });
 
     res.status(200).json({
       status: true,
@@ -27,6 +33,14 @@ export async function getSelfGuidedProgram(req, res) {
 // update self-guided-progress
 export async function updateSelfGuidedProgram(req, res) {
   try {
+    const userProfile = await Profile.findOne({ userId: req.user.id });
+
+    if (!userProfile.hasPremium)
+      return res.status(400).json({
+        status: false,
+        message: "You do not have access to the self-guided program.",
+      });
+
     const validate = selfGuidedValidator.validate(req.body);
     if (validate.error)
       return res.status(400).json({
@@ -53,7 +67,7 @@ export async function updateSelfGuidedProgram(req, res) {
     }
 
     // get user profile
-    const userProfile = await Profile.findOneAndUpdate(
+    const userUpdate = await Profile.findOneAndUpdate(
       { userId: req.user.id },
       { $set: updates },
       { new: true }
@@ -62,7 +76,7 @@ export async function updateSelfGuidedProgram(req, res) {
     res.status(200).json({
       status: true,
       message: "Self-guided updated sucessfully.",
-      data: userProfile.selfGuidedProgram,
+      data: userUpdate.selfGuidedProgram,
     });
   } catch (error) {
     logger.error(error);
