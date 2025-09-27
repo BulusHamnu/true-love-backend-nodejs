@@ -1,6 +1,8 @@
 import express from "express";
 import {
   signup,
+  getGoogleAuthUrl,
+  signupWithGoogle,
   login,
   logout,
   resendEmail,
@@ -15,6 +17,11 @@ import rateLimter from "../middlewares/rateLimiter.js";
 const router = express.Router();
 
 router.post("/signup", rateLimter(5 * 60 * 1000, 5, "ip"), signup);
+
+// google oauth2
+router.get("/google/signup", rateLimter(5 * 60 * 1000, 5, "ip"), getGoogleAuthUrl);
+router.get("/google/fallback", rateLimter(5 * 60 * 1000, 5, "ip"), signupWithGoogle);
+//
 router.post("/login", rateLimter(5 * 60 * 1000, 5, "ip"), login);
 router.post(
   "/logout",

@@ -1,4 +1,9 @@
-import { hashPassword, generateCode, logger } from "../../utils/helpers.js";
+import {
+  hashPassword,
+  generateCode,
+  logger,
+  verifyIdToken,
+} from "../../utils/helpers.js";
 import User from "../../models/user.js";
 import Profile from "../../models/profile.js";
 import sendResendEmail from "../../services/resend.js";
@@ -12,6 +17,8 @@ import {
 } from "../../utils/validators.js";
 import Joi from "joi";
 import sanitizeData from "../../utils/sanitizeData.js";
+import axios from "axios";
+import qs from "qs";
 
 // sign up handler
 export async function signup(req, res) {
@@ -56,7 +63,7 @@ export async function signup(req, res) {
     const userProfile = await Profile.create({
       userId: newUser._id,
       fullName,
-   /*    phone,
+      /*    phone,
       age, */
       email,
     });
@@ -84,6 +91,84 @@ export async function signup(req, res) {
       status: false,
       message: "An unexpected error occurred. Please try again later.",
     });
+  }
+}
+
+export async function getGoogleAuthUrl(req, res) {
+  try {
+    logger.info("New user request for google oauth url.");
+    const oauth2Endpoint = "https://accounts.google.com/o/oauth2/v2/auth?";
+
+    const params = new URLSearchParams({
+      client_id: env.TRUE_LOVE_GOOGLE_CLIENT_ID,
+      redirect_uri: `${env.BACKEND_URL}/api/auth/google/fallback`,
+      response_type: "code",
+      scope: "openid profile email",
+      state: "pass-through value",
+      include_granted_scopes: "true",
+    });
+
+    const redirectLink = oauth2Endpoint + params.toString();
+
+    res.status(200).json({
+      status: true,
+      message: "Google Oauth2 url retrive successful.",
+      redirectLink,
+    });
+  } catch (error) {
+    logger.error(error);
+    res
+      .status(500)
+      .json({ status: false, message: "Unexpected error occured." });
+  }
+}
+
+// sign up with google handler
+export async function signupWithGoogle(req, res) {
+  try {
+    const googleCallbackUrl = "https://oauth2.googleapis.com/token";
+    const accessCode = req.query.code; // get google code
+
+    if (!accessCode)
+      return res
+        .status(400)
+        .json({ status: false, message: "Please provide google access token" });
+
+    // exchange code for access token
+    const response = await axios.post(
+      googleCallbackUrl,
+      qs.stringify({
+        code: accessCode,
+        client_id: env.TRUE_LOVE_GOOGLE_CLIENT_ID,
+        client_secret: env.TRUE_LOVE_GOOGLE_CLIENT_SECRET,
+        grant_type: "authorization_code",
+        redirect_uri: `${env.BACKEND_URL}/api/auth/google/fallback`,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    const payload = await verifyIdToken(response.data.id_token);
+    if (!payload) return res.redirect("https://true-love.app/auth");
+
+    logger.info("Google oauth-openid retrive succesful.", {
+      email: payload.email,
+      name: payload.name,
+      emailVerified: payload.email_verified,
+    });
+
+    res.status(200).json({
+      status: true,
+      message: "Google profile retrive succesful.",
+    });
+  } catch (error) {
+    logger.error(error);
+    res
+      .status(500)
+      .json({ status: false, message: "Unexpected error occured." });
   }
 }
 

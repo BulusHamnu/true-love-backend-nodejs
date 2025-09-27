@@ -31,7 +31,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: "https://true-love.app",
+    origin: "http://127.0.0.1:8080",
     credentials: true,
   })
 );

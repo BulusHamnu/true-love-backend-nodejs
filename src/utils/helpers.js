@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import winston from "winston";
 const { createLogger, transports, format, printf, colorize } = winston;
 import { stripe } from "../../confiq/index.js";
+import { env } from "../../confiq/index.js";
 
 // create stipe customer
 export async function createStripeCustomer(userProfile) {
@@ -110,3 +111,24 @@ export const logger = createLogger({
 //     ),
 //   })
 // );
+
+// function for decoding googe id token
+import { OAuth2Client } from "google-auth-library";
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+export async function verifyIdToken(idToken) {
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: idToken,
+      audience: env.TRUE_GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    return payload;
+  } catch (error) {
+    logger.error(error)
+    return null
+  }
+}
+
+
