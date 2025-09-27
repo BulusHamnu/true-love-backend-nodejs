@@ -17,9 +17,8 @@ import {
 } from "../../utils/validators.js";
 import Joi from "joi";
 import sanitizeData from "../../utils/sanitizeData.js";
-import axios from "axios";
-import qs from "qs";
 import createNewUser from "../../services/createNewUser.js";
+import retriveGoogleIdToken from "../../services/retriveGoogleIdToken.js";
 
 // sign up handler
 export async function signup(req, res) {
@@ -114,40 +113,16 @@ export async function getGoogleSignUpAuthUrl(req, res) {
 // sign up with google handler
 export async function signupWithGoogle(req, res) {
   try {
-    const googleCallbackUrl = "https://oauth2.googleapis.com/token";
     const accessCode = req.query.code; // get google code
+    if (!accessCode) return res.redirect("https://true-love.app/auth");
 
-    if (!accessCode)
-      return res
-        .status(400)
-        .json({ status: false, message: "Please provide google access token" });
-
-    // exchange code for access token
-    // add retrie later
-    const response = await axios.post(
-      googleCallbackUrl,
-      qs.stringify({
-        code: accessCode,
-        client_id: env.TRUE_LOVE_GOOGLE_CLIENT_ID,
-        client_secret: env.TRUE_LOVE_GOOGLE_CLIENT_SECRET,
-        grant_type: "authorization_code",
-        redirect_uri: `${env.BACKEND_URL}/api/auth/google/signup-fallback`,
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
+    // add retry here
+    const payload = await retriveGoogleIdToken(
+      accessCode,
+      "/api/auth/google/signup-fallback"
     );
 
-    const payload = await verifyIdToken(response.data.id_token);
     if (!payload) return res.redirect("https://true-love.app/auth");
-
-    logger.info("Google oauth-openid retrive succesful.", {
-      email: payload.email,
-      name: payload.name,
-      emailVerified: payload.email_verified,
-    });
 
     // check if user already exist
     const userExist = await User.findOne({ email: payload.email });
@@ -164,7 +139,7 @@ export async function signupWithGoogle(req, res) {
       email: payload.email,
       fullName: payload.name,
       googleId: payload.sub,
-      idToken: response.data.id_token,
+      idToken: payload.idToken,
       isVerified: payload.email_verified,
     });
 
@@ -177,7 +152,6 @@ export async function signupWithGoogle(req, res) {
       templates.emailVerificationTemplate(fullName, verficationCode)
     ); */
 
-    // generate token: no refresh token, just token and save in cookies
     const token = jwt.sign(
       { email: newUser.email, id: newUser._id, isVerified: newUser.isVerified },
       env.SECRET_KEY,
@@ -265,7 +239,78 @@ export async function login(req, res) {
 
 // get google oauthurl for login
 export async function getGoogleLoginAuthUrl(req, res) {
-  res.send("Hello");
+  try {
+    const oauth2Endpoint = "https://accounts.google.com/o/oauth2/v2/auth?";
+    logger.info("User request for google sign in oauth url.");
+
+    const params = new URLSearchParams({
+      client_id: env.TRUE_LOVE_GOOGLE_CLIENT_ID,
+      redirect_uri: `${env.BACKEND_URL}/api/auth/google/login-fallback`,
+      response_type: "code",
+      scope: "openid profile email",
+      state: "pass-through value",
+      include_granted_scopes: "true",
+    });
+
+    const redirectLink = oauth2Endpoint + params.toString();
+
+    res.status(200).json({
+      status: true,
+      message: "Google sign in Oauth2 url retrive successful.",
+      redirectLink,
+    });
+  } catch (error) {
+    logger.error(error);
+    res
+      .status(500)
+      .json({ status: false, message: "Unexpected error occured." });
+  }
+}
+
+// sign in with google handler
+export async function signinWithGoogle(req, res) {
+  try {
+    const accessCode = req.query.code; // get google code
+    if (!accessCode) return res.redirect("https://true-love.app/auth");
+
+    // add retry here
+    const payload = await retriveGoogleIdToken(
+      accessCode,
+      "/api/auth/google/login-fallback"
+    );
+
+    if (!payload) return res.redirect("https://true-love.app/auth");
+
+    // check if user already exist
+    const userExist = await User.findOne({ email: payload.email });
+    if (!userExist)
+      return res.redirect("https://true-love.app/auth?error=google_not_link");
+
+    const token = jwt.sign(
+      {
+        email: userExist.email,
+        id: userExist._id,
+        isVerified: userExist.isVerified,
+      },
+      env.SECRET_KEY,
+      { expiresIn: "30d" }
+    );
+
+    // set res cookies for 30d
+    res.cookie("token", token, {
+      secure: process.env.PRODUCTION === "True",
+      httpOnly: true,
+      sameSite: "none",
+      maxAge: 60 * 60 * 24 * 30,
+    });
+
+    logger.info("User login with google oauth2.", { email: userExist.email });
+
+    res.redirect("https://true-love.app/");
+  } catch (error) {
+    logger.error(error);
+    res.redirect("https://true-love.app/auth");
+  }
 }
 
 // forget password handler

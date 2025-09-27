@@ -4,6 +4,7 @@ import {
   getGoogleSignUpAuthUrl,
   getGoogleLoginAuthUrl,
   signupWithGoogle,
+  signinWithGoogle,
   login,
   logout,
   resendEmail,
@@ -20,11 +21,29 @@ const router = express.Router();
 router.post("/signup", rateLimter(5 * 60 * 1000, 5, "ip"), signup);
 
 // google oauth2
-router.get("/google/signup", rateLimter(5 * 60 * 1000, 5, "ip"), getGoogleSignUpAuthUrl);
-router.get("/google/login", rateLimter(5 * 60 * 1000, 5, "ip"), getGoogleLoginAuthUrl);
+router.get(
+  "/google/signup",
+  rateLimter(5 * 60 * 1000, 5, "ip"),
+  getGoogleSignUpAuthUrl
+);
+router.get(
+  "/google/login",
+  rateLimter(5 * 60 * 1000, 5, "ip"),
+  getGoogleLoginAuthUrl
+);
 
-router.get("/google/signup-fallback", rateLimter(5 * 60 * 1000, 5, "ip"), signupWithGoogle);
-//
+router.get(
+  "/google/signup-fallback",
+  rateLimter(5 * 60 * 1000, 5, "ip"),
+  signupWithGoogle
+);
+router.get(
+  "/google/login-fallback",
+  rateLimter(5 * 60 * 1000, 5, "ip"),
+  signinWithGoogle
+);
+// ----
+
 router.post("/login", rateLimter(5 * 60 * 1000, 5, "ip"), login);
 router.post(
   "/logout",
