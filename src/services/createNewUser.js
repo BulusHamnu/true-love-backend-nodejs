@@ -4,12 +4,13 @@ import { logger } from "../utils/helpers.js";
 
 export default async function createNewUser({
   provider = "local",
-  password,
+  password = null,
   email,
   verficationCode = "",
   fullName,
   googleId = "",
   idToken = "",
+  isVerified = false,
 }) {
   try {
     // create new user
@@ -27,6 +28,7 @@ export default async function createNewUser({
         googleId,
         idToken,
       },
+      isVerified,
     });
 
     // create a profile for that user

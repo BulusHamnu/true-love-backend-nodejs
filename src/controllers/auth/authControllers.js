@@ -122,6 +122,7 @@ export async function signupWithGoogle(req, res) {
         .json({ status: false, message: "Please provide google access token" });
 
     // exchange code for access token
+    // add retrie later
     const response = await axios.post(
       googleCallbackUrl,
       qs.stringify({
@@ -147,15 +148,55 @@ export async function signupWithGoogle(req, res) {
       emailVerified: payload.email_verified,
     });
 
-    res.status(200).json({
-      status: true,
-      message: "Google profile retrive succesful.",
+    // check if user already exist
+    const userExist = await User.findOne({ email: payload.email });
+    if (userExist)
+      return res.redirect("https://true-love.app/auth?error=email_taken");
+
+    // fake user password hash
+    const userPassword = await hashPassword("null");
+
+    // create user
+    const { error, newUser } = await createNewUser({
+      provider: "google",
+      password: userPassword,
+      email: payload.email,
+      fullName: payload.name,
+      googleId: payload.sub,
+      idToken: response.data.id_token,
+      isVerified: payload.email_verified,
     });
+
+    if (error) throw new Error("An error occured while creating a new user.");
+
+    // send welcome email
+    /* await sendResendEmail(
+      email,
+      "Please verify your email address",
+      templates.emailVerificationTemplate(fullName, verficationCode)
+    ); */
+
+    // generate token: no refresh token, just token and save in cookies
+    const token = jwt.sign(
+      { email: newUser.email, id: newUser._id, isVerified: newUser.isVerified },
+      env.SECRET_KEY,
+      { expiresIn: "30d" }
+    );
+
+    // set res cookies for 30d
+    res.cookie("token", token, {
+      secure: process.env.PRODUCTION === "True",
+      httpOnly: true,
+      sameSite: "none",
+      maxAge: 60 * 60 * 24 * 30,
+    });
+
+    logger.info("User login after google signup.", { email: newUser.email });
+
+    res.redirect("https://true-love.app/");
   } catch (error) {
     logger.error(error);
-    res
-      .status(500)
-      .json({ status: false, message: "An unexpected error occured." });
+    res.redirect("https://true-love.app/auth");
   }
 }
 
