@@ -202,10 +202,19 @@ export async function login(req, res) {
 
     // compare password
     const passwordCorrect = await bcrypt.compare(password, user.password);
-    if (!passwordCorrect)
+
+    // check if password is correct and also checj if auth is local or google
+    if (!passwordCorrect && user.provider != "local") {
+      return res.status(401).json({
+        status: false,
+        message:
+          "This account was created with Google. Please login with Google or reset your password to enable email login.",
+      });
+    } else if (!passwordCorrect) {
       return res
         .status(401)
         .json({ status: false, message: "Incorect password" });
+    }
 
     // generate token: no refresh token, just token and save in cookies
     const token = jwt.sign(
