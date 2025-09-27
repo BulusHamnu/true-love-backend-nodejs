@@ -126,8 +126,11 @@ export async function signupWithGoogle(req, res) {
 
     // check if user already exist
     const userExist = await User.findOne({ email: payload.email });
-    if (userExist)
-      return res.redirect(`${env.FRONTEND_URL}/auth?error=email_taken`);
+    if (userExist) {
+      if (userExist.provider === "local")
+        return res.redirect(`${env.FRONTEND_URL}/auth?error=email_taken`);
+      return res.redirect(`${env.FRONTEND_URL}/auth?error=google_user_exist`);
+    }
 
     // fake user password hash
     const userPassword = await hashPassword("null");
@@ -204,13 +207,14 @@ export async function login(req, res) {
     const passwordCorrect = await bcrypt.compare(password, user.password);
 
     // check if password is correct and also checj if auth is local or google
-    if (!passwordCorrect && user.provider != "local") {
-      return res.status(401).json({
-        status: false,
-        message:
-          "This account was created with Google. Please login with Google or reset your password to enable email login.",
-      });
-    } else if (!passwordCorrect) {
+    if (!passwordCorrect) {
+      if (user.provider === "google")
+        return res.status(401).json({
+          status: false,
+          message:
+            "This account was created with Google. Please login with Google or reset your password to enable email login.",
+        });
+
       return res
         .status(401)
         .json({ status: false, message: "Incorect password" });
