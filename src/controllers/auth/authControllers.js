@@ -114,7 +114,7 @@ export async function getGoogleSignUpAuthUrl(req, res) {
 export async function signupWithGoogle(req, res) {
   try {
     const accessCode = req.query.code; // get google code
-    if (!accessCode) return res.redirect("https://true-love.app/auth");
+    if (!accessCode) return res.redirect(`${env.FRONTEND_URL}/auth`);
 
     // add retry here
     const payload = await retriveGoogleIdToken(
@@ -122,12 +122,12 @@ export async function signupWithGoogle(req, res) {
       "/api/auth/google/signup-fallback"
     );
 
-    if (!payload) return res.redirect("https://true-love.app/auth");
+    if (!payload) return res.redirect(`${env.FRONTEND_URL}/auth`);
 
     // check if user already exist
     const userExist = await User.findOne({ email: payload.email });
     if (userExist)
-      return res.redirect("https://true-love.app/auth?error=email_taken");
+      return res.redirect(`${env.FRONTEND_URL}/auth?error=email_taken`);
 
     // fake user password hash
     const userPassword = await hashPassword("null");
@@ -168,10 +168,10 @@ export async function signupWithGoogle(req, res) {
 
     logger.info("User login after google signup.", { email: newUser.email });
 
-    res.redirect("https://true-love.app/");
+    res.redirect(env.FRONTEND_URL);
   } catch (error) {
     logger.error(error);
-    res.redirect("https://true-love.app/auth");
+    res.redirect(`${env.FRONTEND_URL}/auth`);
   }
 }
 
@@ -271,7 +271,7 @@ export async function getGoogleLoginAuthUrl(req, res) {
 export async function signinWithGoogle(req, res) {
   try {
     const accessCode = req.query.code; // get google code
-    if (!accessCode) return res.redirect("https://true-love.app/auth");
+    if (!accessCode) return res.redirect(`${env.FRONTEND_URL}/auth`);
 
     // add retry here
     const payload = await retriveGoogleIdToken(
@@ -279,12 +279,12 @@ export async function signinWithGoogle(req, res) {
       "/api/auth/google/login-fallback"
     );
 
-    if (!payload) return res.redirect("https://true-love.app/auth");
+    if (!payload) return res.redirect(`${env.FRONTEND_URL}/auth`);
 
     // check if user already exist
     const userExist = await User.findOne({ email: payload.email });
-    if (!userExist)
-      return res.redirect("https://true-love.app/auth?error=google_not_link");
+    if (!userExist || userExist.provider != "google")
+      return res.redirect(`${env.FRONTEND_URL}/auth?error=google_not_link`);
 
     const token = jwt.sign(
       {
@@ -306,10 +306,10 @@ export async function signinWithGoogle(req, res) {
 
     logger.info("User login with google oauth2.", { email: userExist.email });
 
-    res.redirect("https://true-love.app/");
+    res.redirect(env.FRONTEND_URL);
   } catch (error) {
     logger.error(error);
-    res.redirect("https://true-love.app/auth");
+    res.redirect(`${env.FRONTEND_URL}/auth`);
   }
 }
 
