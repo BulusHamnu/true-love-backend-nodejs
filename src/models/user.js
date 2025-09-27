@@ -21,6 +21,20 @@ const userSchema = new mongoose.Schema({
     code: String,
     expireAt: Date,
   },
+  provider: {
+    type: String,
+    default: "",
+  },
+  google: {
+    googleId: {
+      type: String,
+      default: "",
+    },
+    idToken: {
+      type: String,
+      default: "",
+    },
+  },
   createdAt: {
     type: Date,
     default: Date.now,

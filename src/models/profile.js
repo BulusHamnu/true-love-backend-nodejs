@@ -93,6 +93,7 @@ profileSchema.methods.removeUnwantedFields = function () {
   const obj = this.toObject();
   delete obj.selfGuidedProgram;
   delete obj.transactions;
+  delete obj.google;
   return obj;
 };
 

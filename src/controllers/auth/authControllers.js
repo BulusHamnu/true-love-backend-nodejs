@@ -19,6 +19,7 @@ import Joi from "joi";
 import sanitizeData from "../../utils/sanitizeData.js";
 import axios from "axios";
 import qs from "qs";
+import createNewUser from "../../services/createNewUser.js";
 
 // sign up handler
 export async function signup(req, res) {
@@ -49,24 +50,15 @@ export async function signup(req, res) {
     const userPassword = await hashPassword(password);
     const verficationCode = generateCode(6);
 
-    // create new user
-    const newUser = await User.create({
+    // create user
+    const { error, newUser } = await createNewUser({
       password: userPassword,
       email,
-      emailVerification: {
-        code: verficationCode,
-        expireAt: new Date(Date.now() + 15 * 60 * 1000),
-      },
+      verficationCode,
+      fullName,
     });
 
-    // create a profile for that user
-    const userProfile = await Profile.create({
-      userId: newUser._id,
-      fullName,
-      /*    phone,
-      age, */
-      email,
-    });
+    if (error) throw new Error("An error occured while creating a new user.");
 
     // send verfication email
     await sendResendEmail(
@@ -75,15 +67,10 @@ export async function signup(req, res) {
       templates.emailVerificationTemplate(fullName, verficationCode)
     );
 
-    logger.info("New user created ", { email, fullName: userProfile.fullName });
-
     res.status(201).json({
       status: true,
       message: "User created sucessfully.",
-      data: {
-        ...userProfile.removeUnwantedFields(),
-        isVerified: newUser.isVerified,
-      },
+      data: newUser,
     });
   } catch (error) {
     logger.error(error);
@@ -168,7 +155,7 @@ export async function signupWithGoogle(req, res) {
     logger.error(error);
     res
       .status(500)
-      .json({ status: false, message: "Unexpected error occured." });
+      .json({ status: false, message: "An unexpected error occured." });
   }
 }
 

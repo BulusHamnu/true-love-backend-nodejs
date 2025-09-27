@@ -1,0 +1,55 @@
+import User from "../models/user.js";
+import Profile from "../models/profile.js";
+import { logger } from "../utils/helpers.js";
+
+export default async function createNewUser({
+  provider = "local",
+  password,
+  email,
+  verficationCode = "",
+  fullName,
+  googleId = "",
+  idToken = "",
+}) {
+  try {
+    // create new user
+    const newUser = await User.create({
+      provider,
+      password,
+      email,
+      emailVerification: {
+        code: verficationCode || null,
+        expireAt: verficationCode
+          ? new Date(Date.now() + 15 * 60 * 1000)
+          : null,
+      },
+      google: {
+        googleId,
+        idToken,
+      },
+    });
+
+    // create a profile for that user
+    const userProfile = await Profile.create({
+      userId: newUser._id,
+      fullName,
+      email,
+    });
+
+    logger.info("New user created ", {
+      email,
+      fullName: userProfile.fullName,
+    });
+
+    return {
+      error: false,
+      newUser: {
+        ...userProfile.removeUnwantedFields(),
+        isVerified: newUser.isVerified,
+      },
+    };
+  } catch (error) {
+    logger.error(error);
+    return { error: true };
+  }
+}
