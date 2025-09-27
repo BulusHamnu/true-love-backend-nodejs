@@ -18,11 +18,9 @@ export async function signup(req, res) {
   try {
     // validate body data
     const cleanData = sanitizeData(req.body);
-    const { fullName, phone, age, password, email } = cleanData;
+    const { fullName, password, email } = cleanData;
     const validate = signupSchema.validate({
       fullName,
-      phone,
-      age,
       password,
       email,
     });
@@ -58,8 +56,8 @@ export async function signup(req, res) {
     const userProfile = await Profile.create({
       userId: newUser._id,
       fullName,
-      phone,
-      age,
+   /*    phone,
+      age, */
       email,
     });
 

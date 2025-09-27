@@ -3,8 +3,8 @@ import Joi from "joi";
 // sign up validation schema
 export const signupSchema = Joi.object({
   fullName: Joi.string().required().min(3),
-  phone: Joi.string().required().min(11),
-  age: Joi.number().required().min(14),
+  /* phone: Joi.string().min(11),
+  age: Joi.number().min(14), */
   password: Joi.string()
     .required()
     .min(6)
