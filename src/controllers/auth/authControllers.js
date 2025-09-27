@@ -81,14 +81,15 @@ export async function signup(req, res) {
   }
 }
 
-export async function getGoogleAuthUrl(req, res) {
+// get google oauthurl for signup
+export async function getGoogleSignUpAuthUrl(req, res) {
   try {
     logger.info("New user request for google oauth url.");
     const oauth2Endpoint = "https://accounts.google.com/o/oauth2/v2/auth?";
 
     const params = new URLSearchParams({
       client_id: env.TRUE_LOVE_GOOGLE_CLIENT_ID,
-      redirect_uri: `${env.BACKEND_URL}/api/auth/google/fallback`,
+      redirect_uri: `${env.BACKEND_URL}/api/auth/google/signup-fallback`,
       response_type: "code",
       scope: "openid profile email",
       state: "pass-through value",
@@ -130,7 +131,7 @@ export async function signupWithGoogle(req, res) {
         client_id: env.TRUE_LOVE_GOOGLE_CLIENT_ID,
         client_secret: env.TRUE_LOVE_GOOGLE_CLIENT_SECRET,
         grant_type: "authorization_code",
-        redirect_uri: `${env.BACKEND_URL}/api/auth/google/fallback`,
+        redirect_uri: `${env.BACKEND_URL}/api/auth/google/signup-fallback`,
       }),
       {
         headers: {
@@ -260,6 +261,11 @@ export async function login(req, res) {
       message: "An unexpected error occured.",
     });
   }
+}
+
+// get google oauthurl for login
+export async function getGoogleLoginAuthUrl(req, res) {
+  res.send("Hello");
 }
 
 // forget password handler
