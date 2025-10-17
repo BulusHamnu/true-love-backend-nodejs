@@ -2,7 +2,7 @@ import express from "express";
 import {
   getSelfGuidedProgram,
   updateSelfGuidedProgram,
-  // reflectionCorner,
+  reflectionCorner,
   // getAllReflectionMessages,
 } from "../controllers/selfGuidedController.js";
 import withAuth from "../middlewares/withAuth.js";
@@ -24,12 +24,12 @@ router.patch(
 );
 
 // reflection corner messages
-// router.post(
-//   "/reflection-messages/:weekNumber",
-//   // withAuth,
-//   rateLimter(60 * 60 * 1000, 20, "user-id"),
-//   reflectionCorner
-// );
+router.post(
+  "/reflection-messages/:weekNumber",
+  withAuth,
+  rateLimter(5 * 60 * 1000, 20, "user-id"),
+  reflectionCorner
+);
 // router.get(
 //   "/reflection-messages",
 //   withAuth,

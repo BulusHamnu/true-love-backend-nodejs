@@ -78,12 +78,4 @@ export const selfGuidedValidator = Joi.object({
       "number.max": "Week cannot be greater than 6",
     }),
   }),
-  reflectionMessages: Joi.object({
-    week1: Joi.string().allow(""),
-    week2: Joi.string().allow(""),
-    week3: Joi.string().allow(""),
-    week4: Joi.string().allow(""),
-    week5: Joi.string().allow(""),
-    week6: Joi.string().allow(""),
-  }),
 }).min(1);

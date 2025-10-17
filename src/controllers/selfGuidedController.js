@@ -3,6 +3,7 @@ import { logger } from "../utils/helpers.js";
 import sanitizeData from "../utils/sanitizeData.js";
 import postReflectionStory from "../services/openai.js";
 import { selfGuidedValidator } from "../utils/validators.js";
+import Joi from "joi";
 
 // get self-guided-progress
 export async function getSelfGuidedProgram(req, res) {
@@ -58,13 +59,13 @@ export async function updateSelfGuidedProgram(req, res) {
       }
     }
 
-    if (cleanData.reflectionMessages) {
+    /* if (cleanData.reflectionMessages) {
       for (const [field, value] of Object.entries(
         cleanData.reflectionMessages
       )) {
         updates[`selfGuidedProgram.reflectionMessages.${field}`] = value;
       }
-    }
+    } */
 
     // get user profile
     const userUpdate = await Profile.findOneAndUpdate(
@@ -87,39 +88,59 @@ export async function updateSelfGuidedProgram(req, res) {
   }
 }
 
-// export async function reflectionCorner(req, res) {
-//   try {
-//     const { message } = req.body;
-//     const weekNumber = req.params.weekNumber;
+export async function reflectionCorner(req, res) {
+  try {
+    const { message } = req.body;
+    const weekNumber = req.params.weekNumber;
 
-//     // validate and sanitize data
-//     const validator = Joi.string().required().label("message");
-//     const validate = validator.validate(message);
-//     if (validate.error)
-//       return res
-//         .status(400)
-//         .json({ status: false, message: validate.error.message });
+    // check if user paid for self-guided program
+    const userProfile = await Profile.findOne({ userId: req.user.id });
 
-//     // get openai response
-//     const response = await postReflectionStory(message);
-//     if (!response.status)
-//       return res
-//         .status(500)
-//         .json({ status: false, message: "Response not available." });
-//     res.status(200).json({
-//       status: true,
-//       message: "ChatGPT reflection response",
-//       data: { message: response.message + " " + weekNumber },
-//     });
-//   } catch (error) {
-//     logError("An error occur while generating response.");
-//     res.status(500).json({
-//       status: false,
-//       message: "An expected error occur.",
-//       error: error.message,
-//     });
-//   }
-// }
+    if (!userProfile.hasPremium)
+      return res.status(400).json({
+        status: false,
+        message: "You do not have access to the self-guided program.",
+      });
+
+    // validate and sanitize data
+    const validator = Joi.string().required().label("message");
+    const validate = validator.validate(message);
+    if (validate.error)
+      return res
+        .status(400)
+        .json({ status: false, message: validate.error.message });
+
+    // get openai response
+    const response = await postReflectionStory(message);
+
+    // update week message
+    userProfile.selfGuidedProgram.reflectionMessages[`week${weekNumber}`] =
+      message;
+    userProfile.selfGuidedProgram.gptResponses[`week${weekNumber}`] =
+      response.message;
+    await userProfile.save();
+
+    if (!response.status)
+      return res
+        .status(500)
+        .json({ status: false, message: "Response not available." });
+    res.status(200).json({
+      status: true,
+      message: "ChatGPT reflection response",
+      data: {
+        reflectionMessage: message,
+        chatGptResponse: response.message + " " + weekNumber,
+      },
+    });
+  } catch (error) {
+    logger.error("An error occur while generating response.", error);
+    res.status(500).json({
+      status: false,
+      message: "An expected error occur.",
+      error: error.message,
+    });
+  }
+}
 
 // export async function getAllReflectionMessages(req, res) {
 //   try {
