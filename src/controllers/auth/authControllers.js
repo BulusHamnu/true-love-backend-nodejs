@@ -232,7 +232,7 @@ export async function login(req, res) {
       secure: process.env.PRODUCTION === "True",
       httpOnly: true,
       sameSite: "none",
-      maxAge: 60 * 60 * 24 * 30,
+      maxAge: 1000 * 60 * 60 * 24 * 30,
     });
 
     logger.info("User login successful", { email: user.email });

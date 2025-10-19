@@ -1,25 +1,52 @@
 import OpenAI from "openai";
 import { env } from "../../confiq/index.js";
 const client = new OpenAI({ apiKey: env.OPEN_API_KEY });
+import { logger } from "../utils/helpers.js";
+import weekReadings from "../utils/weekReadings.js";
 
-export default async function postReflectionStory(notes) {
+const assistantContent = `
+You are a gentle and insightful spiritual reflection companion. 
+Your goal is to respond with empathy, wisdom, and encouragement.
+
+You will be given:
+1. The weekly reading or guidance text that the user has just read.
+2. The user's Reflection Question answer — what they felt, thought, or experienced after reading it.
+
+Use both pieces of information to write a thoughtful reply that:
+- Acknowledges what the user shared.
+- Reflects on the ideas or lessons from that week's reading.
+- Offers calm, supportive insight or encouragement.
+- Feels personal and human — not robotic.
+- Keeps the tone aligned with the style of the guidance text.
+
+Be brief but meaningful.
+Never repeat the weekly reading text verbatim, but refer to it naturally when relevant.
+`;
+
+export default async function postReflectionStory(weekNo, notes) {
   try {
-    // will implement openai later
-    /* const response = await client.responses.create({
+    const response = await client.responses.create({
       model: "gpt-5",
-      input: notes,
+      input: [
+        {
+          role: "system",
+          content: assistantContent,
+        },
+        {
+          role: "user",
+          content: `Weekly Reading: ${
+            weekReadings[`week${weekNo}`] || ""
+          }\n\nUser reflectionMessage:\n ${notes}`,
+        },
+      ],
     });
-    console.log(response); */
+    console.log(response.output_text);
 
-    const res = new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve({ status: true, message: `Note is: ${notes}` });
-      }, 4000);
-    });
+    logger.info("GPT response generated sucessfully!");
 
-    return res;
+    return { message: response.output_text };
   } catch (error) {
-    console.log(error.message);
+    logger.error("An error occured while getting GPTResponse", error);
     return { status: false, message: "" };
   }
 }

@@ -92,6 +92,13 @@ export async function reflectionCorner(req, res) {
   try {
     const { message } = req.body;
     const weekNumber = req.params.weekNumber;
+    if (weekNumber <= 0 || weekNumber > 6)
+      return res
+        .status(400)
+        .json({
+          status: false,
+          message: "Week number cannot be less than 1 or greater than 6.",
+        });
 
     // check if user paid for self-guided program
     const userProfile = await Profile.findOne({ userId: req.user.id });
@@ -103,15 +110,15 @@ export async function reflectionCorner(req, res) {
       });
 
     // validate and sanitize data
-    const validator = Joi.string().required().label("message");
-    const validate = validator.validate(message);
-    if (validate.error)
+    const msgValidator = Joi.string().required().label("message").min(10);
+    const msgValidate = msgValidator.validate(message);
+    if (msgValidate.error)
       return res
         .status(400)
-        .json({ status: false, message: validate.error.message });
+        .json({ status: false, message: msgValidate.error.message });
 
     // get openai response
-    const response = await postReflectionStory(message);
+    const response = await postReflectionStory(weekNumber, message);
 
     // update week message
     userProfile.selfGuidedProgram.reflectionMessages[`week${weekNumber}`] =
@@ -120,16 +127,12 @@ export async function reflectionCorner(req, res) {
       response.message;
     await userProfile.save();
 
-    if (!response.status)
-      return res
-        .status(500)
-        .json({ status: false, message: "Response not available." });
     res.status(200).json({
       status: true,
       message: "ChatGPT reflection response",
       data: {
         reflectionMessage: message,
-        chatGptResponse: response.message + " " + weekNumber,
+        chatGptResponse: response.message,
       },
     });
   } catch (error) {
