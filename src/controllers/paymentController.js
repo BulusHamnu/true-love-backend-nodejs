@@ -294,7 +294,7 @@ export async function createCheckOutNewdoor(req, res) {
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
-          price: req.body.priceId,
+          price: req.body.priceId || PRODUCT_PRICE_ID_NEW_DOOR,
           quantity: 1,
         },
       ],
