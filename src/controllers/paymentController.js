@@ -273,3 +273,55 @@ export async function paymentSucessful(req, res) {
     }); */
   }
 }
+
+// create checkout new-door
+export async function createCheckOutNewdoor(req, res) {
+  try {
+    const userProfile = req.userProfile;
+    let customerId = userProfile.stripeCustomerId;
+
+    if (userProfile.paidForCoaching === true)
+      return res.status(409).json({
+        status: true,
+        message: "User already paid for the coaching-program.",
+      });
+
+    if (!customerId) {
+      customerId = await createStripeCustomer(userProfile);
+    }
+
+    // create stripe checkout
+    const session = await stripe.checkout.sessions.create({
+      line_items: [
+        {
+          price: req.body.priceId,
+          quantity: 1,
+        },
+      ],
+      // customer details
+      customer: customerId,
+      phone_number_collection: { enabled: true },
+      mode: "payment",
+      success_url: `${env.FRONTEND_URL}/success`,
+      cancel_url: `${env.FRONTEND_URL}/error`,
+      automatic_tax: { enabled: false },
+      metadata: {
+        site: "true-love",
+      },
+    });
+
+    logger.info("Checkout for coaching program requested", {
+      customerId: customerId,
+      customerEmail: userProfile.email,
+    });
+
+    res.status(200).json({ status: true, data: { url: session.url } });
+  } catch (error) {
+    logger.error(error);
+
+    res.status(500).json({
+      status: false,
+      message: "An error occur.",
+    });
+  }
+}

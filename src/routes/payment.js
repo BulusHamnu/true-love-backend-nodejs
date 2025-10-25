@@ -3,6 +3,7 @@ import {
   createCheckOut,
   paymentSucessful,
   createSelfGuidedCheckOut,
+  createCheckOutNewdoor,
 } from "../controllers/paymentController.js";
 // import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
@@ -28,6 +29,12 @@ router.post(
   rateLimter(3 * 60 * 1000, 10, "ip"),
   autoCreateUser,
   createSelfGuidedCheckOut
+);
+router.post(
+  "/create-new-door-checkout",
+  rateLimter(3 * 60 * 1000, 10, "ip"),
+  autoCreateUser,
+  createCheckOutNewdoor
 );
 
 export default router;
