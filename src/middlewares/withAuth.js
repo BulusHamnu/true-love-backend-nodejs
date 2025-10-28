@@ -15,11 +15,6 @@ export default async function (req, res, next) {
     }
 
     const user = jwt.verify(token, env.SECRET_KEY);
-    if (!user)
-      return res.status(401).json({
-        status: false,
-        message: "Invalid or expired token. Unauthorized.",
-      });
     req.user = user;
     // call the route handler
     next();

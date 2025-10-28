@@ -370,7 +370,7 @@ export async function logout(req, res) {
 
     // delete token cookies
     res.cookie("token", "", {
-      secure: process.env.PRODUCTION === "True",
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: "none",
       maxAge: 0,

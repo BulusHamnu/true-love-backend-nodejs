@@ -31,7 +31,7 @@ export const env = {
   TRUE_LOVE_GOOGLE_CLIENT_ID: process.env.TRUE_LOVE_GOOGLE_CLIENT_ID,
   PRODUCT_PRICE_ID_NEW_DOOR: process.env.PRODUCT_PRICE_ID_NEW_DOOR,
   LOGIN_COOKIE_OPTS: {
-    secure: process.env.PRODUCTION === "True",
+    secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "none",
     maxAge: 1000 * 60 * 60 * 24 * 30,
