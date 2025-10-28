@@ -394,6 +394,7 @@ export async function resendEmail(req, res) {
   try {
     // check if user exist
     const email = req.body.email;
+    // receive email from body
     const user = await User.findOne({ email });
     if (!user)
       return res
