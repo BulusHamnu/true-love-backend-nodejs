@@ -394,6 +394,11 @@ export async function resendEmail(req, res) {
   try {
     // check if user exist
     const email = req.body.email;
+    if (!email)
+      res
+        .status(404)
+        .json({ status: false, message: "Please provide an email." });
+    logger.info("Email received for verification.", { email });
     // receive email from body
     const user = await User.findOne({ email });
     if (!user)
