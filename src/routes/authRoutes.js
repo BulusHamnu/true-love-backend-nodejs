@@ -53,7 +53,7 @@ router.post(
 );
 router.post(
   "/resend-email",
-  withAuth,
+  // withAuth,
   rateLimter(5 * 60 * 1000, 5, "user-id"),
   resendEmail
 );
