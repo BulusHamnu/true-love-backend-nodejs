@@ -1,4 +1,4 @@
-import { logInfo, logError } from "../utils/helpers.js";
+import { logInfo, logError, logger } from "../utils/helpers.js";
 import { env } from "../../confiq/index.js";
 import jwt from "jsonwebtoken";
 
