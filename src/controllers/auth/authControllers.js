@@ -414,7 +414,7 @@ export async function resendEmail(req, res) {
       });
 
     logger.info("Email verification requested", {
-      email: req.user.email,
+      email: email,
     });
 
     // generate verification code
