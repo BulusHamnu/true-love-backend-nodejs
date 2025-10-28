@@ -393,7 +393,8 @@ export async function logout(req, res) {
 export async function resendEmail(req, res) {
   try {
     // check if user exist
-    const user = await User.findOne({ email: req.user.email });
+    const email = req.body.email;
+    const user = await User.findOne({ email });
     if (!user)
       return res
         .status(404)
