@@ -162,12 +162,7 @@ export async function signupWithGoogle(req, res) {
     );
 
     // set res cookies for 30d
-    res.cookie("token", token, {
-      secure: process.env.PRODUCTION === "True",
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: 60 * 60 * 24 * 30,
-    });
+    res.cookie("token", token, env.LOGIN_COOKIE_OPTS);
 
     logger.info("User login after google signup.", { email: newUser.email });
 
@@ -228,12 +223,7 @@ export async function login(req, res) {
     );
 
     // set res cookies for 30d
-    res.cookie("token", token, {
-      secure: process.env.PRODUCTION === "True",
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: 1000 * 60 * 60 * 24 * 30,
-    });
+    res.cookie("token", token, env.LOGIN_COOKIE_OPTS);
 
     logger.info("User login successful", { email: user.email });
 
@@ -310,12 +300,7 @@ export async function signinWithGoogle(req, res) {
     );
 
     // set res cookies for 30d
-    res.cookie("token", token, {
-      secure: process.env.PRODUCTION === "True",
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: 60 * 60 * 24 * 30,
-    });
+    res.cookie("token", token, env.LOGIN_COOKIE_OPTS);
 
     logger.info("User login with google oauth2.", { email: userExist.email });
 

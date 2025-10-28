@@ -6,7 +6,7 @@ export default async function (req, res, next) {
   try {
     const token = req.cookies.token;
 
-    const user = jwt.decode(token, env.SECRET_KEY);
+    const user = jwt.verify(token, env.SECRET_KEY);
     if (!user)
       return res.status(401).json({
         status: false,
