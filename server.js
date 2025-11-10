@@ -14,6 +14,7 @@ import cors from "cors";
 const dirname = import.meta.dirname;
 import cookieParser from "cookie-parser";
 import { logger } from "./src/utils/helpers.js";
+import getAppStats from "./src/controllers/getAppStat.js";
 const port = env.PORT;
 const app = express();
 
@@ -36,7 +37,7 @@ app.use(
   })
 );
 app.use(cookieParser());
-app.set('trust proxy', true)
+app.set("trust proxy", true);
 app.use((req, res, next) => {
   // skip json parsing for stripe webhook route
   if (req.originalUrl === "/api/payment/stripe-webhook") {
@@ -56,6 +57,7 @@ app.use("/api/me", profileRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/self-guided", selfGuidedRoutes);
+app.get("/api/monitor", getAppStats);
 
 // Start the server
 app.listen(port, async () => {
