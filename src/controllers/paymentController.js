@@ -266,11 +266,7 @@ export async function paymentSucessful(req, res) {
     res.send();
   } catch (error) {
     logger.error(error);
-    /* res.status(500).json({
-      status: false,
-      messaseg: "An error occur.",
-      error: error.message,
-    }); */
+    res.status(400);
   }
 }
 
