@@ -1,76 +1,61 @@
-import { generateCode, hashPassword, logger } from "../utils/helpers.js";
+import { generateCode } from "../utils/helpers.js";
 import User from "../models/user.model.js";
-import Profile from "../models/profile.model.js";
 import jwt from "jsonwebtoken";
 import Joi from "joi";
 import { env } from "../config/index.js";
 import { templates } from "../services/email.js";
 import sendResendEmail from "../services/resend.js";
+import AppError from "../errors/appError.js";
+import * as authService from "../services/auth.service.js";
 
+/* Email validator */
+function validateEmail(body) {
+  const validator = Joi.string().required().email().label("email");
+  const { value, error } = validator.validate(body.email);
+  if (error) {
+    throw new AppError("VALIDATION_ERROR", "Validation failed", 400, true, {
+      email: error.message,
+    });
+  }
+  return value;
+}
+
+/*  Auto create user. In a case were user try checking out without creating an account, this middleware create a new account for them and send them an email with the default logins */
 export default async function autoCreateUser(req, res, next) {
   try {
-    const { email } = req.body;
-    const validator = Joi.string().required().email().label("email");
-    const validate = validator.validate(email);
-    if (validate.error) {
-      res.status(400).json({
-        status: false,
-        message: validate.error.message,
-      });
-    }
-
-    const userProfile = await Profile.findOne({ email: email });
-    if (userProfile) {
-      req.userProfile = userProfile;
+    const email = validateEmail(req.body);
+    const user = await User.findOne({ email });
+    if (user) {
+      req.user = user;
       return next();
     }
 
-    const password = generateCode(10);
-    const defaultPassword = await hashPassword(password);
-
-    // create new user
-    const newUser = await User.create({
-      password: defaultPassword,
+    const password = generateCode(10); // Todo: Add function to generate rand password later
+    const newUser = await authService.createNewUser({
       email,
+      fullName: "Cupid's chosen",
+      password,
     });
 
-    // create a profile for that user
-    const newUserProfile = await Profile.create({
-      userId: newUser._id,
-      fullName: "Not provided",
-      // phone: "000000000000",
-      // age: 0,
-      email,
-    });
-
-    logger.info("New user created", { email: newUserProfile.email });
-
-    // generate token: no refresh token, just token and save in cookies
     const token = jwt.sign(
       { email, id: newUser._id, isVerified: newUser.isVerified },
-      env.SECRET_KEY,
+      env.REFRESH_TOKEN_SECRET_KEY,
       { expiresIn: "30d" },
     );
 
-    // send verfication email
+    // Send email with default password so user can login
     sendResendEmail(
       email,
       "Welcome To True-Love App",
       templates.defaultPasswordTemplate("Cupid's chosen", email, password),
     );
 
-    // set res cookies for 30d
-    res.cookie("token", token, {
-      secure: process.env.PRODUCTION === "True",
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: 60 * 60 * 24 * 30,
-    });
+    // For automatic login
+    res.cookie("refreshToken", token, env.LOGIN_COOKIE_OPTS);
 
-    req.userProfile = newUserProfile;
+    req.user = newUser;
     next();
   } catch (error) {
-    logger.error(error);
-    return { status: false, newUserProfile: null, loginToken: null };
+    next(error);
   }
 }

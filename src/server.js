@@ -14,6 +14,7 @@ const dirname = import.meta.dirname;
 import cookieParser from "cookie-parser";
 import { logger } from "./utils/helpers.js";
 import getAppStats from "./controllers/get-app-stats.controller.js";
+import errorHandler from "./middlewares/errorHandler.js";
 const port = env.PORT;
 const app = express();
 
@@ -52,6 +53,9 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/self-guided", selfGuidedRoutes);
 app.get("/api/monitor", getAppStats);
+
+// Error handler
+app.use(errorHandler);
 
 // Start the server
 app.listen(port, async () => {

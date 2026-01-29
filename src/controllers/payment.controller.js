@@ -78,9 +78,12 @@ export async function createSelfGuidedCheckOut(req, res) {
 // create checkout endpoint
 export async function createCheckOut(req, res) {
   try {
-    const userProfile = req.userProfile;
-    let customerId = userProfile.stripeCustomerId;
+    const userProfile = await Profile.findOne({ userId: req.user._id });
+    if (!userProfile) {
+      throw new Error("User does exist.");
+    }
 
+    let customerId = userProfile.stripeCustomerId;
     if (userProfile.paidForCoaching === true)
       return res.status(409).json({
         status: true,

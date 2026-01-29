@@ -1,70 +1,34 @@
-import {
-  hashPassword,
-  generateCode,
-  logger,
-  verifyIdToken,
-} from "../../utils/helpers.js";
+import { generateCode, logger } from "../../utils/helpers.js";
 import User from "../../models/user.model.js";
 import Profile from "../../models/profile.model.js";
 import sendResendEmail from "../../services/resend.js";
-import { templates, sendEmail } from "../../services/email.js";
+import { templates } from "../../services/email.js";
 import { env } from "../../config/index.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import {
-  emailAndPasswordSchema,
-  signupSchema,
-} from "../../utils/validators.js";
+import * as authValidator from "../../utils/validators.js";
 import Joi from "joi";
 import sanitizeData from "../../utils/sanitizeData.js";
-import createNewUser from "../../services/createNewUser.js";
+import * as authService from "../../services/auth.service.js";
 import retriveGoogleIdToken from "../../services/retriveGoogleIdToken.js";
+import validateAndSanitizeData from "../../utils/validateAndSanitizeData.js";
 
-// sign up handler
-export async function signup(req, res) {
+/* Sign up user handler */
+export async function signup(req, res, next) {
   try {
-    // validate body data
-    const cleanData = sanitizeData(req.body);
-    const { fullName, password, email } = cleanData;
-    const validate = signupSchema.validate({
-      fullName,
-      password,
-      email,
-    });
-
-    if (validate.error)
-      return res.status(400).json({
-        status: false,
-        message: validate.error.message,
-      });
-
-    // check if user already exist
-    const userExist = await User.findOne({ email: email });
-    if (userExist)
-      return res
-        .status(409)
-        .json({ status: false, message: "User already exist." });
-
-    // hash user password
-    const userPassword = await hashPassword(password);
-    const verficationCode = generateCode(6);
+    const { fullName, password, email, age, phone } = validateAndSanitizeData(
+      req.body,
+      authValidator.signupSchema,
+    );
 
     // create user
-    const { error, newUser } = await createNewUser({
-      password: userPassword,
+    const newUser = await authService.createNewUser({
+      password,
       email,
-      verficationCode,
       fullName,
+      age,
+      phone,
     });
-
-    if (error) throw new Error("An error occured while creating a new user.");
-
-    // send verfication email
-    await sendResendEmail(
-      email,
-      "Please verify your email address",
-      templates.emailVerificationTemplate(fullName, verficationCode),
-    );
 
     res.status(201).json({
       status: true,
@@ -72,11 +36,7 @@ export async function signup(req, res) {
       data: newUser,
     });
   } catch (error) {
-    logger.error(error);
-    res.status(500).json({
-      status: false,
-      message: "An unexpected error occurred. Please try again later.",
-    });
+    next(error);
   }
 }
 

@@ -7,7 +7,7 @@ function cleanData(value, field = "") {
 
   let cleanValue = value.trim();
   if (field === "password" || field === "confirmPassword") {
-    const normalizedPassword = cleanData.normalize("NFC");
+    const normalizedPassword = cleanValue.normalize("NFC");
     return normalizedPassword;
   }
 
