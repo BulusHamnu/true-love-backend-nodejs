@@ -17,9 +17,9 @@ import getAppStats from "./controllers/get-app-stats.controller.js";
 const port = env.PORT;
 const app = express();
 
-// App middleware
+// Middleware
 app.use(helmet());
-app.use("/public", express.static(path.join(dirname, "public")));
+app.use(express.static(path.join(dirname, "../public")));
 app.use(
   morgan("dev", {
     stream: {
@@ -45,12 +45,7 @@ app.use((req, res, next) => {
   express.json()(req, res, next);
 });
 
-// App routes
-app.get("/", (req, res) => {
-  res.sendFile(path.join(dirname, "views", "index.html"));
-});
-
-// Auth routes
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/me", profileRoutes);
 app.use("/api/payment", paymentRoutes);
