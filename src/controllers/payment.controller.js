@@ -78,7 +78,8 @@ export async function createSelfGuidedCheckOut(req, res) {
 // create checkout endpoint
 export async function createCheckOut(req, res) {
   try {
-    const userProfile = await Profile.findOne({ userId: req.user._id });
+    const userId = req.user?._id;
+    const userProfile = await Profile.findOne({ userId });
     if (!userProfile) {
       throw new Error("User does exist.");
     }

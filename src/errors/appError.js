@@ -1,7 +1,8 @@
 /* Errro Codes */
 export const ErrorCodes = {
   USER_NOT_FOUND: "USER_NOT_FOUND",
-  USER_ALREADY_EXIST: "USER_ALREADY_EXIST"
+  USER_ALREADY_EXIST: "USER_ALREADY_EXIST",
+  EMAIL_DELIVERY_FAILED: "EMAIL_DELIVERY_FAILED",
 };
 
 /* App custom error */

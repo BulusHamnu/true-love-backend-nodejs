@@ -68,7 +68,7 @@ export async function createNewUser({
     await sendResendEmail(
       email,
       "Please verify your email address",
-      templates.emailVerificationTemplate(fullName, emailVerification.code),
+      templates.emailVerificationTemplate(fullName, emailVerification?.code),
     );
 
   return {

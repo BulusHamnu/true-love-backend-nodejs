@@ -1,24 +1,27 @@
 import { Resend } from "resend";
 import { env } from "../config/index.js";
-import { logError, logger, logInfo } from "../utils/helpers.js";
-
+import AppError, { ErrorCodes } from "../errors/appError.js";
 const resend = new Resend(env.RESEND_API_KEY);
 
 async function sendResendEmail(to, subject, html) {
-  try {
-    const k = await resend.emails.send({
-      from: `True Love Transformation <noreply@exponential-education.com>`,
-      to: [to],
-      subject,
-      html,
-    });
+  const k = await resend.emails.send({
+    from: `True Love Transformation <noreply@${env.RESEND_EMAIL_DOMAIN}>`,
+    to: [to],
+    subject,
+    html,
+  });
 
-    if (k.error) throw new Error(k.error.message);
-    return true;
-  } catch (error) {
-    logger.error(error);
-    return false;
-  }
+  if (k.error) console.log(k);
+  throw new AppError(
+    ErrorCodes.EMAIL_DELIVERY_FAILED,
+    k.error?.message,
+    500,
+    false,
+    {
+      to,
+      subject,
+    },
+  );
 }
 
 export default sendResendEmail;

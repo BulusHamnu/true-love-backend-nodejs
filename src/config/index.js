@@ -18,7 +18,7 @@ export const env = {
   EMAIL: process.env.EMAIL || "",
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD || "",
   RESEND_API_KEY: process.env.RESEND_API_KEY || "",
-  TOTUR_EMAIL: process.env.TOTUR_EMAIL || "hamnubulus@gmail.com", // for test purpose,
+  TOTUR_EMAIL: process.env.TOTUR_EMAIL,
   TOKEN_SECRET_KEY: process.env.TOKEN_SECRET_KEY,
   REFRESH_TOKEN_SECRET_KEY: process.env.REFRESH_TOKEN_SECRET_KEY,
   PRODUCTION: process.env.PRODUCTION,
@@ -37,4 +37,6 @@ export const env = {
     sameSite: "none",
     maxAge: 1000 * 60 * 60 * 24 * 30,
   },
+  RESEND_EMAIL_DOMAIN:
+    process.env.RESEND_EMAIL_DOMAIN || "exponentialenlightenment.com",
 };

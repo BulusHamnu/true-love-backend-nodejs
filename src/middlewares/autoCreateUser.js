@@ -1,4 +1,3 @@
-import { generateCode } from "../utils/helpers.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import Joi from "joi";
@@ -20,6 +19,17 @@ function validateEmail(body) {
   return value;
 }
 
+function generateRandPassword(limit = 10) {
+  const character = `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-={}[]|\:;"'<>,.?/~`;
+
+  let randomPassword = "";
+  for (let i = 0; i < limit; i++) {
+    const index = Math.floor(Math.random() * character.length);
+    randomPassword += character[index];
+  }
+  return randomPassword;
+}
+
 /*  Auto create user. In a case were user try checking out without creating an account, this middleware create a new account for them and send them an email with the default logins */
 export default async function autoCreateUser(req, res, next) {
   try {
@@ -30,7 +40,7 @@ export default async function autoCreateUser(req, res, next) {
       return next();
     }
 
-    const password = generateCode(10); // Todo: Add function to generate rand password later
+    const password = generateRandPassword();
     const newUser = await authService.createNewUser({
       email,
       fullName: "Cupid's chosen",
