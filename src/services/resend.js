@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { env } from "../../confiq/index.js";
+import { env } from "../config/index.js";
 import { logError, logger, logInfo } from "../utils/helpers.js";
 
 const resend = new Resend(env.RESEND_API_KEY);
@@ -22,4 +22,3 @@ async function sendResendEmail(to, subject, html) {
 }
 
 export default sendResendEmail;
-// sendResendEmail("hamnubulus@gmail.com","True Love Transformation","<h1>Hello</h1>")

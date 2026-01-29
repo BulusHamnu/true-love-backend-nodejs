@@ -1,4 +1,4 @@
-import { env } from "../../confiq/index.js";
+import { env } from "../config/index.js";
 import axios from "axios";
 import qs from "qs";
 import { verifyIdToken, logger } from "../utils/helpers.js";
@@ -20,7 +20,7 @@ export default async function retriveGoogleIdToken(accessCode, redirectUri) {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-      }
+      },
     );
 
     const payload = await verifyIdToken(response.data.id_token);

@@ -1,8 +1,8 @@
 import { logError } from "../utils/helpers.js";
-import User from "../models/user.js";
-import Profile from "../models/profile.js";
+import User from "../models/user.model.js";
+import Profile from "../models/profile.model.js";
 import mongoose from "mongoose";
-import Transaction from "../models/transactions.js";
+import Transaction from "../models/transaction.model.js";
 
 // get user transactions handler
 export async function getAllTransaction(req, res) {

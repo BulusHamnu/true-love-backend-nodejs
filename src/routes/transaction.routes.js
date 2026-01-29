@@ -2,7 +2,7 @@ import express from "express";
 import {
   getAllTransaction,
   getTransaction,
-} from "../controllers/transactionController.js";
+} from "../controllers/transaction.controller.js";
 import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 

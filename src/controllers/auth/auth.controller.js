@@ -4,11 +4,11 @@ import {
   logger,
   verifyIdToken,
 } from "../../utils/helpers.js";
-import User from "../../models/user.js";
-import Profile from "../../models/profile.js";
+import User from "../../models/user.model.js";
+import Profile from "../../models/profile.model.js";
 import sendResendEmail from "../../services/resend.js";
 import { templates, sendEmail } from "../../services/email.js";
-import { env } from "../../../confiq/index.js";
+import { env } from "../../config/index.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
@@ -63,7 +63,7 @@ export async function signup(req, res) {
     await sendResendEmail(
       email,
       "Please verify your email address",
-      templates.emailVerificationTemplate(fullName, verficationCode)
+      templates.emailVerificationTemplate(fullName, verficationCode),
     );
 
     res.status(201).json({
@@ -119,7 +119,7 @@ export async function signupWithGoogle(req, res) {
     // add retry here
     const payload = await retriveGoogleIdToken(
       accessCode,
-      "/api/auth/google/signup-fallback"
+      "/api/auth/google/signup-fallback",
     );
 
     if (!payload) return res.redirect(`${env.FRONTEND_URL}/auth`);
@@ -158,7 +158,7 @@ export async function signupWithGoogle(req, res) {
     const token = jwt.sign(
       { email: newUser.email, id: newUser.id, isVerified: newUser.isVerified },
       env.SECRET_KEY,
-      { expiresIn: "30d" }
+      { expiresIn: "30d" },
     );
 
     // set res cookies for 30d
@@ -219,7 +219,7 @@ export async function login(req, res) {
     const token = jwt.sign(
       { email: user.email, id: user._id, isVerified: user.isVerified },
       env.SECRET_KEY,
-      { expiresIn: "30d" }
+      { expiresIn: "30d" },
     );
 
     // set res cookies for 30d
@@ -279,7 +279,7 @@ export async function signinWithGoogle(req, res) {
     // add retry here
     const payload = await retriveGoogleIdToken(
       accessCode,
-      "/api/auth/google/login-fallback"
+      "/api/auth/google/login-fallback",
     );
 
     if (!payload) return res.redirect(`${env.FRONTEND_URL}/auth`);
@@ -296,7 +296,7 @@ export async function signinWithGoogle(req, res) {
         isVerified: userExist.isVerified,
       },
       env.SECRET_KEY,
-      { expiresIn: "30d" }
+      { expiresIn: "30d" },
     );
 
     // set res cookies for 30d
@@ -339,7 +339,7 @@ export async function forgetPassword(req, res) {
     // update user
     user.resetPasswordVerification.code = verficationCode;
     user.resetPasswordVerification.expireAt = new Date(
-      Date.now() + 15 * 60 * 1000
+      Date.now() + 15 * 60 * 1000,
     );
     await user.save();
 
@@ -347,7 +347,7 @@ export async function forgetPassword(req, res) {
     await sendResendEmail(
       email,
       "Reset Your Password",
-      templates.passwordVerificationTemplate(verficationCode)
+      templates.passwordVerificationTemplate(verficationCode),
     );
 
     res.status(200).json({
@@ -429,7 +429,7 @@ export async function resendEmail(req, res) {
     await sendResendEmail(
       email,
       "Please verify your email address",
-      templates.emailVerificationTemplate(user.fullName, verficationCode)
+      templates.emailVerificationTemplate(user.fullName, verficationCode),
     );
 
     res.status(200).json({
@@ -489,7 +489,7 @@ export async function resetPassword(req, res) {
     await sendResendEmail(
       email,
       "Password reset sucessfully.",
-      templates.paswordResetSucessful(user.fullName)
+      templates.paswordResetSucessful(user.fullName),
     );
 
     res.status(200).json({

@@ -1,4 +1,4 @@
-import Profile from "../models/profile.js";
+import Profile from "../models/profile.model.js";
 import { logger } from "../utils/helpers.js";
 import sanitizeData from "../utils/sanitizeData.js";
 import postReflectionStory from "../services/openai.js";
@@ -71,7 +71,7 @@ export async function updateSelfGuidedProgram(req, res) {
     const userUpdate = await Profile.findOneAndUpdate(
       { userId: req.user.id },
       { $set: updates },
-      { new: true }
+      { new: true },
     );
 
     res.status(200).json({
@@ -93,12 +93,10 @@ export async function reflectionCorner(req, res) {
     const { message } = req.body;
     const weekNumber = req.params.weekNumber;
     if (weekNumber <= 0 || weekNumber > 6)
-      return res
-        .status(400)
-        .json({
-          status: false,
-          message: "Week number cannot be less than 1 or greater than 6.",
-        });
+      return res.status(400).json({
+        status: false,
+        message: "Week number cannot be less than 1 or greater than 6.",
+      });
 
     // check if user paid for self-guided program
     const userProfile = await Profile.findOne({ userId: req.user.id });

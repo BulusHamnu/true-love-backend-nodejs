@@ -1,14 +1,14 @@
-import { env, stripe } from "../../confiq/index.js";
-import Profile from "../models/profile.js";
-import { templates, sendEmail } from "../services/email.js";
+import { env, stripe } from "../config/index.js";
+import Profile from "../models/profile.model.js";
+import { templates } from "../services/email.js";
 import sendResendEmail from "../services/resend.js";
 import {
   formatAmount,
   logger,
   createStripeCustomer,
 } from "../utils/helpers.js";
-import Transaction from "../models/transactions.js";
-import User from "../models/user.js";
+import Transaction from "../models/transaction.model.js";
+import User from "../models/user.model.js";
 
 // create checkout endpoint
 export async function createSelfGuidedCheckOut(req, res) {
@@ -137,7 +137,7 @@ export async function paymentSucessful(req, res) {
     const event = stripe.webhooks.constructEvent(
       rawBody,
       sig,
-      env.STRIPE_WEBHOOK_SECRET_KEY
+      env.STRIPE_WEBHOOK_SECRET_KEY,
     );
 
     const data = event.data.object;
@@ -176,7 +176,7 @@ export async function paymentSucessful(req, res) {
             $set: { hasPremium: true },
             $push: { transactions: newTransaction._id },
           },
-          { new: true }
+          { new: true },
         );
       }
 
@@ -190,8 +190,8 @@ export async function paymentSucessful(req, res) {
           data.customer_details?.name || "new user",
           data.customer_details?.email || "No Provided",
           formatAmount(data.amount_subtotal),
-          `${new Date().toLocaleDateString()}`
-        )
+          `${new Date().toLocaleDateString()}`,
+        ),
       );
 
       // for customer
@@ -199,8 +199,8 @@ export async function paymentSucessful(req, res) {
         data.customer_details?.email,
         "Payment Successful",
         templates.selfGuidedCustomerTemplate(
-          data.customer_details?.name || "cupid’s pick"
-        )
+          data.customer_details?.name || "cupid’s pick",
+        ),
       );
     } else if (
       event.type === "checkout.session.completed" &&
@@ -235,7 +235,7 @@ export async function paymentSucessful(req, res) {
             $set: { paidForCoaching: true, hasPremium: true },
             $push: { transactions: newTransaction._id },
           },
-          { new: true }
+          { new: true },
         );
       }
 
@@ -249,8 +249,8 @@ export async function paymentSucessful(req, res) {
           data.customer_details?.name || "new user",
           data.customer_details?.email || "No Provided",
           formatAmount(data.amount_subtotal),
-          `${new Date().toLocaleDateString()}`
-        )
+          `${new Date().toLocaleDateString()}`,
+        ),
       );
 
       // for customer
@@ -258,8 +258,8 @@ export async function paymentSucessful(req, res) {
         data.customer_details?.email,
         "Payment Successful",
         templates.customerTemplate(
-          data.customer_details?.name || "cupid’s pick"
-        )
+          data.customer_details?.name || "cupid’s pick",
+        ),
       );
     }
 

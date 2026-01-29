@@ -1,14 +1,10 @@
-import {
-  generateCode,
-  hashPassword,
-  logger,
-} from "../utils/helpers.js";
-import User from "../models/user.js";
-import Profile from "../models/profile.js";
+import { generateCode, hashPassword, logger } from "../utils/helpers.js";
+import User from "../models/user.model.js";
+import Profile from "../models/profile.model.js";
 import jwt from "jsonwebtoken";
 import Joi from "joi";
-import { env } from "../../confiq/index.js";
-import { templates, sendEmail } from "../services/email.js";
+import { env } from "../config/index.js";
+import { templates } from "../services/email.js";
 import sendResendEmail from "../services/resend.js";
 
 export default async function autoCreateUser(req, res, next) {
@@ -53,14 +49,14 @@ export default async function autoCreateUser(req, res, next) {
     const token = jwt.sign(
       { email, id: newUser._id, isVerified: newUser.isVerified },
       env.SECRET_KEY,
-      { expiresIn: "30d" }
+      { expiresIn: "30d" },
     );
 
     // send verfication email
     sendResendEmail(
       email,
       "Welcome To True-Love App",
-      templates.defaultPasswordTemplate("Cupid's chosen", email, password)
+      templates.defaultPasswordTemplate("Cupid's chosen", email, password),
     );
 
     // set res cookies for 30d

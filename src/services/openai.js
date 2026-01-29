@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { env } from "../../confiq/index.js";
+import { env } from "../config/index.js";
 const client = new OpenAI({ apiKey: env.OPEN_API_KEY });
 import { logger } from "../utils/helpers.js";
 import weekReadings from "../utils/weekReadings.js";

@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { env } from "../../confiq/index.js";
+import { env } from "../config/index.js";
 
 // nodemailer config
 const transporter = nodemailer.createTransport({
@@ -36,7 +36,7 @@ export const templates = {
     customer_name,
     customer_email,
     amount_paid,
-    payment_date
+    payment_date,
   ) => {
     return `
       <!DOCTYPE html>
@@ -307,7 +307,7 @@ export const templates = {
     customer_name,
     customer_email,
     amount_paid,
-    payment_date
+    payment_date,
   ) => {
     return `
       <!DOCTYPE html>

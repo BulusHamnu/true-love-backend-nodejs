@@ -1,5 +1,5 @@
-import { logInfo, logError, logger } from "../utils/helpers.js";
-import { env } from "../../confiq/index.js";
+import { logger } from "../utils/helpers.js";
+import { env } from "../config/index.js";
 import jwt from "jsonwebtoken";
 
 export default async function (req, res, next) {

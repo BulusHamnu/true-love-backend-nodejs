@@ -1,8 +1,7 @@
 import bcrypt from "bcryptjs";
 import winston from "winston";
 const { createLogger, transports, format, printf, colorize } = winston;
-import { stripe } from "../../confiq/index.js";
-import { env } from "../../confiq/index.js";
+import { stripe, env } from "../config/index.js";
 
 // create stipe customer
 export async function createStripeCustomer(userProfile) {
@@ -46,7 +45,7 @@ export const logInfo = (message, data) => {
       TimeStamp: new Date().toISOString(),
       Message: message || "Info",
       Data: data || "",
-    })
+    }),
   );
 };
 
@@ -58,7 +57,7 @@ export const logError = (message, error) => {
       TimeStamp: new Date().toISOString(),
       Message: message,
       Error: error || "",
-    })
+    }),
   );
 };
 
@@ -88,7 +87,7 @@ const myFormat = format.printf(
     return `[${timestamp}] ${level}: ${message} ${
       Object.keys(meta).length > 0 ? JSON.stringify(meta) : ""
     }`;
-  }
+  },
 );
 
 export const logger = createLogger({
@@ -126,9 +125,7 @@ export async function verifyIdToken(idToken) {
     const payload = ticket.getPayload();
     return payload;
   } catch (error) {
-    logger.error(error)
-    return null
+    logger.error(error);
+    return null;
   }
 }
-
-

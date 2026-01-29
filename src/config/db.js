@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { logger } from "../src/utils/helpers.js";
+import { logger } from "../utils/helpers.js";
 // import { logInfo, logError } from "../src/utils/helpers.js";
 
 // connect to mongodb

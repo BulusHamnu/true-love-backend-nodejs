@@ -1,20 +1,19 @@
 import express from "express";
-import { env, stripe } from "./confiq/index.js";
-import { logInfo, logError } from "./src/utils/helpers.js";
-import connectDb from "./confiq/db.js";
-import authRoutes from "./src/routes/authRoutes.js";
-import profileRoutes from "./src/routes/profileRoutes.js";
-import selfGuidedRoutes from "./src/routes/selfGuided.js";
-import paymentRoutes from "./src/routes/payment.js";
-import transactionRoutes from "./src/routes/transaction.js";
+import { env, stripe } from "./config/index.js";
+import connectDb from "./config/db.js";
+import authRoutes from "./routes/auth.routes.js";
+import profileRoutes from "./routes/profile.routes.js";
+import selfGuidedRoutes from "./routes/self-guided.routes.js";
+import paymentRoutes from "./routes/checkout.routes.js";
+import transactionRoutes from "./routes/transaction.routes.js";
 import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import cors from "cors";
 const dirname = import.meta.dirname;
 import cookieParser from "cookie-parser";
-import { logger } from "./src/utils/helpers.js";
-import getAppStats from "./src/controllers/getAppStat.js";
+import { logger } from "./utils/helpers.js";
+import getAppStats from "./controllers/get-app-stats.controller.js";
 const port = env.PORT;
 const app = express();
 
@@ -28,13 +27,13 @@ app.use(
         logger.http(log.trim());
       },
     },
-  })
+  }),
 );
 app.use(
   cors({
     origin: "https://true-love.app",
     credentials: true,
-  })
+  }),
 );
 app.use(cookieParser());
 app.set("trust proxy", true);

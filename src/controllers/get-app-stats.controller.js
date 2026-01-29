@@ -1,4 +1,4 @@
-import Profile from "../models/profile.js";
+import Profile from "../models/profile.model.js";
 import { logger } from "../utils/helpers.js";
 
 const getAppStats = async (req, res) => {
@@ -19,7 +19,7 @@ const getAppStats = async (req, res) => {
     // get start of current week
     const dayOfWeek = date.getDay();
     const startOfWeek = new Date(
-      date.getTime() - dayOfWeek * 60 * 60 * 24 * 1000
+      date.getTime() - dayOfWeek * 60 * 60 * 24 * 1000,
     );
     const endOfWeek = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -27,7 +27,7 @@ const getAppStats = async (req, res) => {
     const newUsersThisWeek = totalUsers.filter(
       (user) =>
         new Date(user.createdAt) >= startOfWeek &&
-        new Date(user.createdAt) <= endOfWeek
+        new Date(user.createdAt) <= endOfWeek,
     );
 
     const stats = {

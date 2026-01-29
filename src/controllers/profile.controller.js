@@ -1,6 +1,6 @@
 import { logError, logger } from "../utils/helpers.js";
-import User from "../models/user.js";
-import Profile from "../models/profile.js";
+import User from "../models/user.model.js";
+import Profile from "../models/profile.model.js";
 import { profileUpdate } from "../utils/validators.js";
 import Joi from "joi";
 import sanitizeData from "../utils/sanitizeData.js";
@@ -75,7 +75,7 @@ export async function updateProfile(req, res) {
     const updateUser = await Profile.findOneAndUpdate(
       { email: req.user.email },
       { $set: { ...data } },
-      { new: true }
+      { new: true },
     );
 
     res.status(200).json({

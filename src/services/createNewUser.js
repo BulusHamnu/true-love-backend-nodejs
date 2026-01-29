@@ -1,5 +1,5 @@
-import User from "../models/user.js";
-import Profile from "../models/profile.js";
+import User from "../models/user.model.js";
+import Profile from "../models/profile.model.js";
 import { logger } from "../utils/helpers.js";
 
 export default async function createNewUser({

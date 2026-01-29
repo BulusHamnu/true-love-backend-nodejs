@@ -12,7 +12,7 @@ import {
   forgetPassword,
   verifyEmail,
   verifyPasswordResetCode,
-} from "../controllers/auth/authControllers.js";
+} from "../controllers/auth/auth.controller.js";
 import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 

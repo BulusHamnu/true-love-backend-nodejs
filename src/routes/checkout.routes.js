@@ -4,7 +4,7 @@ import {
   paymentSucessful,
   createSelfGuidedCheckOut,
   createCheckOutNewdoor,
-} from "../controllers/paymentController.js";
+} from "../controllers/payment.controller.js";
 // import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 import autoCreateUser from "../middlewares/autoCreateUser.js";

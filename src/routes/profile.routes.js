@@ -1,5 +1,5 @@
 import express from "express";
-import { updateProfile, getProfile } from "../controllers/profile.js";
+import { updateProfile, getProfile } from "../controllers/profile.controller.js";
 import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 
