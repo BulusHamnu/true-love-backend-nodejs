@@ -1,4 +1,5 @@
 import Joi from "joi";
+import validateAndSanitizeData from "./validateAndSanitizeData.js";
 
 const passwordField = Joi.string()
   .required()
@@ -48,3 +49,18 @@ export const selfGuidedValidator = Joi.object({
     }),
   }),
 }).min(1);
+
+/* Checkoutbody schema */
+export const checkoutBodySchema = Joi.object({
+  product: Joi.string()
+    .required()
+    .valid("self-guided-program", "coaching-program")
+    .messages({
+      "any.only": "Product must be Self-guided-program or coaching-program",
+    }),
+  newDoor: Joi.boolean().optional().default(false),
+});
+
+export function validateCheckoutBody(body) {
+  return validateAndSanitizeData(body, checkoutBodySchema);
+}

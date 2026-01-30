@@ -1,4 +1,4 @@
-import AppError from "../errors/appError.js";
+import AppError, { ErrorCodes } from "../errors/appError.js";
 import sanitizeData from "./sanitizeData.js";
 
 export default function validateAndSanitizeData(data, schema) {
@@ -14,7 +14,7 @@ export default function validateAndSanitizeData(data, schema) {
       details[errField] = err.message;
     }
     throw new AppError(
-      "VALIDATION_ERROR",
+      ErrorCodes.VALIDATION_ERROR,
       "Validation failed.",
       400,
       true,

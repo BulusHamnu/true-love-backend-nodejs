@@ -2,136 +2,202 @@ import { env, stripe } from "../config/index.js";
 import Profile from "../models/profile.model.js";
 import { templates } from "../services/email.js";
 import sendResendEmail from "../services/resend.js";
-import {
-  formatAmount,
-  logger,
-  createStripeCustomer,
-} from "../utils/helpers.js";
+import { formatAmount, logger } from "../utils/helpers.js";
 import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
+import AppError, { ErrorCodes } from "../errors/appError.js";
+import { validateCheckoutBody } from "../utils/validators.js";
 
-// create checkout endpoint
-export async function createSelfGuidedCheckOut(req, res) {
-  const userProfile = req.userProfile;
-  let customerId = userProfile.stripeCustomerId;
-  try {
-    if (userProfile.hasPremium === true)
-      return res.status(409).json({
-        status: true,
-        message: "User already paid for the self-guided program.",
-      });
+/* Create checkout function */
+// Create stripe customer
+export async function get0rCreateStripeCustomerId({
+  fullName,
+  email,
+  phone,
+  userId,
+  stripeCustomerId,
+}) {
+  if (stripeCustomerId) {
+    return stripeCustomerId;
+  }
 
-    if (!customerId) {
-      customerId = await createStripeCustomer(userProfile);
-    }
+  const customer = await stripe.customers.create({
+    name: fullName,
+    email,
+    phone,
+  });
 
-    // get coupon
-    const coupons = [];
-    if (req.body.coupon) {
-      coupons.push({
-        coupon: req.body.coupon,
-      });
-    }
+  await Profile.findOneAndUpdate(
+    { userId },
+    { stripeCustomerId: customer.id },
+    { new: true },
+  );
 
-    // create stripe checkout
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price: env.SELF_GUIDED_PRICE_ID,
-          quantity: 1,
-        },
-      ],
-      allow_promotion_codes: true,
-      // customer details
-      customer: customerId,
-      phone_number_collection: { enabled: true },
-      mode: "payment",
-      success_url: `${env.FRONTEND_URL}/self-guided-success`,
-      cancel_url: `${env.FRONTEND_URL}/self-guided-error`,
-      automatic_tax: { enabled: false },
-      metadata: {
-        site: "self-guided-true-love",
+  return customer.id;
+}
+
+// Get user profile
+async function getProfile(userId) {
+  const userProfile = await Profile.findOne({ userId }).lean();
+  if (!userProfile) {
+    throw new AppError(
+      ErrorCodes.PROFILE_NOT_FOUND,
+      "Profile not found.",
+      404,
+      true,
+    );
+  }
+  return userProfile;
+}
+
+// create stripe session
+async function createStripeSession(stripeCustomerId, product, newDoor = false) {
+  let priceId;
+  let successUrl;
+  let errorUrl;
+  let allowCoupon;
+
+  if (product === "self-guided-program") {
+    priceId = env.SELF_GUIDED_PRICE_ID;
+    successUrl = `${env.FRONTEND_URL}/self-guided-success`;
+    errorUrl = `${env.FRONTEND_URL}/self-guided-error`;
+    allowCoupon = true;
+  }
+
+  if (product === "coaching-program") {
+    priceId = newDoor ? env.NEWDOOR_COACHING_PRICE_ID : env.COACHING_PRICE_ID;
+    successUrl = `${env.FRONTEND_URL}/success`;
+    errorUrl = `${env.FRONTEND_URL}/error`;
+    allowCoupon = false;
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
       },
+    ],
+    allow_promotion_codes: allowCoupon,
+    customer: stripeCustomerId,
+    phone_number_collection: { enabled: true },
+    mode: "payment",
+    success_url: successUrl,
+    cancel_url: errorUrl,
+    automatic_tax: { enabled: false },
+    metadata: {
+      site: "true-love-app",
+      product,
+    },
+  });
+
+  return session.url;
+}
+
+export async function createCheckOut(req, res, next) {
+  try {
+    const { product, newDoor } = validateCheckoutBody(req.body);
+
+    const user = req.user;
+    const userProfile = await getProfile(user?._id);
+
+    logger.info(`${product} checkout requested`, {
+      customerEmail: user.email,
     });
 
-    logger.info("Checkout for self-guided program requested", {
-      customerId: customerId,
-      customerEmail: userProfile.email,
-    });
+    if (product === "self-guided-program" && userProfile.hasPremium === true) {
+      throw new AppError(
+        ErrorCodes.SELFGUIDED_ALREADY_PURCHASED,
+        "User already paid for the Self-guided Program.",
+        409,
+        true,
+        { email, hasPremium: true },
+      );
+    }
 
-    // res.redirect(session.url)
-    res.status(200).json({ status: true, data: { url: session.url } });
+    if (
+      product === "coaching-program" &&
+      userProfile.paidForCoaching === true
+    ) {
+      throw new AppError(
+        ErrorCodes.COACHING_ALREADY_PURCHASED,
+        "User already paid for the Coaching Program.",
+        409,
+        true,
+        { email, paidForCoaching: true },
+      );
+    }
+
+    const stripeCustomerId = await get0rCreateStripeCustomerId({
+      ...user,
+      ...userProfile,
+      userId: user._id,
+    });
+    const sessionUrl = await createStripeSession(
+      stripeCustomerId,
+      product,
+      newDoor,
+    );
+
+    res.status(200).json({ status: true, data: { url: sessionUrl } });
   } catch (error) {
-    logger.error(error);
-    if (error.message.includes("No such coupon"))
-      return res.status(400).json({
-        status: false,
-        message: "Coupon is invalid or not available.",
-      });
-    res.status(500).json({
-      status: false,
-      message: "An error occur.",
-    });
+    next(error);
   }
 }
 
 // create checkout endpoint
-export async function createCheckOut(req, res) {
-  try {
-    const userId = req.user?._id;
-    const userProfile = await Profile.findOne({ userId });
-    if (!userProfile) {
-      throw new Error("User does exist.");
-    }
+// export async function oldCreateCheckOut(req, res) {
+//   try {
+//     const user = req.user;
+//     const userProfile = await getProfile(user?._id);
 
-    let customerId = userProfile.stripeCustomerId;
-    if (userProfile.paidForCoaching === true)
-      return res.status(409).json({
-        status: true,
-        message: "User already paid for the coaching-program.",
-      });
+//     if (userProfile.paidForCoaching === true)
+//       return res.status(409).json({
+//         status: true,
+//         message: "User already paid for the coaching-program.",
+//       });
 
-    if (!customerId) {
-      customerId = await createStripeCustomer(userProfile);
-    }
+//     if (!customerId) {
+//       customerId = await createStripeCustomer(userProfile);
+//     }
 
-    // create stripe checkout
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price: env.PRODUCT_PRICE_ID,
-          quantity: 1,
-        },
-      ],
-      // customer details
-      customer: customerId,
-      phone_number_collection: { enabled: true },
-      mode: "payment",
-      success_url: `${env.FRONTEND_URL}/success`,
-      cancel_url: `${env.FRONTEND_URL}/error`,
-      automatic_tax: { enabled: false },
-      metadata: {
-        site: "true-love",
-      },
-    });
+//     // create stripe checkout
+//     const session = await stripe.checkout.sessions.create({
+//       line_items: [
+//         {
+//           price: env.PRODUCT_PRICE_ID,
+//           quantity: 1,
+//         },
+//       ],
+//       // customer details
+//       customer: customerId,
+//       phone_number_collection: { enabled: true },
+//       mode: "payment",
+//       success_url: `${env.FRONTEND_URL}/success`,
+//       cancel_url: `${env.FRONTEND_URL}/error`,
+//       automatic_tax: { enabled: false },
+//       metadata: {
+//         site: "true-love",
+//       },
+//     });
 
-    logger.info("Checkout for coaching program requested", {
-      customerId: customerId,
-      customerEmail: userProfile.email,
-    });
+//     logger.info("Checkout for coaching program requested", {
+//       customerId: customerId,
+//       customerEmail: userProfile.email,
+//     });
 
-    res.status(200).json({ status: true, data: { url: session.url } });
-  } catch (error) {
-    logger.error(error);
+//     res.status(200).json({ status: true, data: { url: session.url } });
+//   } catch (error) {
+//     logger.error(error);
 
-    res.status(500).json({
-      status: false,
-      message: "An error occur.",
-    });
-  }
-}
+//     res.status(500).json({
+//       status: false,
+//       message: "An error occur.",
+//     });
+//   }
+// }
 
-// stripe webhook
+/* Stripe webhook handler */
 export async function paymentSucessful(req, res) {
   try {
     const rawBody = req.body;
@@ -275,53 +341,53 @@ export async function paymentSucessful(req, res) {
 }
 
 // create checkout new-door
-export async function createCheckOutNewdoor(req, res) {
-  try {
-    const userProfile = req.userProfile;
-    let customerId = userProfile.stripeCustomerId;
+// export async function createCheckOutNewdoor(req, res) {
+//   try {
+//     const userProfile = req.userProfile;
+//     let customerId = userProfile.stripeCustomerId;
 
-    if (userProfile.paidForCoaching === true)
-      return res.status(409).json({
-        status: true,
-        message: "User already paid for the coaching-program.",
-      });
+//     if (userProfile.paidForCoaching === true)
+//       return res.status(409).json({
+//         status: true,
+//         message: "User already paid for the coaching-program.",
+//       });
 
-    if (!customerId) {
-      customerId = await createStripeCustomer(userProfile);
-    }
+//     if (!customerId) {
+//       customerId = await createStripeCustomer(userProfile);
+//     }
 
-    // create stripe checkout
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price: req.body.priceId || PRODUCT_PRICE_ID_NEW_DOOR,
-          quantity: 1,
-        },
-      ],
-      // customer details
-      customer: customerId,
-      phone_number_collection: { enabled: true },
-      mode: "payment",
-      success_url: `${env.FRONTEND_URL}/success`,
-      cancel_url: `${env.FRONTEND_URL}/error`,
-      automatic_tax: { enabled: false },
-      metadata: {
-        site: "true-love",
-      },
-    });
+//     // create stripe checkout
+//     const session = await stripe.checkout.sessions.create({
+//       line_items: [
+//         {
+//           price: req.body.priceId || PRODUCT_PRICE_ID_NEW_DOOR,
+//           quantity: 1,
+//         },
+//       ],
+//       // customer details
+//       customer: customerId,
+//       phone_number_collection: { enabled: true },
+//       mode: "payment",
+//       success_url: `${env.FRONTEND_URL}/success`,
+//       cancel_url: `${env.FRONTEND_URL}/error`,
+//       automatic_tax: { enabled: false },
+//       metadata: {
+//         site: "true-love",
+//       },
+//     });
 
-    logger.info("Checkout for coaching program requested", {
-      customerId: customerId,
-      customerEmail: userProfile.email,
-    });
+//     logger.info("Checkout for coaching program requested", {
+//       customerId: customerId,
+//       customerEmail: userProfile.email,
+//     });
 
-    res.status(200).json({ status: true, data: { url: session.url } });
-  } catch (error) {
-    logger.error(error);
+//     res.status(200).json({ status: true, data: { url: session.url } });
+//   } catch (error) {
+//     logger.error(error);
 
-    res.status(500).json({
-      status: false,
-      message: "An error occur.",
-    });
-  }
-}
+//     res.status(500).json({
+//       status: false,
+//       message: "An error occur.",
+//     });
+//   }
+// }
