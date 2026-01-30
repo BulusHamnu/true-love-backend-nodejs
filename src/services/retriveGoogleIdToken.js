@@ -1,4 +1,4 @@
-import { env } from "../config/index.js";
+import Env from "../config/index.js";
 import axios from "axios";
 import qs from "qs";
 import { verifyIdToken, logger } from "../utils/helpers.js";
@@ -11,10 +11,10 @@ export default async function retriveGoogleIdToken(accessCode, redirectUri) {
       googleCallbackUrl,
       qs.stringify({
         code: accessCode,
-        client_id: env.TRUE_LOVE_GOOGLE_CLIENT_ID,
-        client_secret: env.TRUE_LOVE_GOOGLE_CLIENT_SECRET,
+        client_id: Env.TRUE_LOVE_GOOGLE_CLIENT_ID,
+        client_secret: Env.TRUE_LOVE_GOOGLE_CLIENT_SECRET,
         grant_type: "authorization_code",
-        redirect_uri: `${env.BACKEND_URL}${redirectUri}`,
+        redirect_uri: `${Env.BACKEND_URL}${redirectUri}`,
       }),
       {
         headers: {

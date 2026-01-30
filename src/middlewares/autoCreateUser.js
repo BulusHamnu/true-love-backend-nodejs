@@ -1,7 +1,7 @@
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import Joi from "joi";
-import { env } from "../config/index.js";
+import Env from "../config/index.js";
 import EmailTemplates from "../utils/emailTemplates.js";
 import sendResendEmail from "../services/resend.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
@@ -58,7 +58,7 @@ export default async function autoCreateUser(req, res, next) {
 
     const token = jwt.sign(
       { email, id: newUser._id, isVerified: newUser.isVerified },
-      env.REFRESH_TOKEN_SECRET_KEY,
+      Env.REFRESH_TOKEN_SECRET_KEY,
       { expiresIn: "30d" },
     );
 
@@ -70,7 +70,7 @@ export default async function autoCreateUser(req, res, next) {
     );
 
     // For automatic login
-    res.cookie("refreshToken", token, env.LOGIN_COOKIE_OPTS);
+    res.cookie("refreshToken", token, Env.LOGIN_COOKIE_OPTS);
 
     req.user = newUser;
     next();

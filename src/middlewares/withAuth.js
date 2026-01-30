@@ -1,5 +1,5 @@
 import { logger } from "../utils/helpers.js";
-import { env } from "../config/index.js";
+import Env from "../config/index.js";
 import jwt from "jsonwebtoken";
 
 export default async function (req, res, next) {
@@ -14,7 +14,7 @@ export default async function (req, res, next) {
       });
     }
 
-    const user = jwt.verify(token, env.SECRET_KEY);
+    const user = jwt.verify(token, Env.SECRET_KEY);
     req.user = user;
     // call the route handler
     next();

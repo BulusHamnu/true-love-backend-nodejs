@@ -3,10 +3,10 @@ import Stripe from "stripe";
 dotenv.config();
 
 // init stripe
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+export const StripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // env variables
-export const env = {
+export const Env = {
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",
   STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || "",
   STRIPE_WEBHOOK_SECRET_KEY: process.env.STRIPE_WEBHOOK_SECRET_KEY || "",
@@ -45,3 +45,5 @@ export const env = {
   BACKEND_URL: process.env.BACKEND_URL || "",
   FRONTEND_URL: process.env.FRONTEND_URL || "",
 };
+
+export default Env;

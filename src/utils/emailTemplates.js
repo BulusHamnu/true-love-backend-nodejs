@@ -1,5 +1,3 @@
-import { env } from "../config/index.js";
-
 /* Email Templates */
 const EmailTemplates = {
   // default template self confirmation

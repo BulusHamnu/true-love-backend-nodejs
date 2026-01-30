@@ -1,5 +1,5 @@
 import AppError, { ErrorCodes } from "../errors/appError.js";
-import { stripe, env } from "../config/index.js";
+import Env, { StripeClient, } from "../config/index.js";
 import { logger } from "../utils/helpers.js";
 import { processPayment } from "../services/processPayment.js";
 
@@ -18,10 +18,10 @@ export default async function stripeWebhookHandler(req, res) {
     }
 
     // To verify if event is from stripe
-    const event = stripe.webhooks.constructEvent(
+    const event = StripeClient.webhooks.constructEvent(
       rawBody,
       stripeSig,
-      env.STRIPE_WEBHOOK_SECRET_KEY,
+      Env.STRIPE_WEBHOOK_SECRET_KEY,
     );
 
     if (event.type !== "checkout.session.completed") {

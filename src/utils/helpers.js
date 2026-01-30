@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
 import winston from "winston";
 const { createLogger, transports, format, printf, colorize } = winston;
-import { stripe, env } from "../config/index.js";
+import Env, { StripeClient } from "../config/index.js";
 
-
+/* Format money function */
 export const formatAmount = (amountCents) => {
   try {
     const amountDollars = parseInt(amountCents) / 100;
@@ -95,13 +95,13 @@ export const logger = createLogger({
 
 // function for decoding googe id token
 import { OAuth2Client } from "google-auth-library";
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(Env.GOOGLE_CLIENT_ID);
 
 export async function verifyIdToken(idToken) {
   try {
     const ticket = await client.verifyIdToken({
       idToken: idToken,
-      audience: env.TRUE_GOOGLE_CLIENT_ID,
+      audience: Env.TRUE_LOVE_GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();

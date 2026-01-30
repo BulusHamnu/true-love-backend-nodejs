@@ -3,7 +3,7 @@ import User from "../../models/user.model.js";
 import Profile from "../../models/profile.model.js";
 import sendResendEmail from "../../services/resend.js";
 import EmailTemplates from "../../utils/emailTemplates.js";
-import { env } from "../../config/index.js";
+import Env from "../../config/index.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import * as authValidator from "../../utils/validators.js";
@@ -47,8 +47,8 @@ export async function getGoogleSignUpAuthUrl(req, res) {
     const oauth2Endpoint = "https://accounts.google.com/o/oauth2/v2/auth?";
 
     const params = new URLSearchParams({
-      client_id: env.TRUE_LOVE_GOOGLE_CLIENT_ID,
-      redirect_uri: `${env.BACKEND_URL}/api/auth/google/signup-fallback`,
+      client_id: Env.TRUE_LOVE_GOOGLE_CLIENT_ID,
+      redirect_uri: `${Env.BACKEND_URL}/api/auth/google/signup-fallback`,
       response_type: "code",
       scope: "openid profile email",
       state: "pass-through value",
@@ -74,7 +74,7 @@ export async function getGoogleSignUpAuthUrl(req, res) {
 export async function signupWithGoogle(req, res) {
   try {
     const accessCode = req.query.code; // get google code
-    if (!accessCode) return res.redirect(`${env.FRONTEND_URL}/auth`);
+    if (!accessCode) return res.redirect(`${Env.FRONTEND_URL}/auth`);
 
     // add retry here
     const payload = await retriveGoogleIdToken(
@@ -82,14 +82,14 @@ export async function signupWithGoogle(req, res) {
       "/api/auth/google/signup-fallback",
     );
 
-    if (!payload) return res.redirect(`${env.FRONTEND_URL}/auth`);
+    if (!payload) return res.redirect(`${Env.FRONTEND_URL}/auth`);
 
     // check if user already exist
     const userExist = await User.findOne({ email: payload.email });
     if (userExist) {
       if (userExist.provider === "local")
-        return res.redirect(`${env.FRONTEND_URL}/auth?error=email_taken`);
-      return res.redirect(`${env.FRONTEND_URL}/auth?error=google_user_exist`);
+        return res.redirect(`${Env.FRONTEND_URL}/auth?error=email_taken`);
+      return res.redirect(`${Env.FRONTEND_URL}/auth?error=google_user_exist`);
     }
 
     // fake user password hash
@@ -117,19 +117,19 @@ export async function signupWithGoogle(req, res) {
 
     const token = jwt.sign(
       { email: newUser.email, id: newUser.id, isVerified: newUser.isVerified },
-      env.SECRET_KEY,
+      Env.SECRET_KEY,
       { expiresIn: "30d" },
     );
 
     // set res cookies for 30d
-    res.cookie("token", token, env.LOGIN_COOKIE_OPTS);
+    res.cookie("token", token, Env.LOGIN_COOKIE_OPTS);
 
     logger.info("User login after google signup.", { email: newUser.email });
 
-    res.redirect(env.FRONTEND_URL);
+    res.redirect(Env.FRONTEND_URL);
   } catch (error) {
     logger.error(error);
-    res.redirect(`${env.FRONTEND_URL}/auth`);
+    res.redirect(`${Env.FRONTEND_URL}/auth`);
   }
 }
 
@@ -178,12 +178,12 @@ export async function login(req, res) {
     // generate token: no refresh token, just token and save in cookies
     const token = jwt.sign(
       { email: user.email, id: user._id, isVerified: user.isVerified },
-      env.SECRET_KEY,
+      Env.SECRET_KEY,
       { expiresIn: "30d" },
     );
 
     // set res cookies for 30d
-    res.cookie("token", token, env.LOGIN_COOKIE_OPTS);
+    res.cookie("token", token, Env.LOGIN_COOKIE_OPTS);
 
     logger.info("User login successful", { email: user.email });
 
@@ -207,8 +207,8 @@ export async function getGoogleLoginAuthUrl(req, res) {
     logger.info("User request for google sign in oauth url.");
 
     const params = new URLSearchParams({
-      client_id: env.TRUE_LOVE_GOOGLE_CLIENT_ID,
-      redirect_uri: `${env.BACKEND_URL}/api/auth/google/login-fallback`,
+      client_id: Env.TRUE_LOVE_GOOGLE_CLIENT_ID,
+      redirect_uri: `${Env.BACKEND_URL}/api/auth/google/login-fallback`,
       response_type: "code",
       scope: "openid profile email",
       state: "pass-through value",
@@ -234,7 +234,7 @@ export async function getGoogleLoginAuthUrl(req, res) {
 export async function signinWithGoogle(req, res) {
   try {
     const accessCode = req.query.code; // get google code
-    if (!accessCode) return res.redirect(`${env.FRONTEND_URL}/auth`);
+    if (!accessCode) return res.redirect(`${Env.FRONTEND_URL}/auth`);
 
     // add retry here
     const payload = await retriveGoogleIdToken(
@@ -242,12 +242,12 @@ export async function signinWithGoogle(req, res) {
       "/api/auth/google/login-fallback",
     );
 
-    if (!payload) return res.redirect(`${env.FRONTEND_URL}/auth`);
+    if (!payload) return res.redirect(`${Env.FRONTEND_URL}/auth`);
 
     // check if user already exist
     const userExist = await User.findOne({ email: payload.email });
     if (!userExist || userExist.provider != "google")
-      return res.redirect(`${env.FRONTEND_URL}/auth?error=google_not_link`);
+      return res.redirect(`${Env.FRONTEND_URL}/auth?error=google_not_link`);
 
     const token = jwt.sign(
       {
@@ -255,19 +255,19 @@ export async function signinWithGoogle(req, res) {
         id: userExist._id,
         isVerified: userExist.isVerified,
       },
-      env.SECRET_KEY,
+      Env.SECRET_KEY,
       { expiresIn: "30d" },
     );
 
     // set res cookies for 30d
-    res.cookie("token", token, env.LOGIN_COOKIE_OPTS);
+    res.cookie("token", token, Env.LOGIN_COOKIE_OPTS);
 
     logger.info("User login with google oauth2.", { email: userExist.email });
 
-    res.redirect(env.FRONTEND_URL);
+    res.redirect(Env.FRONTEND_URL);
   } catch (error) {
     logger.error(error);
-    res.redirect(`${env.FRONTEND_URL}/auth`);
+    res.redirect(`${Env.FRONTEND_URL}/auth`);
   }
 }
 
@@ -330,7 +330,7 @@ export async function logout(req, res) {
 
     // delete token cookies
     res.cookie("token", "", {
-      secure: process.env.NODE_ENV === "production",
+      secure: process.Env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: "none",
       maxAge: 0,

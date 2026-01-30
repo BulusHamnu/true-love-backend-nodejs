@@ -1,5 +1,5 @@
 import express from "express";
-import { env, stripe } from "./config/index.js";
+import Env from "./config/index.js";
 import connectDb from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
@@ -15,7 +15,7 @@ import cookieParser from "cookie-parser";
 import { logger } from "./utils/helpers.js";
 import getAppStats from "./controllers/get-app-stats.controller.js";
 import errorHandler from "./middlewares/errorHandler.js";
-const port = env.PORT;
+const port = Env.PORT;
 const app = express();
 
 // Middleware

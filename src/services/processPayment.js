@@ -5,7 +5,7 @@ import AppError, { ErrorCodes } from "../errors/appError.js";
 import Transaction from "../models/transaction.model.js";
 import Profile from "../models/profile.model.js";
 import sendResendEmail from "./resend.js";
-import { env } from "../config/index.js";
+import { Env } from "../config/index.js";
 
 /* Process stripe payment */
 async function recordPayment({
@@ -81,7 +81,7 @@ export async function processPayment(data) {
   // Send confirmation email
   if (data.metadata.product === "self-guided-program") {
     await sendResendEmail(
-      env.TOTUR_EMAIL,
+      Env.TOTUR_EMAIL,
       `Payment For True Love Self-Guided Program`,
       EmailTemplates.toturSelfGuidedTemplate(
         "David Prorok",
@@ -103,7 +103,7 @@ export async function processPayment(data) {
 
   if (data.metadata.product === "coaching-program") {
     await sendResendEmail(
-      env.TOTUR_EMAIL,
+      Env.TOTUR_EMAIL,
       "Payment For True Love Transformation Program",
       EmailTemplates.toturCoachingTemplate(
         "David Prorok",

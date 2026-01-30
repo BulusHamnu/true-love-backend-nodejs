@@ -1,21 +1,21 @@
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import Profile from "../models/profile.model.js";
-import { stripe, env } from "../config/index.js";
+import Env, { StripeClient } from "../config/index.js";
 
 /* Create checkout function */
-// Create stripe customer
+// Create StripeClient customer
 export async function get0rCreateStripeCustomerId({
   fullName,
   email,
   phone,
   userId,
-  stripeCustomerId,
+  StripeClientCustomerId,
 }) {
-  if (stripeCustomerId) {
-    return stripeCustomerId;
+  if (StripeClientCustomerId) {
+    return StripeClientCustomerId;
   }
 
-  const customer = await stripe.customers.create({
+  const customer = await StripeClient.customers.create({
     name: fullName,
     email,
     phone,
@@ -23,16 +23,16 @@ export async function get0rCreateStripeCustomerId({
 
   await Profile.findOneAndUpdate(
     { userId },
-    { stripeCustomerId: customer.id },
+    { StripeClientCustomerId: customer.id },
     { new: true },
   );
 
   return customer.id;
 }
 
-// create stripe session
+// create StripeClient session
 export async function createStripeSession(
-  stripeCustomerId,
+  StripeClientCustomerId,
   product,
   newDoor = false,
 ) {
@@ -42,20 +42,20 @@ export async function createStripeSession(
   let allowCoupon;
 
   if (product === "self-guided-program") {
-    priceId = env.SELF_GUIDED_PRICE_ID;
-    successUrl = `${env.FRONTEND_URL}/self-guided-success`;
-    errorUrl = `${env.FRONTEND_URL}/self-guided-error`;
+    priceId = Env.SELF_GUIDED_PRICE_ID;
+    successUrl = `${Env.FRONTEND_URL}/self-guided-success`;
+    errorUrl = `${Env.FRONTEND_URL}/self-guided-error`;
     allowCoupon = true;
   }
 
   if (product === "coaching-program") {
-    priceId = newDoor ? env.NEWDOOR_COACHING_PRICE_ID : env.COACHING_PRICE_ID;
-    successUrl = `${env.FRONTEND_URL}/success`;
-    errorUrl = `${env.FRONTEND_URL}/error`;
+    priceId = newDoor ? Env.NEWDOOR_COACHING_PRICE_ID : Env.COACHING_PRICE_ID;
+    successUrl = `${Env.FRONTEND_URL}/success`;
+    errorUrl = `${Env.FRONTEND_URL}/error`;
     allowCoupon = false;
   }
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await StripeClient.checkout.sessions.create({
     line_items: [
       {
         price: priceId,
@@ -63,7 +63,7 @@ export async function createStripeSession(
       },
     ],
     allow_promotion_codes: allowCoupon,
-    customer: stripeCustomerId,
+    customer: StripeClientCustomerId,
     phone_number_collection: { enabled: true },
     mode: "payment",
     success_url: successUrl,
@@ -99,13 +99,13 @@ export async function createCheckout(user, product, newDoor) {
     );
   }
 
-  const stripeCustomerId = await get0rCreateStripeCustomerId({
+  const StripeClientCustomerId = await get0rCreateStripeCustomerId({
     ...user,
     userId: user._id,
   });
 
   const sessionUrl = await createStripeSession(
-    stripeCustomerId,
+    StripeClientCustomerId,
     product,
     newDoor,
   );
