@@ -4,17 +4,24 @@ import Joi from "joi";
 import { env } from "../config/index.js";
 import { templates } from "../services/email.js";
 import sendResendEmail from "../services/resend.js";
-import AppError from "../errors/appError.js";
+import AppError, { ErrorCodes } from "../errors/appError.js";
 import * as authService from "../services/auth.service.js";
+import Profile from "../models/profile.model.js";
 
 /* Email validator */
 function validateEmail(body) {
   const validator = Joi.string().required().email().label("email");
   const { value, error } = validator.validate(body.email);
   if (error) {
-    throw new AppError("VALIDATION_ERROR", "Validation failed", 400, true, {
-      email: error.message,
-    });
+    throw new AppError(
+      ErrorCodes.VALIDATION_ERROR,
+      "Validation failed",
+      400,
+      true,
+      {
+        email: error.message,
+      },
+    );
   }
   return value;
 }
@@ -34,9 +41,11 @@ function generateRandPassword(limit = 10) {
 export default async function autoCreateUser(req, res, next) {
   try {
     const email = validateEmail(req.body);
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).lean();
+
     if (user) {
-      req.user = user;
+      const userProfile = await Profile.findOne({ userId: user._id }).lean();
+      req.user = { ...user, id: user._id, ...userProfile };
       return next();
     }
 
