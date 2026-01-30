@@ -127,63 +127,112 @@ export async function createCheckOut(req, res, next) {
 }
 
 /* Stripe webhook handler */
+async function recordPayment({
+  email,
+  amount,
+  product,
+  paymentIntent,
+  status,
+  name,
+  phone,
+  receipt,
+}) {
+  logger.info("New payment received.", {
+    amount: formatAmount(amount),
+    status,
+    email,
+    name,
+    phone,
+  });
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new AppError(
+      ErrorCodes.USER_NOT_FOUND,
+      "User not found.",
+      404,
+      false,
+    );
+  }
+
+  // Save transaction record
+  const newTransaction = await Transaction.create({
+    userId: user._id,
+    amount,
+    status: "paid",
+    type: product,
+    paymentIntent,
+    receipt,
+  });
+
+  /* 
+    Check the product type to know what to update
+    mark hasPremium if user purchase the self-guided-program
+    mark hasPremium & paidForCoaching if user purchased the coaching-program package
+  */
+  const updates =
+    product === "self-guided-program"
+      ? { hasPremium: true }
+      : { paidForCoaching: true, hasPremium: true };
+
+  await Profile.findOneAndUpdate(
+    { userId: user._id },
+    {
+      $set: updates,
+      $push: { transactions: newTransaction._id },
+    },
+    { new: true },
+  );
+}
+
 export async function paymentSucessful(req, res) {
   try {
     const rawBody = req.body;
-    const sig = req.headers["stripe-signature"];
+    const stripeSig = req.headers["stripe-signature"];
+    if (!stripeSig) {
+      throw new AppError(
+        ErrorCodes.STRIPE_SIGNATURE_NOT_FOUND,
+        "Stripe signature not found",
+        400,
+        true,
+      );
+    }
 
-    // construct stripe event for signature
+    // To verify if event is from stripe
     const event = stripe.webhooks.constructEvent(
       rawBody,
-      sig,
+      stripeSig,
       env.STRIPE_WEBHOOK_SECRET_KEY,
     );
 
+    if (event.type !== "checkout.session.completed") {
+      return res.status(200).send("Event received.");
+    }
+
     const data = event.data.object;
-    logger.info("Stripe webhook received.", { paymentEventType: data.type });
+    logger.info("Stripe webhook received.", { eventType: event.type });
 
-    if (
-      event.type === "checkout.session.completed" &&
-      data.metadata.site === "self-guided-true-love"
-    ) {
-      logger.info("New payment submited for self-guided version!", {
-        amount: formatAmount(data.amount_subtotal),
-        status: data.payment_status,
-        email: data.customer_details?.email,
-        name: data.customer_details?.name,
-        phoneNo: data.customer_details?.phone,
-      });
+    if (data.metadata.site !== "true-love-app") {
+      logger.info("Event does not belong to the app.");
+      return res.status(200).send("Event received.");
+    }
 
-      // add the transaction
-      const user = await User.findOne({ email: data.customer_details?.email });
+    await recordPayment({
+      email: data.customer_details?.email,
+      amount: data.amount_subtotal,
+      product: data.metadata.product,
+      paymentIntent: data.payment_intent,
+      status: data.payment_status,
+      name: data.customer_details?.name,
+      phone: data.customer_details?.phone,
+      receipt: data.receipt_url,
+    });
 
-      // if user exist saved the transaction record
-      if (user) {
-        const newTransaction = await Transaction.create({
-          userId: user._id,
-          amount: data.amount_subtotal,
-          status: "paid",
-          type: "self-guided-program",
-          paymentIntent: data.payment_intent,
-          receipt: data.receipt_url,
-        });
-
-        // find users profile and update payment status
-        await Profile.findOneAndUpdate(
-          { userId: user._id },
-          {
-            $set: { hasPremium: true },
-            $push: { transactions: newTransaction._id },
-          },
-          { new: true },
-        );
-      }
-
-      // send confirmation emails
-      // for tutor
+    // Send confirmation email
+    if (data.metadata.product === "self-guided-program") {
       await sendResendEmail(
         env.TOTUR_EMAIL,
-        "Payment For True Love Self-Guided Version",
+        `Payment For True Love Self-Guided Program`,
         templates.selfGuidedtutorTemplate(
           "David Prorok",
           data.customer_details?.name || "new user",
@@ -193,76 +242,38 @@ export async function paymentSucessful(req, res) {
         ),
       );
 
-      // for customer
       await sendResendEmail(
         data.customer_details?.email,
         "Payment Successful",
         templates.selfGuidedCustomerTemplate(
-          data.customer_details?.name || "cupid’s pick",
+          data.customer_details?.name || "Cupid’s pick",
         ),
       );
-    } else if (
-      event.type === "checkout.session.completed" &&
-      data.metadata.site === "true-love"
-    ) {
-      logger.info("New payment submited for self-guided version!", {
-        amount: formatAmount(data.amount_subtotal),
-        status: data.payment_status,
-        email: data.customer_details?.email,
-        name: data.customer_details?.name,
-        phoneNo: data.customer_details?.phone,
-      });
+    }
 
-      // add the transaction
-      const user = await User.findOne({ email: data.customer_details?.email });
-
-      // if user exist saved the transaction record
-      if (user) {
-        const newTransaction = await Transaction.create({
-          userId: user._id,
-          amount: data.amount_subtotal,
-          status: "paid",
-          type: "coaching-program",
-          paymentIntent: data.payment_intent,
-          receipt: data.receipt_url,
-        });
-
-        // find users profile and update payment status
-        await Profile.findOneAndUpdate(
-          { userId: user._id },
-          {
-            $set: { paidForCoaching: true, hasPremium: true },
-            $push: { transactions: newTransaction._id },
-          },
-          { new: true },
-        );
-      }
-
-      // send confirmation emails
-      // for tutor
+    if (data.metadata.product === "coaching-program") {
       await sendResendEmail(
         env.TOTUR_EMAIL,
         "Payment For True Love Transformation Program",
         templates.tutorTemplate(
           "David Prorok",
-          data.customer_details?.name || "new user",
+          data.customer_details?.name || "New user",
           data.customer_details?.email || "No Provided",
           formatAmount(data.amount_subtotal),
           `${new Date().toLocaleDateString()}`,
         ),
       );
 
-      // for customer
       await sendResendEmail(
         data.customer_details?.email,
         "Payment Successful",
-        templates.customerTemplate(
-          data.customer_details?.name || "cupid’s pick",
+        templates.coachingTemplate(
+          data.customer_details?.name || "Cupid’s pick",
         ),
       );
     }
 
-    res.send();
+    res.status(200).send("Event received.");
   } catch (error) {
     logger.error(error);
     res.status(400);

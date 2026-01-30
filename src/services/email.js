@@ -550,7 +550,7 @@ export const templates = {
   },
 
   // default template for customer confirmation
-  customerTemplate: (customer_name) => {
+  coachingTemplate: (customer_name) => {
     return `
       <!DOCTYPE html>
       <html lang="en">
