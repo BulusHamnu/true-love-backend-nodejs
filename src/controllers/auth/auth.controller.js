@@ -2,7 +2,7 @@ import { generateCode, logger } from "../../utils/helpers.js";
 import User from "../../models/user.model.js";
 import Profile from "../../models/profile.model.js";
 import sendResendEmail from "../../services/resend.js";
-import { templates } from "../../services/email.js";
+import EmailTemplates from "../../utils/emailTemplates.js";
 import { env } from "../../config/index.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -112,7 +112,7 @@ export async function signupWithGoogle(req, res) {
     /* await sendResendEmail(
       email,
       "Please verify your email address",
-      templates.emailVerificationTemplate(fullName, verficationCode)
+      EmailTemplates.emailVerificationTemplate(fullName, verficationCode)
     ); */
 
     const token = jwt.sign(
@@ -307,7 +307,7 @@ export async function forgetPassword(req, res) {
     await sendResendEmail(
       email,
       "Reset Your Password",
-      templates.passwordVerificationTemplate(verficationCode),
+      EmailTemplates.passwordVerificationTemplate(verficationCode),
     );
 
     res.status(200).json({
@@ -389,7 +389,7 @@ export async function resendEmail(req, res) {
     await sendResendEmail(
       email,
       "Please verify your email address",
-      templates.emailVerificationTemplate(user.fullName, verficationCode),
+      EmailTemplates.emailVerificationTemplate(user.fullName, verficationCode),
     );
 
     res.status(200).json({
@@ -449,7 +449,7 @@ export async function resetPassword(req, res) {
     await sendResendEmail(
       email,
       "Password reset sucessfully.",
-      templates.paswordResetSucessful(user.fullName),
+      EmailTemplates.paswordResetSucessful(user.fullName),
     );
 
     res.status(200).json({

@@ -4,7 +4,7 @@ import connectDb from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
 import selfGuidedRoutes from "./routes/self-guided.routes.js";
-import paymentRoutes from "./routes/checkout.routes.js";
+import checkOutRoutes from "./routes/checkout.routes.js";
 import transactionRoutes from "./routes/transaction.routes.js";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -40,7 +40,7 @@ app.use(cookieParser());
 app.set("trust proxy", true);
 app.use((req, res, next) => {
   // skip json parsing for stripe webhook route
-  if (req.originalUrl === "/api/payment/stripe-webhook") {
+  if (req.originalUrl === "/api/checkout/stripe-webhook") {
     return next();
   }
   express.json()(req, res, next);
@@ -49,7 +49,7 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/me", profileRoutes);
-app.use("/api/payment", paymentRoutes);
+app.use("/api/checkout", checkOutRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/self-guided", selfGuidedRoutes);
 app.get("/api/monitor", getAppStats);

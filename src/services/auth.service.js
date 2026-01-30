@@ -4,7 +4,7 @@ import { logger, generateCode } from "../utils/helpers.js";
 import sendResendEmail from "./resend.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import bcrypt from "bcryptjs";
-import { templates } from "./email.js";
+import EmailTemplates from "../utils/emailTemplates.js";
 
 /* Create verification code function */
 export function createEmailVerificationCode() {
@@ -68,7 +68,10 @@ export async function createNewUser({
     await sendResendEmail(
       email,
       "Please verify your email address",
-      templates.emailVerificationTemplate(fullName, emailVerification?.code),
+      EmailTemplates.emailVerificationTemplate(
+        fullName,
+        emailVerification?.code,
+      ),
     );
 
   return {

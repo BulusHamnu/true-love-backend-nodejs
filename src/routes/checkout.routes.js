@@ -1,7 +1,8 @@
 import express from "express";
-import * as checkOutController from "../controllers/payment.controller.js";
+import * as checkOutController from "../controllers/checkout.controller.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 import autoCreateUser from "../middlewares/autoCreateUser.js";
+import stripeWebhookHandler from "../controllers/stripeWebhook.js";
 
 const router = express.Router();
 
@@ -10,13 +11,13 @@ router.post(
   "/create-checkout",
   rateLimter(3 * 60 * 1000, 10, "ip"),
   autoCreateUser,
-  checkOutController.createCheckOut,
+  checkOutController.createCheckOutHandler,
 );
 
 router.post(
   "/stripe-webhook",
   express.raw({ type: "application/json" }),
-  checkOutController.paymentSucessful,
+  stripeWebhookHandler,
 );
 
 export default router;

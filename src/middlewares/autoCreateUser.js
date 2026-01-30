@@ -2,7 +2,7 @@ import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import Joi from "joi";
 import { env } from "../config/index.js";
-import { templates } from "../services/email.js";
+import EmailTemplates from "../utils/emailTemplates.js";
 import sendResendEmail from "../services/resend.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import * as authService from "../services/auth.service.js";
@@ -66,7 +66,7 @@ export default async function autoCreateUser(req, res, next) {
     sendResendEmail(
       email,
       "Welcome To True-Love App",
-      templates.defaultPasswordTemplate("Cupid's chosen", email, password),
+      EmailTemplates.defaultPasswordTemplate("Cupid's chosen", email, password),
     );
 
     // For automatic login
