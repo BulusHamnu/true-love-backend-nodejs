@@ -37,12 +37,12 @@ function generateRandPassword(limit = 10) {
   return randomPassword;
 }
 
-/*  Auto create user. In a case were user try checking out without creating an account, this middleware create a new account for them and send them an email with the default logins */
+/*  Auto create user. In a case were user try checking out without creating an account, this middleware create a new account for them and send them an email with the default logins.*/
 export default async function autoCreateUser(req, res, next) {
   try {
-    const email = validateEmail(req.body);
-    const user = await User.findOne({ email }).lean();
+    const email = validateEmail(req.body); // Even if a user already have an account the client should send the user email for verification in the middleware.
 
+    const user = await User.findOne({ email }).lean();
     if (user) {
       const userProfile = await Profile.findOne({ userId: user._id }).lean();
       req.user = { ...user, id: user._id, ...userProfile };
@@ -63,7 +63,7 @@ export default async function autoCreateUser(req, res, next) {
     );
 
     // Send email with default password so user can login
-    sendResendEmail(
+    await sendResendEmail(
       email,
       "Welcome To True-Love App",
       EmailTemplates.defaultPasswordTemplate("Cupid's chosen", email, password),

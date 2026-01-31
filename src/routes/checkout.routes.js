@@ -6,7 +6,7 @@ import stripeWebhookHandler from "../controllers/stripeWebhook.js";
 
 const router = express.Router();
 
-// the client wants users to make purchase even without signing up
+// Users should be able to make purchase even without an account, that is why the autoCreateUser middleware is added.
 router.post(
   "/create-checkout",
   rateLimter(3 * 60 * 1000, 10, "ip"),

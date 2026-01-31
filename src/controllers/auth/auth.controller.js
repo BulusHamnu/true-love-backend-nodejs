@@ -179,7 +179,7 @@ export async function login(req, res) {
     // generate token: no refresh token, just token and save in cookies
     const token = jwt.sign(
       { email: user.email, id: user._id, isVerified: user.isVerified },
-      Env.SECRET_KEY,
+      Env.TOKEN_SECRET_KEY,
       { expiresIn: "30d" },
     );
 
