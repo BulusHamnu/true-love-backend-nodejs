@@ -1,8 +1,15 @@
 import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 import Logger from "../utils/logger.js";
+import AppError, { ErrorCodes } from "../errors/appError.js";
 
 const getClientIp = (req) => {
-  return req.headers?.["x-forwarded-for"]?.split(",")[0].trim() || req.ip;
+  const forwardedIp = req.headers["x-forwarded-for"];
+  if (forwardedIp) {
+    Logger.info(`X-Forwarded-For: ${forwardedIp}`);
+    return req.headers?.["x-forwarded-for"]?.split(",")[0].trim();
+  }
+
+  return req.ip;
 };
 
 const rateLimter = (time, limit, key) => {
@@ -15,10 +22,13 @@ const rateLimter = (time, limit, key) => {
         route: req.originalUrl,
         identifier: req.user ? req.user?.email : req.ip,
       });
-      res.status(403).json({
-        status: false,
-        message: "Too many request please try again later.",
-      });
+
+      throw new AppError(
+        ErrorCodes.RATE_LIMIT_EXCEEDED,
+        "Too many request, please try again later.",
+        403,
+        true,
+      );
     },
     keyGenerator: (req, res) => {
       if (key === "user-id" && req.user && req.user.id) {
