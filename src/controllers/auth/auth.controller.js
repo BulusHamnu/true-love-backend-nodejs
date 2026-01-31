@@ -1,4 +1,4 @@
-import { generateCode, logger } from "../../utils/helpers.js";
+import { generateCode } from "../../utils/helpers.js";
 import User from "../../models/user.model.js";
 import Profile from "../../models/profile.model.js";
 import sendResendEmail from "../../services/resend.js";
@@ -12,6 +12,7 @@ import sanitizeData from "../../utils/sanitizeData.js";
 import * as authService from "../../services/auth.service.js";
 import retriveGoogleIdToken from "../../services/retriveGoogleIdToken.js";
 import validateAndSanitizeData from "../../utils/validateAndSanitizeData.js";
+import Logger from "../../utils/logger.js";
 
 /* Sign up user handler */
 export async function signup(req, res, next) {
@@ -43,7 +44,7 @@ export async function signup(req, res, next) {
 // get google oauthurl for signup
 export async function getGoogleSignUpAuthUrl(req, res) {
   try {
-    logger.info("New user request for google oauth url.");
+    Logger.info("New user request for google oauth url.");
     const oauth2Endpoint = "https://accounts.google.com/o/oauth2/v2/auth?";
 
     const params = new URLSearchParams({
@@ -63,7 +64,7 @@ export async function getGoogleSignUpAuthUrl(req, res) {
       redirectLink,
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res
       .status(500)
       .json({ status: false, message: "Unexpected error occured." });
@@ -124,11 +125,11 @@ export async function signupWithGoogle(req, res) {
     // set res cookies for 30d
     res.cookie("token", token, Env.LOGIN_COOKIE_OPTS);
 
-    logger.info("User login after google signup.", { email: newUser.email });
+    Logger.info("User login after google signup.", { email: newUser.email });
 
     res.redirect(Env.FRONTEND_URL);
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.redirect(`${Env.FRONTEND_URL}/auth`);
   }
 }
@@ -185,14 +186,14 @@ export async function login(req, res) {
     // set res cookies for 30d
     res.cookie("token", token, Env.LOGIN_COOKIE_OPTS);
 
-    logger.info("User login successful", { email: user.email });
+    Logger.info("User login successful", { email: user.email });
 
     res.status(200).json({
       status: true,
       message: "Login sucessful, token is set in the cookie header.",
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -204,7 +205,7 @@ export async function login(req, res) {
 export async function getGoogleLoginAuthUrl(req, res) {
   try {
     const oauth2Endpoint = "https://accounts.google.com/o/oauth2/v2/auth?";
-    logger.info("User request for google sign in oauth url.");
+    Logger.info("User request for google sign in oauth url.");
 
     const params = new URLSearchParams({
       client_id: Env.TRUE_LOVE_GOOGLE_CLIENT_ID,
@@ -223,7 +224,7 @@ export async function getGoogleLoginAuthUrl(req, res) {
       redirectLink,
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res
       .status(500)
       .json({ status: false, message: "Unexpected error occured." });
@@ -262,11 +263,11 @@ export async function signinWithGoogle(req, res) {
     // set res cookies for 30d
     res.cookie("token", token, Env.LOGIN_COOKIE_OPTS);
 
-    logger.info("User login with google oauth2.", { email: userExist.email });
+    Logger.info("User login with google oauth2.", { email: userExist.email });
 
     res.redirect(Env.FRONTEND_URL);
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.redirect(`${Env.FRONTEND_URL}/auth`);
   }
 }
@@ -291,7 +292,7 @@ export async function forgetPassword(req, res) {
         .status(404)
         .json({ status: true, message: "User does not exist." });
 
-    logger.info("Password reset requested", { email });
+    Logger.info("Password reset requested", { email });
 
     // generate verification code
     const verficationCode = generateCode(6);
@@ -315,7 +316,7 @@ export async function forgetPassword(req, res) {
       message: "Password reset email was sent sucessfully.",
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -341,7 +342,7 @@ export async function logout(req, res) {
       message: "User logout sucessfully",
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -358,7 +359,7 @@ export async function resendEmail(req, res) {
       res
         .status(404)
         .json({ status: false, message: "Please provide an email." });
-    logger.info("Email received for verification.", { email });
+    Logger.info("Email received for verification.", { email });
     // receive email from body
     const user = await User.findOne({ email });
     if (!user)
@@ -373,7 +374,7 @@ export async function resendEmail(req, res) {
         message: "User is already verified",
       });
 
-    logger.info("Email verification requested", {
+    Logger.info("Email verification requested", {
       email: email,
     });
 
@@ -397,7 +398,7 @@ export async function resendEmail(req, res) {
       message: "Email was sent sucessfully.",
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -441,7 +442,7 @@ export async function resetPassword(req, res) {
     user.password = newPassword;
     await user.save();
 
-    logger.info("User password reset sucessful", {
+    Logger.info("User password reset sucessful", {
       email: user.email,
     });
 
@@ -457,7 +458,7 @@ export async function resetPassword(req, res) {
       message: "Password was reset sucessfully.",
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -492,7 +493,7 @@ export async function verifyEmail(req, res) {
     user.emailVerification.expireAt = null;
     await user.save();
 
-    logger.info("Email verification sucessful", { email: user.email });
+    Logger.info("Email verification sucessful", { email: user.email });
 
     // get user profile
     const userProfile = await Profile.findOne({ userId: user._id });
@@ -506,7 +507,7 @@ export async function verifyEmail(req, res) {
       },
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -540,7 +541,7 @@ export async function verifyPasswordResetCode(req, res) {
       message: "Code is valid",
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",

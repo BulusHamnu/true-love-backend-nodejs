@@ -1,5 +1,5 @@
 import Profile from "../models/profile.model.js";
-import { logger } from "../utils/helpers.js";
+import Logger from "../utils/logger.js";
 
 const getAppStats = async (req, res) => {
   try {
@@ -36,10 +36,10 @@ const getAppStats = async (req, res) => {
       newUsersThisWeek: newUsersThisWeek.length,
       timestamp: date,
     };
-    logger.info("App stats retrive sucessfully.");
+    Logger.info("App stats retrive sucessfully.");
     res.status(200).json(stats);
   } catch (error) {
-    logger.error("An error ocurred while retriving app stats.", error);
+    Logger.error("An error ocurred while retriving app stats.", error);
     res.status(500).json({
       status: false,
       message: "An error occur, please try again later.",

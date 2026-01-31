@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import Profile from "../models/profile.model.js";
-import { logger, generateCode } from "../utils/helpers.js";
+import { generateCode } from "../utils/helpers.js";
+import Logger from "../utils/logger.js";
 import sendResendEmail from "./resend.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import bcrypt from "bcryptjs";
@@ -59,7 +60,7 @@ export async function createNewUser({
     age,
   });
 
-  logger.info("User created sucessfully.", {
+  Logger.info("User created sucessfully.", {
     id: newUser._id,
   });
 

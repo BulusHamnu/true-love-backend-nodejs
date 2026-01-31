@@ -1,6 +1,6 @@
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import Env, { StripeClient, } from "../config/index.js";
-import { logger } from "../utils/helpers.js";
+import Logger from "../utils/logger.js";
 import { processPayment } from "../services/processPayment.js";
 
 /* Stripe webhook handler */
@@ -29,17 +29,17 @@ export default async function stripeWebhookHandler(req, res) {
     }
 
     const eventObj = event.data.object;
-    logger.info("Stripe webhook received.", { eventType: event.type });
+    Logger.info("Stripe webhook received.", { eventType: event.type });
 
     if (eventObj.metadata.site !== "true-love-app") {
-      logger.info("Event does not belong to the app.");
+      Logger.info("Event does not belong to the app.");
       return res.status(200).send("Event received.");
     }
 
     await processPayment(eventObj);
     res.status(200).send("Event received.");
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(400);
   }
 }

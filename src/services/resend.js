@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import Env from "../config/index.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
-import { logger } from "../utils/helpers.js";
+import Logger from "../utils/logger.js";
 const resend = new Resend(Env.RESEND_API_KEY);
 
 async function sendResendEmail(to, subject, html) {
@@ -25,7 +25,7 @@ async function sendResendEmail(to, subject, html) {
         },
       );
   } catch (error) {
-    logger.error("An error occured while sending email.", error);
+    Logger.error("An error occured while sending email.", error);
   }
 }
 

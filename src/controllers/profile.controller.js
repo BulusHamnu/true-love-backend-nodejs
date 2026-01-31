@@ -1,4 +1,4 @@
-import { logger } from "../utils/helpers.js";
+import Logger from "../utils/logger.js";
 import User from "../models/user.model.js";
 import Profile from "../models/profile.model.js";
 import { profileUpdate } from "../utils/validators.js";
@@ -26,7 +26,7 @@ export async function getProfile(req, res) {
       },
     });
   } catch (error) {
-    logger.error(error.message);
+    Logger.error(error.message);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -86,7 +86,7 @@ export async function updateProfile(req, res) {
       },
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",

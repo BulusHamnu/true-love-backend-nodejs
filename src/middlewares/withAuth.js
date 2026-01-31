@@ -1,4 +1,4 @@
-import { logger } from "../utils/helpers.js";
+import Logger from "../utils/logger.js";
 import Env from "../config/index.js";
 import jwt from "jsonwebtoken";
 
@@ -7,7 +7,7 @@ export default async function (req, res, next) {
     const token = req.cookies?.token;
 
     if (!token) {
-      logger.info("Token not provided.");
+      Logger.info("Token not provided.");
       return res.status(401).json({
         status: false,
         message: "No token provided. Unauthorized.",
@@ -19,7 +19,7 @@ export default async function (req, res, next) {
     // call the route handler
     next();
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
         status: false,

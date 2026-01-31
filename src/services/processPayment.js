@@ -1,11 +1,12 @@
 import EmailTemplates from "../utils/emailTemplates.js";
-import { logger, formatAmount } from "../utils/helpers.js";
+import { formatAmount } from "../utils/helpers.js";
 import User from "../models/user.model.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import Transaction from "../models/transaction.model.js";
 import Profile from "../models/profile.model.js";
 import sendResendEmail from "./resend.js";
 import { Env } from "../config/index.js";
+import Logger from "../utils/logger.js";
 
 /* Process stripe payment */
 async function recordPayment({
@@ -18,7 +19,7 @@ async function recordPayment({
   phone,
   receipt,
 }) {
-  logger.info("New payment received.", {
+  Logger.info("New payment received.", {
     amount: formatAmount(amount),
     status,
     email,

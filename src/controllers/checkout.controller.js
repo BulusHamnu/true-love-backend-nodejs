@@ -1,6 +1,6 @@
 import { validateCheckoutBody } from "../utils/validators.js";
 import * as checkoutService from "../services/checkout.service.js";
-import { logger } from "../utils/helpers.js";
+import Logger from "../utils/logger.js";
 
 /* Create checkout handler */
 export async function createCheckOutHandler(req, res, next) {
@@ -8,7 +8,7 @@ export async function createCheckOutHandler(req, res, next) {
     const { product, newDoor } = validateCheckoutBody(req.body);
     const user = req.user;
 
-    logger.info(`${product} checkout requested`, {
+    Logger.info(`${product} checkout requested`, {
       customerEmail: user.email,
     });
     const sessionUrl = await checkoutService.createCheckout(

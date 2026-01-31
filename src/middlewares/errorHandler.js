@@ -1,9 +1,9 @@
 import AppError from "../errors/appError.js";
-import { logger } from "../utils/helpers.js";
+import Logger from "../utils/logger.js";
 
 /* Error handler */
 const errorHandler = (err, req, res, next) => {
-  logger.error("An error ocurred.", err);
+  Logger.error("An error ocurred.", err);
   if (err instanceof AppError) {
     return res.status(err.status).json({
       status: false,

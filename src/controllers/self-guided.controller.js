@@ -1,5 +1,5 @@
 import Profile from "../models/profile.model.js";
-import { logger } from "../utils/helpers.js";
+import Logger from "../utils/logger.js";
 import sanitizeData from "../utils/sanitizeData.js";
 import postReflectionStory from "../services/openai.js";
 import { selfGuidedValidator } from "../utils/validators.js";
@@ -23,7 +23,7 @@ export async function getSelfGuidedProgram(req, res) {
       data: userProfile.selfGuidedProgram,
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -80,7 +80,7 @@ export async function updateSelfGuidedProgram(req, res) {
       data: userUpdate.selfGuidedProgram,
     });
   } catch (error) {
-    logger.error(error);
+    Logger.error(error);
     res.status(500).json({
       status: false,
       message: "An unexpected error occured.",
@@ -134,7 +134,7 @@ export async function reflectionCorner(req, res) {
       },
     });
   } catch (error) {
-    logger.error("An error occur while generating response.", error);
+    Logger.error("An error occur while generating response.", error);
     res.status(500).json({
       status: false,
       message: "An expected error occur.",

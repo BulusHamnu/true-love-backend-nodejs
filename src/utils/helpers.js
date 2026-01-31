@@ -1,6 +1,5 @@
-import winston from "winston";
-const { createLogger, transports, format, printf, colorize } = winston;
 import Env from "../config/index.js";
+import Logger from "./logger.js";
 
 /* Format money function */
 export const formatAmount = (amountCents) => {
@@ -13,7 +12,6 @@ export const formatAmount = (amountCents) => {
   return amountFormatted;
 };
 
-
 /* Generate rand code function */
 export const generateCode = (length = 6) => {
   let code = "";
@@ -22,37 +20,6 @@ export const generateCode = (length = 6) => {
   }
   return code;
 };
-
-/* Logger setup */
-const myFormat = format.printf(
-  ({ level, message, timestamp, stack, ...meta }) => {
-    if (stack) return `[${timestamp}] ${level}: ${message} ${stack} `;
-    return `[${timestamp}] ${level}: ${message} ${
-      Object.keys(meta).length > 0 ? JSON.stringify(meta) : ""
-    }`;
-  },
-);
-
-export const logger = createLogger({
-  level: "debug",
-  format: format.combine(format.errors({ stack: true })),
-  transports: [
-    new transports.Console({
-      format: format.combine(format.colorize(), format.timestamp(), myFormat),
-    }),
-  ],
-});
-
-// logger.add(
-//   new transports.File({
-//     filename: "app.log",
-//     format: format.combine(
-//       format.timestamp(),
-//       format.json(),
-//       format.prettyPrint()
-//     ),
-//   })
-// );
 
 // function for decoding googe id token
 import { OAuth2Client } from "google-auth-library";

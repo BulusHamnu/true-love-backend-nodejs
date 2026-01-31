@@ -12,7 +12,7 @@ import path from "path";
 import cors from "cors";
 const dirname = import.meta.dirname;
 import cookieParser from "cookie-parser";
-import { logger } from "./utils/helpers.js";
+import Logger from "./utils/logger.js";
 import getAppStats from "./controllers/get-app-stats.controller.js";
 import errorHandler from "./middlewares/errorHandler.js";
 const port = Env.PORT;
@@ -25,7 +25,7 @@ app.use(
   morgan("dev", {
     stream: {
       write: (log) => {
-        logger.http(log.trim());
+        Logger.http(log.trim());
       },
     },
   }),
@@ -60,5 +60,5 @@ app.use(errorHandler);
 // Start the server
 app.listen(port, async () => {
   await connectDb();
-  logger.info(`Server listening on: http://localhost:${port}`);
+  Logger.info(`Server listening on: http://localhost:${port}`);
 });

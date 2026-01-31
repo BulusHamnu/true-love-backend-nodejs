@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import Env from "../config/index.js";
 const client = new OpenAI({ apiKey: Env.OPEN_API_KEY });
-import { logger } from "../utils/helpers.js";
+import Logger from "../utils/logger.js";
 import weekReadings from "../utils/weekReadings.js";
 
 const assistantContent = `
@@ -40,13 +40,12 @@ export default async function postReflectionStory(weekNo, notes) {
         },
       ],
     });
-    console.log(response.output_text);
 
-    logger.info("GPT response generated sucessfully!");
+    Logger.info("GPT response generated sucessfully!");
 
     return { message: response.output_text };
   } catch (error) {
-    logger.error("An error occured while getting GPTResponse", error);
+    Logger.error("An error occured while getting GPTResponse", error);
     return { status: false, message: "" };
   }
 }
