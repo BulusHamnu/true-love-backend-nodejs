@@ -1,8 +1,7 @@
-import { logError, logger } from "../utils/helpers.js";
+import { logger } from "../utils/helpers.js";
 import User from "../models/user.model.js";
 import Profile from "../models/profile.model.js";
 import { profileUpdate } from "../utils/validators.js";
-import Joi from "joi";
 import sanitizeData from "../utils/sanitizeData.js";
 
 // get profile handler

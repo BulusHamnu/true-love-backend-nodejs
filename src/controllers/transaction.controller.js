@@ -1,4 +1,3 @@
-import { logError } from "../utils/helpers.js";
 import User from "../models/user.model.js";
 import Profile from "../models/profile.model.js";
 import mongoose from "mongoose";

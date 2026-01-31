@@ -1,59 +1,20 @@
-import bcrypt from "bcryptjs";
 import winston from "winston";
 const { createLogger, transports, format, printf, colorize } = winston;
-import Env, { StripeClient } from "../config/index.js";
+import Env from "../config/index.js";
 
 /* Format money function */
 export const formatAmount = (amountCents) => {
-  try {
-    const amountDollars = parseInt(amountCents) / 100;
-    const amountFormatted = amountDollars.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-    });
+  const amountDollars = parseInt(amountCents) / 100;
+  const amountFormatted = amountDollars.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
 
-    return amountFormatted;
-  } catch (error) {
-    logError(`An error occur:`, error);
-    return "null";
-  }
+  return amountFormatted;
 };
 
-// log function for info
-export const logInfo = (message, data) => {
-  console.log(
-    JSON.stringify({
-      Type: "Info",
-      TimeStamp: new Date().toISOString(),
-      Message: message || "Info",
-      Data: data || "",
-    }),
-  );
-};
 
-// log function for error
-export const logError = (message, error) => {
-  console.log(
-    JSON.stringify({
-      Type: "Error",
-      TimeStamp: new Date().toISOString(),
-      Message: message,
-      Error: error || "",
-    }),
-  );
-};
-
-// bcrypt hash password
-export const hashPassword = async (password) => {
-  try {
-    return await bcrypt.hash(password, 10);
-  } catch (error) {
-    logError("An error occur while hashing password", error.message);
-    return false;
-  }
-};
-
-// generate code function
+/* Generate rand code function */
 export const generateCode = (length = 6) => {
   let code = "";
   for (let i = 0; i < length; i++) {
@@ -62,7 +23,7 @@ export const generateCode = (length = 6) => {
   return code;
 };
 
-//  logger set up
+/* Logger setup */
 const myFormat = format.printf(
   ({ level, message, timestamp, stack, ...meta }) => {
     if (stack) return `[${timestamp}] ${level}: ${message} ${stack} `;
