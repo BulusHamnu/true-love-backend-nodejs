@@ -127,18 +127,80 @@ export async function validatePasswordAndSignTokens({ email, password }) {
     );
   }
 
-  let safeUser = user.removeUnwantedFields();
+  let safeUserData = user.removeUnwantedFields();
   const accessToken = signToken({
-    ...safeUser,
-    id: user._id,
+    ...safeUserData,
+    id: safeUserData._id,
     type: "accessToken",
   });
 
   const refreshToken = signToken({
-    ...safeUser,
-    id: user._id,
+    ...safeUserData,
+    id: safeUserData._id,
     type: "refreshToken",
   });
 
-  return { accessToken, refreshToken, user: { id: safeUser._id, ...safeUser } };
+  return {
+    accessToken,
+    refreshToken,
+    user: { id: safeUserData._id, ...safeUserData },
+  };
+}
+
+/* Refresh access token */
+export async function refreshAccessToken(refreshToken) {
+  try {
+    if (!refreshToken) {
+      throw new AppError(ErrorCodes.UNAUTHORIZED, "Unauthorized.", 401, true);
+    }
+
+    const tokenPayload = jwt.verify(refreshToken, Env.REFRESH_TOKEN_SECRET_KEY);
+    if (tokenPayload.type !== "refreshToken") {
+      throw new AppError(
+        ErrorCodes.REFRESH_TOKEN_INVALID,
+        "Unauthorized.",
+        401,
+        true,
+      );
+    }
+
+    const user = await User.findOne({ _id: tokenPayload.id });
+    if (!user) {
+      throw new AppError(
+        ErrorCodes.USER_NOT_FOUND,
+        "User not found.",
+        404,
+        true,
+      );
+    }
+
+    const safeUserData = user.removeUnwantedFields();
+    const accessToken = signToken({
+      ...safeUserData,
+      id: safeUserData._id,
+      type: "accessToken",
+    });
+
+    return accessToken;
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      throw new AppError(
+        ErrorCodes.REFRESH_TOKEN_EXPIRED,
+        "Session has expired, please log in..",
+        401,
+        true,
+      );
+    }
+
+    if (error.name === "JsonWebTokenError") {
+      throw new AppError(
+        ErrorCodes.REFRESH_TOKEN_INVALID,
+        "Session has expired, please log in.",
+        401,
+        true,
+      );
+    }
+
+    throw error;
+  }
 }

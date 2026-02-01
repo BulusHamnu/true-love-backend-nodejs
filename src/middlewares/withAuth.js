@@ -31,7 +31,7 @@ export default async function (req, res, next) {
     if (error.name === "TokenExpiredError") {
       throw new AppError(
         ErrorCodes.ACCESS_TOKEN_EXPIRED,
-        "Token expired. Please log in again.",
+        "Token expired. Please log in.",
         401,
         true,
       );
@@ -40,7 +40,7 @@ export default async function (req, res, next) {
     if (error.name === "JsonWebTokenError") {
       throw new AppError(
         ErrorCodes.ACCESS_TOKEN_INVALID,
-        "Token expired. Please log in again.",
+        "Invalid token. Unauthorized..",
         401,
         true,
       );

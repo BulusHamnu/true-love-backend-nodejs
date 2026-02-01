@@ -67,6 +67,23 @@ export async function login(req, res, next) {
   }
 }
 
+/* Refresh token handler */
+export async function refreshToken(req, res, next) {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    const accessToken = await authService.refreshAccessToken(refreshToken);
+
+    res.status(200).json({
+      status: true,
+      message: "Session refresh successfully.",
+      data: { accessToken },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 // get google oauthurl for signup
 export async function getGoogleSignUpAuthUrl(req, res) {
   try {
