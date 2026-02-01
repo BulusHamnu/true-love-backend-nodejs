@@ -42,6 +42,22 @@ export async function signup(req, res, next) {
 }
 
 /* Login handler */
+function clearRefreshToken(res) {
+  const paths = ["/", "/api", "/api/auth"];
+
+  for (const path of paths) {
+    res.clearCookie("refreshToken", {
+      ...Env.LOGIN_COOKIE_OPTS,
+      path,
+    });
+
+    res.clearCookie("token", {
+      ...Env.LOGIN_COOKIE_OPTS,
+      path,
+    });
+  }
+}
+
 export async function login(req, res, next) {
   try {
     const { password, email } = validateAndSanitizeData(
@@ -55,7 +71,7 @@ export async function login(req, res, next) {
         password,
       });
 
-    // res.clearCookie("token", Env.LOGIN_COOKIE_OPTS); // Added a util function later that will clear all users cookies as a refresh because we changed the auth system
+    clearRefreshToken(res); // Util function to clear all user cookies as a refresh because we changed the auth system. Will remove later
 
     res.cookie("refreshToken", refreshToken, Env.LOGIN_COOKIE_OPTS);
     res.status(200).json({
