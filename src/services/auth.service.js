@@ -37,7 +37,8 @@ export async function createNewUser({
     );
 
   const isVerified = provider === "google" ? true : false;
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
+
   const emailVerification =
     provider !== "google" ? createEmailVerificationCode() : {};
 

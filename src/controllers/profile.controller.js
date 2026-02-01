@@ -8,21 +8,24 @@ import sanitizeData from "../utils/sanitizeData.js";
 export async function getProfile(req, res) {
   try {
     // check if user already exist
-    const user = await User.findOne({ email: req.user.email });
+    const user = await User.findOne({ _id: req.user.id });
     if (!user)
       return res
         .status(404)
         .json({ status: true, message: "User does not exist." });
 
     // get user profile
-    const userProfile = await Profile.findOne({ userId: req.user.id });
+    const userProfile = await Profile.findOne({ userId: user._id });
+    const safeUserProfileData = userProfile.removeUnwantedFields();
+    const safeUserData = user.removeUnwantedFields();
 
     res.status(200).json({
       status: true,
       message: "Profile retrieved sucessfully",
       data: {
-        ...userProfile.removeUnwantedFields(),
-        isVerified: user.isVerified,
+        ...safeUserProfileData,
+        ...safeUserData,
+        id: safeUserData._id,
       },
     });
   } catch (error) {
@@ -37,7 +40,7 @@ export async function getProfile(req, res) {
 // update profile handler
 export async function updateProfile(req, res) {
   // check if user already exist
-  const user = await User.findOne({ email: req.user.email });
+  const user = await User.findOne({ _id: req.user.id });
   if (!user)
     return res
       .status(404)
@@ -72,17 +75,20 @@ export async function updateProfile(req, res) {
 
     // update user
     const updateUser = await Profile.findOneAndUpdate(
-      { email: req.user.email },
+      { userId: user._id },
       { $set: { ...data } },
       { new: true },
     );
+
+    const safeUserProfileData = updateUser.removeUnwantedFields();
+    const safeUserData = user.removeUnwantedFields();
 
     res.status(200).json({
       status: true,
       message: "Profile updated sucessfully.",
       data: {
-        ...updateUser.removeUnwantedFields(),
-        isVerified: user.isVerified,
+        ...safeUserProfileData,
+        ...safeUserData,
       },
     });
   } catch (error) {

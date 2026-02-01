@@ -7,6 +7,7 @@ export const StripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // env variables
 export const Env = {
+  PASSWORD_HASH_SALT: 10,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",
   STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || "",
   STRIPE_WEBHOOK_SECRET_KEY: process.env.STRIPE_WEBHOOK_SECRET_KEY || "",

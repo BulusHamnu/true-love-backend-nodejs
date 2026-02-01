@@ -12,6 +12,7 @@ import * as authService from "../../services/auth.service.js";
 import retriveGoogleIdToken from "../../services/retriveGoogleIdToken.js";
 import validateAndSanitizeData from "../../utils/validateAndSanitizeData.js";
 import Logger from "../../utils/logger.js";
+import bcrypt from "bcryptjs";
 
 /* Sign up user handler */
 export async function signup(req, res, next) {
@@ -375,7 +376,7 @@ export async function resetPassword(req, res) {
     const cleanData = sanitizeData(req.body);
     const { email, password } = cleanData;
 
-    const validate = emailAndPasswordSchema.validate({
+    const validate = authValidator.emailAndPasswordSchema.validate({
       email,
       password,
     });
@@ -397,7 +398,7 @@ export async function resetPassword(req, res) {
       return res.status(404).json({ status: false, message: "Code not found" });
 
     // hash user password
-    const newPassword = await hashPassword(password);
+    const newPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
 
     // update password
     user.resetPasswordVerification.code = null;
@@ -467,6 +468,7 @@ export async function verifyEmail(req, res) {
       data: {
         ...userProfile.removeUnwantedFields(),
         isVerified: user.isVerified,
+        id: user._id,
       },
     });
   } catch (error) {
