@@ -4,7 +4,6 @@ import Profile from "../../models/profile.model.js";
 import sendResendEmail from "../../services/resend.js";
 import EmailTemplates from "../../utils/emailTemplates.js";
 import Env from "../../config/index.js";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import * as authValidator from "../../utils/validators.js";
 import Joi from "joi";
@@ -35,6 +34,33 @@ export async function signup(req, res, next) {
       status: true,
       message: "User created sucessfully.",
       data: newUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/* Login handler */
+export async function login(req, res, next) {
+  try {
+    const { password, email } = validateAndSanitizeData(
+      req.body,
+      authValidator.loginBodySchema,
+    );
+
+    const { accessToken, refreshToken, user } =
+      await authService.validatePasswordAndSignTokens({
+        email,
+        password,
+      });
+
+    // res.clearCookie("token", Env.LOGIN_COOKIE_OPTS); // Added a util function later that will clear all users cookies as a refresh because we changed the auth system
+
+    res.cookie("refreshToken", refreshToken, Env.LOGIN_COOKIE_OPTS);
+    res.status(200).json({
+      status: true,
+      message: "Login sucessful.",
+      data: { user, accessToken },
     });
   } catch (error) {
     next(error);
@@ -131,73 +157,6 @@ export async function signupWithGoogle(req, res) {
   } catch (error) {
     Logger.error(error);
     res.redirect(`${Env.FRONTEND_URL}/auth`);
-  }
-}
-
-// login handler
-export async function login(req, res) {
-  try {
-    const { password, email } = req.body;
-    const validator = Joi.object({
-      email: Joi.string().email().required(),
-      password: Joi.string().required(),
-    });
-    const validate = validator.validate({
-      email,
-      password,
-    });
-
-    if (validate.error)
-      return res
-        .status(400)
-        .json({ status: false, message: validate.error.message });
-
-    // check if user already exist
-    const user = await User.findOne({ email: email });
-    if (!user)
-      return res
-        .status(404)
-        .json({ status: false, message: "User does not exist." });
-
-    // compare password
-    const passwordCorrect = await bcrypt.compare(password, user.password);
-
-    // check if password is correct and also checj if auth is local or google
-    if (!passwordCorrect) {
-      if (user.provider === "google")
-        return res.status(401).json({
-          status: false,
-          message:
-            "This account was created with Google. Please login with Google or reset your password to enable email login.",
-        });
-
-      return res
-        .status(401)
-        .json({ status: false, message: "Incorect password" });
-    }
-
-    // generate token: no refresh token, just token and save in cookies
-    const token = jwt.sign(
-      { email: user.email, id: user._id, isVerified: user.isVerified },
-      Env.TOKEN_SECRET_KEY,
-      { expiresIn: "30d" },
-    );
-
-    // set res cookies for 30d
-    res.cookie("token", token, Env.LOGIN_COOKIE_OPTS);
-
-    Logger.info("User login successful", { email: user.email });
-
-    res.status(200).json({
-      status: true,
-      message: "Login sucessful, token is set in the cookie header.",
-    });
-  } catch (error) {
-    Logger.error(error);
-    res.status(500).json({
-      status: false,
-      message: "An unexpected error occured.",
-    });
   }
 }
 
@@ -324,29 +283,16 @@ export async function forgetPassword(req, res) {
   }
 }
 
-// logout handler
-export async function logout(req, res) {
+/* Logout handler */
+export async function logout(req, res, next) {
   try {
-    if (!req.user?.email) return res.status(401).end();
-
-    // delete token cookies
-    res.cookie("token", "", {
-      secure: process.Env.NODE_ENV === "production",
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: 0,
-    });
-
+    res.clearCookie("refreshToken", Env.LOGIN_COOKIE_OPTS);
     res.status(200).json({
       status: true,
       message: "User logout sucessfully",
     });
   } catch (error) {
-    Logger.error(error);
-    res.status(500).json({
-      status: false,
-      message: "An unexpected error occured.",
-    });
+    next(error);
   }
 }
 

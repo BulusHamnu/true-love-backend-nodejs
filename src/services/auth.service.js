@@ -5,9 +5,11 @@ import Logger from "../utils/logger.js";
 import sendResendEmail from "./resend.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import EmailTemplates from "../utils/emailTemplates.js";
+import Env from "../config/index.js";
 
-/* Create verification code function */
+/* Sign up user */
 export function createEmailVerificationCode() {
   return {
     code: generateCode(6),
@@ -15,7 +17,6 @@ export function createEmailVerificationCode() {
   };
 }
 
-/* Sign up user */
 export async function createNewUser({
   provider = "local",
   email,
@@ -81,4 +82,63 @@ export async function createNewUser({
     ...userProfile.removeUnwantedFields(),
     isVerified: newUser.isVerified,
   };
+}
+
+/* Login user */
+function signToken({ email, id, isVerified, type }) {
+  const tokenSecret =
+    type === "refreshToken"
+      ? Env.REFRESH_TOKEN_SECRET_KEY
+      : Env.TOKEN_SECRET_KEY;
+  const expiresIn = type === "refreshToken" ? "7d" : "24h";
+
+  return jwt.sign(
+    {
+      email,
+      id,
+      isVerified,
+      type,
+    },
+    tokenSecret,
+    { expiresIn },
+  );
+}
+
+export async function validatePasswordAndSignTokens({ email, password }) {
+  const user = await User.findOne({ email: email });
+  if (!user)
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
+
+  const passwordCorrect = await bcrypt.compare(password, user.password);
+  if (!passwordCorrect) {
+    if (user.provider === "google")
+      throw new AppError(
+        ErrorCodes.PASSWORD_INCORRECT,
+        "Incorect password, please login with Google or reset your password.",
+        401,
+        true,
+      );
+
+    throw new AppError(
+      ErrorCodes.PASSWORD_INCORRECT,
+      "Incorect password",
+      401,
+      true,
+    );
+  }
+
+  let safeUser = user.removeUnwantedFields();
+  const accessToken = signToken({
+    ...safeUser,
+    id: user._id,
+    type: "accessToken",
+  });
+
+  const refreshToken = signToken({
+    ...safeUser,
+    id: user._id,
+    type: "refreshToken",
+  });
+
+  return { accessToken, refreshToken, user: { id: safeUser._id, ...safeUser } };
 }
