@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+/* Schema */
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -12,6 +13,14 @@ const userSchema = new mongoose.Schema({
   isVerified: {
     type: Boolean,
     default: false,
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+  role: {
+    type: String,
+    default: "user",
   },
   resetPasswordVerification: {
     code: String,
@@ -41,8 +50,18 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// create an indexes
+/* Indexes */
 userSchema.index({ email: 1 });
 
-const User = mongoose.models.User || mongoose.model("User", userSchema);
+/* Methods */
+userSchema.methods.removeUnwantedFields = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  delete obj.resetPasswordVerification;
+  delete obj.emailVerification;
+  delete obj.google;
+  return obj;
+};
+
+const User = mongoose.model("User", userSchema);
 export default User;

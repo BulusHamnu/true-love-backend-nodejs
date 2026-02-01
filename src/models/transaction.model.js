@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+/* Schema */
 const transactionSchema = mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -23,11 +24,8 @@ const transactionSchema = mongoose.Schema({
   },
 });
 
-// create an indexes
+/* Indexes */
 transactionSchema.index({ userId: 1 });
 
-const Transaction =
-  mongoose.models.Transaction ||
-  mongoose.model("Transaction", transactionSchema);
-
+const Transaction = mongoose.model("Transaction", transactionSchema);
 export default Transaction;

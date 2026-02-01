@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+/* Schema */
 const profileSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -13,10 +14,6 @@ const profileSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // email: {
-  //   type: String,
-  //   required: true,
-  // },
   phone: {
     type: String,
     default: "",
@@ -109,19 +106,17 @@ const profileSchema = new mongoose.Schema({
   },
 });
 
-// create an indexes
+/* Indexes */
 profileSchema.index({ email: 1 });
 profileSchema.index({ userId: 1 });
 
-// remove unwanted feilds methods
+/* Methods */
 profileSchema.methods.removeUnwantedFields = function () {
   const obj = this.toObject();
   delete obj.selfGuidedProgram;
   delete obj.transactions;
-  delete obj.google;
   return obj;
 };
 
-const Profile =
-  mongoose.models.Profile || mongoose.model("Profile", profileSchema);
+const Profile = mongoose.model("Profile", profileSchema);
 export default Profile;
