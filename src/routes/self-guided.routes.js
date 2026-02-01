@@ -1,10 +1,5 @@
 import express from "express";
-import {
-  getSelfGuidedProgram,
-  updateSelfGuidedProgram,
-  reflectionCorner,
-  // getAllReflectionMessages,
-} from "../controllers/self-guided.controller.js";
+import * as selfGuidedController from "../controllers/self-guided.controller.js";
 import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 
@@ -14,13 +9,13 @@ router.get(
   "/",
   withAuth,
   rateLimter(5 * 60 * 1000, 25, "user-id"),
-  getSelfGuidedProgram
+  selfGuidedController.getSelfGuidedProgram,
 );
 router.patch(
   "/",
   withAuth,
   rateLimter(5 * 60 * 1000, 20, "user-id"),
-  updateSelfGuidedProgram
+  selfGuidedController.updateSelfGuidedProgram,
 );
 
 // reflection corner messages
@@ -28,7 +23,7 @@ router.post(
   "/reflection-messages/:weekNumber",
   withAuth,
   rateLimter(5 * 60 * 1000, 20, "user-id"),
-  reflectionCorner
+  selfGuidedController.reflectionCorner,
 );
 // router.get(
 //   "/reflection-messages",

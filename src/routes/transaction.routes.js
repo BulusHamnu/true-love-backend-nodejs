@@ -1,8 +1,5 @@
 import express from "express";
-import {
-  getAllTransaction,
-  getTransaction,
-} from "../controllers/transaction.controller.js";
+import * as transactionController from "../controllers/transaction.controller.js";
 import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 
@@ -12,13 +9,13 @@ router.get(
   "/",
   withAuth,
   rateLimter(5 * 60 * 1000, 25, "user-id"),
-  getAllTransaction
+  transactionController.getAllTransaction,
 );
 router.get(
   "/:id",
   withAuth,
   rateLimter(5 * 60 * 1000, 25, "user-id"),
-  getTransaction
+  transactionController.getTransaction,
 );
 
 export default router;
