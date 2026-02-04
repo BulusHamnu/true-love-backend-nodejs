@@ -59,7 +59,7 @@ export default async function autoCreateUser(req, res, next) {
     const token = jwt.sign(
       { email, id: newUser._id, isVerified: newUser.isVerified },
       Env.REFRESH_TOKEN_SECRET_KEY,
-      { expiresIn: "30d" },
+      { expiresIn: "7d" },
     );
 
     // Send email with default password so user can login

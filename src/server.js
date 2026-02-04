@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
 import selfGuidedRoutes from "./routes/self-guided.routes.js";
 import checkOutRoutes from "./routes/checkout.routes.js";
+import webhooksRoutes from "./routes/webhook.routes.js"
 import transactionRoutes from "./routes/transaction.routes.js";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -49,7 +50,8 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/me", profileRoutes);
-app.use("/api/checkout", checkOutRoutes);
+app.use("/api/checkouts", checkOutRoutes);
+app.use("/api/webhooks", webhooksRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/self-guided", selfGuidedRoutes);
 app.get("/api/monitor", getAppStats);
