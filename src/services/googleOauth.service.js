@@ -71,14 +71,9 @@ export async function processGoogleCallbackReq(state, code) {
   let user = null;
   if (state === "signup") {
     const randPassword = generateRandPassword(7);
-    const hashedPassword = await bcrypt.hash(
-      randPassword,
-      Env.PASSWORD_HASH_SALT,
-    );
-
     const newUser = await createNewUser({
       provider: "google",
-      password: hashedPassword,
+      password: randPassword,
       email: payload.email,
       fullName: payload.name,
       googleId: payload.sub,
@@ -108,7 +103,7 @@ export async function processGoogleCallbackReq(state, code) {
   } else {
     throw new AppError(
       ErrorCodes.UNEXPECTED_ERROR,
-      "Missing state.",
+      "State mismatch.",
       500,
       false,
       { state },

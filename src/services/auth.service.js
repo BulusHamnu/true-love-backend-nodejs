@@ -30,7 +30,7 @@ export async function createNewUser({
   const userExist = await User.findOne({ email: email });
   if (userExist)
     throw new AppError(
-      ErrorCodes.USER_ALREADY_EXIST,
+      ErrorCodes.USER_ALREADY_EXISTS,
       "User already exist.",
       409,
       true,
