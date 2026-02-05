@@ -33,7 +33,7 @@ export async function retriveGoogleOauthUrl(req, res, next) {
     res.status(200).json({
       status: true,
       message: "Google Oauth2 url retrived successfully.",
-      redirectLink,
+      data: { url: redirectLink },
     });
   } catch (error) {
     next(error);

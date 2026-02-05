@@ -99,6 +99,19 @@ export async function refreshToken(req, res, next) {
   }
 }
 
+/* Logout handler */
+export async function logout(req, res, next) {
+  try {
+    res.clearCookie("refreshToken", Env.LOGIN_COOKIE_OPTS);
+    res.status(200).json({
+      status: true,
+      message: "User logout sucessfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 // forget password handler
 export async function forgetPassword(req, res) {
   try {
@@ -148,19 +161,6 @@ export async function forgetPassword(req, res) {
       status: false,
       message: "An unexpected error occured.",
     });
-  }
-}
-
-/* Logout handler */
-export async function logout(req, res, next) {
-  try {
-    res.clearCookie("refreshToken", Env.LOGIN_COOKIE_OPTS);
-    res.status(200).json({
-      status: true,
-      message: "User logout sucessfully",
-    });
-  } catch (error) {
-    next(error);
   }
 }
 
