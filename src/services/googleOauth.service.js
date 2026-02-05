@@ -1,0 +1,131 @@
+import AppError, { ErrorCodes } from "../errors/appError.js";
+import { createNewUser } from "./auth.service.js";
+import { generateRandPassword, signToken } from "../utils/helpers.js";
+import bcrypt from "bcryptjs";
+import Env from "../config/index.js";
+import User from "../models/user.model.js";
+import axios from "axios";
+import qs from "qs";
+import Logger from "../utils/logger.js";
+import { OAuth2Client } from "google-auth-library";
+
+/* Decode google id function */
+async function verifyIdToken(idToken) {
+  const client = new OAuth2Client(Env.GOOGLE_CLIENT_ID);
+  const ticket = await client.verifyIdToken({
+    idToken: idToken,
+    audience: Env.TRUE_LOVE_GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+  return payload;
+}
+
+/* Process google callback function */
+async function exchangeCodeForUserToken(accessCode) {
+  let response = null;
+
+  const makeRequest = async () => {
+    return await axios.post(
+      Env.GOOGLE_TOKEN_REQUEST_URL,
+      qs.stringify({
+        code: accessCode,
+        client_id: Env.TRUE_LOVE_GOOGLE_CLIENT_ID,
+        client_secret: Env.TRUE_LOVE_GOOGLE_CLIENT_SECRET,
+        grant_type: "authorization_code",
+        redirect_uri: `${Env.BACKEND_URL}/api/auth/google/callback`,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      },
+    );
+  };
+
+  try {
+    response = await makeRequest(accessCode);
+  } catch (error) {
+    Logger.error(
+      "An error occured while making request to retrive google token, trying again.",
+      error,
+    );
+    // Todo: add delay here
+    response = await makeRequest(accessCode);
+  }
+
+  return response;
+}
+
+export async function processGoogleCallbackReq(state, code) {
+  const response = await exchangeCodeForUserToken(code);
+  const payload = await verifyIdToken(response?.data.id_token);
+  if (!payload)
+    throw new AppError(
+      ErrorCodes.UNEXPECTED_ERROR,
+      "Unable to retrive google id token.",
+      500,
+      false,
+    );
+
+  let user = null;
+  if (state === "signup") {
+    const randPassword = generateRandPassword(7);
+    const hashedPassword = await bcrypt.hash(
+      randPassword,
+      Env.PASSWORD_HASH_SALT,
+    );
+
+    const newUser = await createNewUser({
+      provider: "google",
+      password: hashedPassword,
+      email: payload.email,
+      fullName: payload.name,
+      googleId: payload.sub,
+      idToken: payload.idToken,
+      isVerified: payload.email_verified,
+    });
+
+    user = newUser;
+  } else if (state === "login") {
+    user = await User.findOne({ email: payload.email }).lean();
+    if (!user)
+      throw new AppError(
+        ErrorCodes.USER_NOT_FOUND,
+        "User not found.",
+        404,
+        true,
+      );
+
+    if (user.provider !== "google") {
+      throw new AppError(
+        ErrorCodes.GOOGLE_NOT_LINKED,
+        "Google not linked to this account.",
+        401,
+        true,
+      );
+    }
+  } else {
+    throw new AppError(
+      ErrorCodes.UNEXPECTED_ERROR,
+      "Missing state.",
+      500,
+      false,
+      { state },
+    );
+  }
+
+  const accessToken = signToken({
+    ...user,
+    id: user._id,
+    type: "accessToken",
+  });
+
+  const refreshToken = signToken({
+    ...user,
+    id: user._id,
+    type: "refreshToken",
+  });
+
+  return { accessToken, refreshToken };
+}

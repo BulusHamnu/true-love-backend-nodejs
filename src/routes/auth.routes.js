@@ -1,5 +1,6 @@
 import express from "express";
 import * as authController from "../controllers/auth/auth.controller.js";
+import * as googleAuthController from "../controllers/auth/googleOauth.controller.js";
 import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 
@@ -51,27 +52,13 @@ router.post(
   authController.verifyPasswordResetCode,
 );
 
-/* Google Oauth */
+/* Google Oauth routes*/
 router.get(
-  "/google/signup",
+  "/google",
   rateLimter(5 * 60 * 1000, 5, "ip"),
-  authController.getGoogleSignUpAuthUrl,
-);
-router.get(
-  "/google/login",
-  rateLimter(5 * 60 * 1000, 5, "ip"),
-  authController.getGoogleLoginAuthUrl,
+  googleAuthController.retriveGoogleOauthUrl,
 );
 
-router.get(
-  "/google/signup-fallback",
-  rateLimter(5 * 60 * 1000, 5, "ip"),
-  authController.signupWithGoogle,
-);
-router.get(
-  "/google/login-fallback",
-  rateLimter(5 * 60 * 1000, 5, "ip"),
-  authController.signinWithGoogle,
-);
+router.get("/google/callback", googleAuthController.googleCallbackHandler);
 
 export default router;

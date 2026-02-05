@@ -1,5 +1,6 @@
 import Env from "../config/index.js";
 import Logger from "./logger.js";
+import jwt from "jsonwebtoken";
 
 /* Format money function */
 export const formatAmount = (amountCents) => {
@@ -21,21 +22,34 @@ export const generateCode = (length = 6) => {
   return code;
 };
 
-// function for decoding googe id token
-import { OAuth2Client } from "google-auth-library";
-const client = new OAuth2Client(Env.GOOGLE_CLIENT_ID);
+/* Generate random password button */
+export function generateRandPassword(limit = 10) {
+  const character = `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-={}[]|\:;"'<>,.?/~`;
 
-export async function verifyIdToken(idToken) {
-  try {
-    const ticket = await client.verifyIdToken({
-      idToken: idToken,
-      audience: Env.TRUE_LOVE_GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    return payload;
-  } catch (error) {
-    logger.error(error);
-    return null;
+  let randomPassword = "";
+  for (let i = 0; i < limit; i++) {
+    const index = Math.floor(Math.random() * character.length);
+    randomPassword += character[index];
   }
+  return randomPassword;
+}
+
+/* Sign token function */
+export function signToken({ email, id, isVerified, type }) {
+  const tokenSecret =
+    type === "refreshToken"
+      ? Env.REFRESH_TOKEN_SECRET_KEY
+      : Env.TOKEN_SECRET_KEY;
+  const expiresIn = type === "refreshToken" ? "7d" : "24h";
+
+  return jwt.sign(
+    {
+      email,
+      id,
+      isVerified,
+      type,
+    },
+    tokenSecret,
+    { expiresIn },
+  );
 }

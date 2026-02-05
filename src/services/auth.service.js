@@ -1,6 +1,6 @@
 import User from "../models/user.model.js";
 import Profile from "../models/profile.model.js";
-import { generateCode } from "../utils/helpers.js";
+import { generateCode, signToken } from "../utils/helpers.js";
 import Logger from "../utils/logger.js";
 import sendResendEmail from "./resend.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
@@ -86,25 +86,6 @@ export async function createNewUser({
 }
 
 /* Login user */
-function signToken({ email, id, isVerified, type }) {
-  const tokenSecret =
-    type === "refreshToken"
-      ? Env.REFRESH_TOKEN_SECRET_KEY
-      : Env.TOKEN_SECRET_KEY;
-  const expiresIn = type === "refreshToken" ? "7d" : "24h";
-
-  return jwt.sign(
-    {
-      email,
-      id,
-      isVerified,
-      type,
-    },
-    tokenSecret,
-    { expiresIn },
-  );
-}
-
 export async function validatePasswordAndSignTokens({ email, password }) {
   const user = await User.findOne({ email: email });
   if (!user)

@@ -7,6 +7,7 @@ import sendResendEmail from "../services/resend.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import * as authService from "../services/auth.service.js";
 import Profile from "../models/profile.model.js";
+import { generateRandPassword } from "../utils/helpers.js";
 
 /* Email validator */
 function validateEmail(body) {
@@ -24,17 +25,6 @@ function validateEmail(body) {
     );
   }
   return value;
-}
-
-function generateRandPassword(limit = 10) {
-  const character = `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-={}[]|\:;"'<>,.?/~`;
-
-  let randomPassword = "";
-  for (let i = 0; i < limit; i++) {
-    const index = Math.floor(Math.random() * character.length);
-    randomPassword += character[index];
-  }
-  return randomPassword;
 }
 
 /*  Auto create user. In a case were user try checking out without creating an account, this middleware create a new account for them and send them an email with the default logins.*/
