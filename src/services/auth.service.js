@@ -268,3 +268,52 @@ export async function resetPassword(password, resetToken) {
     EmailTemplates.paswordResetSucessful(user.fullName),
   );
 }
+
+/* Resend verification code */
+export async function sendEmailVerificationCode(email) {
+  const user = await User.findOne({ email });
+  if (user.isVerified)
+    throw new AppError(
+      ErrorCodes.EMAIL_ALREADY_VERIFIED,
+      "User is already verified",
+      400,
+      true,
+      {
+        isVerified: user.isVerified,
+      },
+    );
+
+  const emailVerification = createEmailVerificationCode();
+  user.emailVerification = emailVerification;
+  await user.save();
+
+  await sendResendEmail(
+    user.email,
+    "Please verify your email address",
+    EmailTemplates.emailVerificationTemplate(
+      "Cupid's chosen",
+      emailVerification.code,
+    ),
+  );
+}
+
+/* Verify email verification code */
+export async function verifyEmailVerificationCode(code) {
+  const user = await User.findOne({
+    "emailVerification.code": code,
+    "emailVerification.expireAt": { $gt: new Date() },
+  });
+
+  if (!user)
+    throw new AppError(
+      ErrorCodes.VERIFICATION_CODE_INVALID,
+      "Code expired or code is invalid",
+      400,
+      true,
+    );
+
+  user.isVerified = true;
+  user.emailVerification.code = null;
+  user.emailVerification.expireAt = null;
+  await user.save();
+}

@@ -32,9 +32,9 @@ router.post(
 );
 router.post(
   "/resend-email",
-  // withAuth,
+  withAuth,
   rateLimter(5 * 60 * 1000, 5, "user-id"),
-  authController.resendEmail,
+  authController.resendEmaiVerificationCode,
 );
 router.post(
   "/verify-password-reset-otp",

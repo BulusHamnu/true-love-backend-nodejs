@@ -1,8 +1,3 @@
-import { generateCode } from "../../utils/helpers.js";
-import User from "../../models/user.model.js";
-import Profile from "../../models/profile.model.js";
-import sendResendEmail from "../../services/resend.js";
-import EmailTemplates from "../../utils/emailTemplates.js";
 import Env from "../../config/index.js";
 import * as authValidator from "../../utils/validators.js";
 import Joi from "joi";
@@ -132,7 +127,7 @@ export async function forgetPassword(req, res, next) {
 }
 
 /* Verify password reset code handler */
-function validateOptCodeBody(data) {
+function validateCodeBody(data) {
   const schema = Joi.object({
     code: Joi.string().required().length(6),
   });
@@ -141,7 +136,7 @@ function validateOptCodeBody(data) {
 
 export async function verifyPasswordResetOpt(req, res, next) {
   try {
-    const { code } = validateOptCodeBody(req.body);
+    const { code } = validateCodeBody(req.body);
     const resetToken = await authService.verifyOptCodeAndIssueToken(code);
 
     res.status(200).json({
@@ -172,108 +167,34 @@ export async function resetPassword(req, res, next) {
   }
 }
 
-// resend email handler
-export async function resendEmail(req, res) {
+/* Resend email verification code handler */
+export async function resendEmaiVerificationCode(req, res, next) {
   try {
-    // check if user exist
-    const email = req.body.email;
-    if (!email)
-      res
-        .status(404)
-        .json({ status: false, message: "Please provide an email." });
-    Logger.info("Email received for verification.", { email });
-    // receive email from body
-    const user = await User.findOne({ email });
-    if (!user)
-      return res
-        .status(404)
-        .json({ status: true, message: "User does not exist." });
+    const email = req.user.email;
+    Logger.info(`${email} requested for email verification`);
 
-    // check if user is already verfied
-    if (user.isVerified)
-      return res.status(409).json({
-        status: false,
-        message: "User is already verified",
-      });
-
-    Logger.info("Email verification requested", {
-      email: email,
-    });
-
-    // generate verification code
-    const verficationCode = generateCode(6);
-
-    // update user
-    user.emailVerification.code = verficationCode;
-    user.emailVerification.expireAt = new Date(Date.now() + 15 * 60 * 1000);
-    await user.save();
-
-    // send verfication email
-    await sendResendEmail(
-      email,
-      "Please verify your email address",
-      EmailTemplates.emailVerificationTemplate(user.fullName, verficationCode),
-    );
+    await authService.sendEmailVerificationCode(email);
 
     res.status(200).json({
       status: true,
       message: "Email was sent sucessfully.",
     });
   } catch (error) {
-    Logger.error(error);
-    res.status(500).json({
-      status: false,
-      message: "An unexpected error occured.",
-    });
+    next(error);
   }
 }
 
-// verify email handler
-export async function verifyEmail(req, res) {
+/* Verify email code handler */
+export async function verifyEmail(req, res, next) {
   try {
-    const { code } = req.body;
-    if (!code)
-      return res.status(400).json({
-        status: false,
-        message: "Please provide verification code.",
-      });
-
-    // check if user already exist
-    const user = await User.findOne({
-      "emailVerification.code": code,
-      "emailVerification.expireAt": { $gt: new Date() },
-    });
-
-    if (!user)
-      return res
-        .status(422)
-        .json({ status: true, message: "Code expired or code is invalid" });
-
-    // verify user
-    user.isVerified = true;
-    user.emailVerification.code = null;
-    user.emailVerification.expireAt = null;
-    await user.save();
-
-    Logger.info("Email verification sucessful", { email: user.email });
-
-    // get user profile
-    const userProfile = await Profile.findOne({ userId: user._id });
+    const { code } = validateCodeBody(req.body);
+    await authService.verifyEmailVerificationCode(code);
 
     res.status(200).json({
       status: true,
-      message: "Email verify sucessful",
-      data: {
-        ...userProfile.removeUnwantedFields(),
-        isVerified: user.isVerified,
-        id: user._id,
-      },
+      message: "Email verification was successful.",
     });
   } catch (error) {
-    Logger.error(error);
-    res.status(500).json({
-      status: false,
-      message: "An unexpected error occured.",
-    });
+    next(error);
   }
 }
