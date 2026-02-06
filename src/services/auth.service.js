@@ -270,8 +270,7 @@ export async function resetPassword(password, resetToken) {
 }
 
 /* Resend verification code */
-export async function sendEmailVerificationCode(email) {
-  const user = await User.findOne({ email });
+export async function sendEmailVerificationCode(user) {
   if (user.isVerified)
     throw new AppError(
       ErrorCodes.EMAIL_ALREADY_VERIFIED,
@@ -283,17 +282,21 @@ export async function sendEmailVerificationCode(email) {
       },
     );
 
-  const emailVerification = createEmailVerificationCode();
-  user.emailVerification = emailVerification;
-  await user.save();
+  const { code, expireAt } = createEmailVerificationCode();
+  await User.findOneAndUpdate(
+    { _id: user.id },
+    {
+      emailVerification: {
+        code,
+        expireAt,
+      },
+    },
+  );
 
   await sendResendEmail(
     user.email,
     "Please verify your email address",
-    EmailTemplates.emailVerificationTemplate(
-      "Cupid's chosen",
-      emailVerification.code,
-    ),
+    EmailTemplates.emailVerificationTemplate("Cupid's chosen", code),
   );
 }
 

@@ -1,5 +1,4 @@
 import Env from "../config/index.js";
-import Logger from "./logger.js";
 import jwt from "jsonwebtoken";
 
 /* Format money function */
@@ -35,7 +34,7 @@ export function generateRandPassword(limit = 10) {
 }
 
 /* Sign token function */
-export function signToken({ email, id, isVerified, type }) {
+export function signToken({ email, id, type }) {
   const tokenSecret =
     type === "refreshToken"
       ? Env.REFRESH_TOKEN_SECRET_KEY
@@ -46,7 +45,6 @@ export function signToken({ email, id, isVerified, type }) {
     {
       email,
       id,
-      isVerified,
       type,
     },
     tokenSecret,

@@ -170,10 +170,10 @@ export async function resetPassword(req, res, next) {
 /* Resend email verification code handler */
 export async function resendEmaiVerificationCode(req, res, next) {
   try {
-    const email = req.user.email;
-    Logger.info(`${email} requested for email verification`);
+    const user = req.user;
+    Logger.info(`${user.email} requested for email verification`);
 
-    await authService.sendEmailVerificationCode(email);
+    await authService.sendEmailVerificationCode(user);
 
     res.status(200).json({
       status: true,

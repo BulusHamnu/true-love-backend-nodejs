@@ -1,6 +1,7 @@
 import Env from "../config/index.js";
 import jwt from "jsonwebtoken";
 import AppError, { ErrorCodes } from "../errors/appError.js";
+import User from "../models/user.model.js";
 
 export default async function (req, res, next) {
   try {
@@ -24,7 +25,8 @@ export default async function (req, res, next) {
       );
     }
 
-    req.user = tokenPayload;
+    const authUser = await User.findOne({ _id: tokenPayload.id }).lean();
+    req.user = { id: authUser, ...authUser };
 
     next();
   } catch (error) {
