@@ -26,15 +26,20 @@ router.post(
   authController.logout,
 );
 router.post(
+  "/verify-email",
+  rateLimter(5 * 60 * 1000, 5, "ip"),
+  authController.verifyEmail,
+);
+router.post(
   "/resend-email",
   // withAuth,
   rateLimter(5 * 60 * 1000, 5, "user-id"),
   authController.resendEmail,
 );
 router.post(
-  "/reset-password",
+  "/verify-password-reset-otp",
   rateLimter(5 * 60 * 1000, 5, "ip"),
-  authController.resetPassword,
+  authController.verifyPasswordResetOpt,
 );
 router.post(
   "/forget-password",
@@ -42,14 +47,9 @@ router.post(
   authController.forgetPassword,
 );
 router.post(
-  "/verify-email",
+  "/reset-password",
   rateLimter(5 * 60 * 1000, 5, "ip"),
-  authController.verifyEmail,
-);
-router.post(
-  "/verify-password-reset-code",
-  rateLimter(5 * 60 * 1000, 5, "ip"),
-  authController.verifyPasswordResetCode,
+  authController.resetPassword,
 );
 
 /* Google Oauth routes*/

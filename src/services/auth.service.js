@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import EmailTemplates from "../utils/emailTemplates.js";
 import Env from "../config/index.js";
+import crypto from "crypto";
 
 /* Sign up user */
 export function createEmailVerificationCode() {
@@ -185,4 +186,85 @@ export async function refreshAccessToken(refreshToken) {
 
     throw error;
   }
+}
+
+/* Send reset opt code function */
+export async function createAndSendPasswordResetOpt(email) {
+  const user = await User.findOne({ email });
+  if (!user)
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
+
+  const otpCode = generateCode(6);
+  const otpCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  user.resetPasswordVerification.otpCode = otpCode;
+  user.resetPasswordVerification.otpCodeExpiresAt = otpCodeExpiresAt;
+  await user.save();
+
+  // send verfication email
+  await sendResendEmail(
+    email,
+    "Reset Your Password",
+    EmailTemplates.passwordVerificationTemplate(otpCode),
+  );
+}
+
+/* Verify reset otp  */
+function generateResetToken() {
+  return crypto.randomBytes(16).toString("hex");
+}
+export async function verifyOptCodeAndIssueToken(code) {
+  const user = await User.findOne({
+    "resetPasswordVerification.otpCode": code,
+    "resetPasswordVerification.otpCodeExpiresAt": { $gt: new Date() },
+  });
+
+  if (!user)
+    throw new AppError(
+      ErrorCodes.RESET_OTP_INVALID,
+      "Code expired or code is invalid",
+      400,
+      true,
+    );
+
+  const resetToken = generateResetToken();
+  const resetTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  user.resetPasswordVerification.otpCode = null;
+  user.resetPasswordVerification.otpCodeExpiresAt = null;
+  user.resetPasswordVerification.resetToken = resetToken;
+  user.resetPasswordVerification.resetTokenExpiresAt = resetTokenExpiresAt;
+  await user.save();
+
+  return resetToken;
+}
+
+/* Reset password function */
+export async function resetPassword(password, resetToken) {
+  const user = await User.findOne({
+    "resetPasswordVerification.resetToken": resetToken,
+    "resetPasswordVerification.resetTokenExpiresAt": { $gt: new Date() },
+  });
+
+  if (!user)
+    throw new AppError(
+      ErrorCodes.RESET_TOKEN_EXPIRED,
+      "Reset token has expired.",
+      400,
+      true,
+    );
+
+  const newPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
+  user.password = newPassword;
+  user.resetPasswordVerification.resetToken = null;
+  user.resetPasswordVerification.resetTokenExpiresAt = null;
+  await user.save();
+
+  Logger.info("User password reset sucessful", {
+    email: user.email,
+  });
+
+  await sendResendEmail(
+    user.email,
+    "Password reset sucessfully.",
+    EmailTemplates.paswordResetSucessful(user.fullName),
+  );
 }

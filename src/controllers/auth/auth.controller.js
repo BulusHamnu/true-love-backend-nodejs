@@ -6,11 +6,9 @@ import EmailTemplates from "../../utils/emailTemplates.js";
 import Env from "../../config/index.js";
 import * as authValidator from "../../utils/validators.js";
 import Joi from "joi";
-import sanitizeData from "../../utils/sanitizeData.js";
 import * as authService from "../../services/auth.service.js";
 import validateAndSanitizeData from "../../utils/validateAndSanitizeData.js";
 import Logger from "../../utils/logger.js";
-import bcrypt from "bcryptjs";
 
 /* Sign up user handler */
 export async function signup(req, res, next) {
@@ -86,7 +84,6 @@ export async function login(req, res, next) {
 export async function refreshToken(req, res, next) {
   try {
     const refreshToken = req.cookies.refreshToken;
-
     const accessToken = await authService.refreshAccessToken(refreshToken);
 
     res.status(200).json({
@@ -112,55 +109,66 @@ export async function logout(req, res, next) {
   }
 }
 
-// forget password handler
-export async function forgetPassword(req, res) {
+/* Forget password handler */
+function validateForgetPasswordBody(data) {
+  const schema = Joi.object({
+    email: authValidator.emailField,
+  });
+
+  return validateAndSanitizeData(data, schema);
+}
+export async function forgetPassword(req, res, next) {
   try {
-    const { email } = req.body;
-
-    // validate email with Joi
-    const validator = Joi.string().email().required().label("email");
-    const validate = validator.validate(email);
-    if (validate.error)
-      return res
-        .status(400)
-        .json({ status: false, message: validate.error.message });
-
-    // check if user already exist
-    const user = await User.findOne({ email: email });
-    if (!user)
-      return res
-        .status(404)
-        .json({ status: true, message: "User does not exist." });
-
-    Logger.info("Password reset requested", { email });
-
-    // generate verification code
-    const verficationCode = generateCode(6);
-
-    // update user
-    user.resetPasswordVerification.code = verficationCode;
-    user.resetPasswordVerification.expireAt = new Date(
-      Date.now() + 15 * 60 * 1000,
-    );
-    await user.save();
-
-    // send verfication email
-    await sendResendEmail(
-      email,
-      "Reset Your Password",
-      EmailTemplates.passwordVerificationTemplate(verficationCode),
-    );
+    const { email } = validateForgetPasswordBody(req.body);
+    await authService.createAndSendPasswordResetOpt(email);
 
     res.status(200).json({
       status: true,
       message: "Password reset email was sent sucessfully.",
     });
   } catch (error) {
-    Logger.error(error);
-    res.status(500).json({
-      status: false,
-      message: "An unexpected error occured.",
+    next(error);
+  }
+}
+
+/* Verify password reset code handler */
+function validateOptCodeBody(data) {
+  const schema = Joi.object({
+    code: Joi.string().required().length(6),
+  });
+  return validateAndSanitizeData(data, schema);
+}
+
+export async function verifyPasswordResetOpt(req, res, next) {
+  try {
+    const { code } = validateOptCodeBody(req.body);
+    const resetToken = await authService.verifyOptCodeAndIssueToken(code);
+
+    res.status(200).json({
+      status: true,
+      message: "Code is valid",
+      data: { resetToken },
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/* Reset password handler */
+export async function resetPassword(req, res, next) {
+  try {
+    const { password, resetToken } = validateAndSanitizeData(
+      req.body,
+      authValidator.resetPasswordBodySchema,
+    );
+
+    await authService.resetPassword(password, resetToken);
+    res.status(200).json({
+      status: true,
+      message: "Password was reset sucessfully.",
+    });
+  } catch (error) {
+    next(error);
   }
 }
 
@@ -220,66 +228,6 @@ export async function resendEmail(req, res) {
   }
 }
 
-// reset password handler
-export async function resetPassword(req, res) {
-  try {
-    const cleanData = sanitizeData(req.body);
-    const { email, password } = cleanData;
-
-    const validate = authValidator.emailAndPasswordSchema.validate({
-      email,
-      password,
-    });
-
-    if (validate.error)
-      return res
-        .status(400)
-        .json({ status: false, message: validate.error.message });
-
-    // check if user already exist
-    const user = await User.findOne({ email: email });
-    if (!user)
-      return res
-        .status(404)
-        .json({ status: true, message: "User does not exist." });
-
-    // check if code still exist
-    if (!user.resetPasswordVerification.code)
-      return res.status(404).json({ status: false, message: "Code not found" });
-
-    // hash user password
-    const newPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
-
-    // update password
-    user.resetPasswordVerification.code = null;
-    user.resetPasswordVerification.expireAt = null;
-    user.password = newPassword;
-    await user.save();
-
-    Logger.info("User password reset sucessful", {
-      email: user.email,
-    });
-
-    // send verfication email
-    await sendResendEmail(
-      email,
-      "Password reset sucessfully.",
-      EmailTemplates.paswordResetSucessful(user.fullName),
-    );
-
-    res.status(200).json({
-      status: true,
-      message: "Password was reset sucessfully.",
-    });
-  } catch (error) {
-    Logger.error(error);
-    res.status(500).json({
-      status: false,
-      message: "An unexpected error occured.",
-    });
-  }
-}
-
 // verify email handler
 export async function verifyEmail(req, res) {
   try {
@@ -320,40 +268,6 @@ export async function verifyEmail(req, res) {
         isVerified: user.isVerified,
         id: user._id,
       },
-    });
-  } catch (error) {
-    Logger.error(error);
-    res.status(500).json({
-      status: false,
-      message: "An unexpected error occured.",
-    });
-  }
-}
-
-// verify password reset code handler
-export async function verifyPasswordResetCode(req, res) {
-  try {
-    const { code } = req.body;
-    if (!code)
-      return res.status(400).json({
-        status: false,
-        message: "Please provide verification code.",
-      });
-
-    // check if user already exist
-    const user = await User.findOne({
-      "resetPasswordVerification.code": code,
-      "resetPasswordVerification.expireAt": { $gt: new Date() },
-    });
-
-    if (!user)
-      return res
-        .status(422)
-        .json({ status: false, message: "Code expired or code is invalid" });
-
-    res.status(200).json({
-      status: true,
-      message: "Code is valid",
     });
   } catch (error) {
     Logger.error(error);

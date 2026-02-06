@@ -23,8 +23,10 @@ const userSchema = new mongoose.Schema({
     default: "user",
   },
   resetPasswordVerification: {
-    code: String,
-    expireAt: Date,
+    otpCode: String,
+    otpCodeExpiresAt: Date,
+    resetToken: String,
+    resetTokenExpiresAt: Date,
   },
   emailVerification: {
     code: String,

@@ -13,7 +13,7 @@ const passwordField = Joi.string()
     "string.min": "Password is too short.",
   });
 
-const emailField = Joi.string()
+export const emailField = Joi.string()
   .email({ minDomainSegments: 2, tlds: { allow: ["net", "com"] } })
   .required();
 
@@ -36,9 +36,12 @@ export const loginBodySchema = Joi.object({
 });
 
 /* Email and Password body schema */
-export const emailAndPasswordSchema = Joi.object({
+export const resetPasswordBodySchema = Joi.object({
   password: passwordField,
-  email: emailField,
+  confirmPassword: Joi.string().required().valid(Joi.ref("password")).messages({
+    "any.only": "Confirm password must be the same with password.",
+  }),
+  resetToken: Joi.string().required().length(32),
 });
 
 /* Profile update body schema */
