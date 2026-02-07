@@ -8,8 +8,8 @@ export default async function (req, res, next) {
     const accessToken = req.headers["authorization"]?.split(" ")[1].trim();
     if (!accessToken) {
       throw new AppError(
-        ErrorCodes.UNAUTHORIZED,
-        "No token provided. Unauthorized.",
+        ErrorCodes.UNAUTHENTICATED,
+        "No token provided. Unauthenticated.",
         401,
         true,
       );
@@ -26,8 +26,16 @@ export default async function (req, res, next) {
     }
 
     const authUser = await User.findOne({ _id: tokenPayload.id }).lean();
-    req.user = { id: authUser, ...authUser };
+    if (!authUser) {
+      throw new AppError(
+        ErrorCodes.UNAUTHENTICATED,
+        "Unauthenticated.",
+        401,
+        true,
+      );
+    }
 
+    req.user = { id: authUser, ...authUser };
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
