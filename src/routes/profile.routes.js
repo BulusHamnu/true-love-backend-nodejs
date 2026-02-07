@@ -5,15 +5,14 @@ import rateLimter from "../middlewares/rateLimiter.js";
 
 const router = express.Router();
 
+router.use(withAuth);
 router.get(
   "/",
-  withAuth,
   rateLimter(5 * 60 * 1000, 30, "user-id"),
   profileController.getProfile,
 );
 router.patch(
   "/",
-  withAuth,
   rateLimter(5 * 60 * 1000, 30, "user-id"),
   profileController.updateProfile,
 );

@@ -2,18 +2,20 @@ import express from "express";
 import * as selfGuidedController from "../controllers/self-guided.controller.js";
 import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
+import requiredVerifiedEmail from "../middlewares/requiredVerifiedEmail.js";
 
 const router = express.Router();
 
+router.use(withAuth);
 router.get(
   "/",
-  withAuth,
   rateLimter(5 * 60 * 1000, 25, "user-id"),
   selfGuidedController.getSelfGuidedProgram,
 );
+
+router.use(requiredVerifiedEmail);
 router.patch(
   "/",
-  withAuth,
   rateLimter(5 * 60 * 1000, 20, "user-id"),
   selfGuidedController.updateSelfGuidedProgram,
 );
@@ -21,7 +23,6 @@ router.patch(
 // reflection corner messages
 router.post(
   "/reflection-messages/:weekNumber",
-  withAuth,
   rateLimter(5 * 60 * 1000, 20, "user-id"),
   selfGuidedController.reflectionCorner,
 );

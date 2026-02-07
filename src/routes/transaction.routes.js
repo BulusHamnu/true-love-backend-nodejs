@@ -5,15 +5,14 @@ import rateLimter from "../middlewares/rateLimiter.js";
 
 const router = express.Router();
 
+router.use(withAuth);
 router.get(
   "/",
-  withAuth,
   rateLimter(5 * 60 * 1000, 25, "user-id"),
   transactionController.getAllTransaction,
 );
 router.get(
   "/:id",
-  withAuth,
   rateLimter(5 * 60 * 1000, 25, "user-id"),
   transactionController.getTransaction,
 );
