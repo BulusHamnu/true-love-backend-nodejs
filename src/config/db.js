@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 import Logger from "../utils/logger.js";
-// import { logInfo, logError } from "../src/utils/helpers.js";
+import Env from "./index.js";
 
-// connect to mongodb
+/* Connect to mongodb */
 const connectDb = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB);
+    await mongoose.connect(Env.MONGO_DATABASE_URI);
     Logger.info("DB connected sucessfully.");
   } catch (error) {
     Logger.error("An error occur while connecting to db.", error.message);
@@ -13,5 +13,4 @@ const connectDb = async () => {
   }
 };
 
-// connectDb();
 export default connectDb;

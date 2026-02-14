@@ -49,6 +49,9 @@ export const Env = {
   BACKEND_URL: process.env.BACKEND_URL || "",
   FRONTEND_URL: process.env.FRONTEND_URL || "",
 
-  MAINTENANCE_MODE: process.env.MAINTENANCE_MODE || false,
+  MAINTENANCE_MODE: process.env.MAINTENANCE_MODE || "false",
+  MONGO_DATABASE_HOST: process.env.MONGO_DATABASE_HOST || "",
+  MONGO_DATABASE_NAME: process.env.MONGO_DATABASE_NAME || "",
+  MONGO_DATABASE_URI: process.env.MONGO_DATABASE_URI || "",
 };
 export default Env;
