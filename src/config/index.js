@@ -48,6 +48,7 @@ export const Env = {
   PORT: process.env.PORT,
   BACKEND_URL: process.env.BACKEND_URL || "",
   FRONTEND_URL: process.env.FRONTEND_URL || "",
-};
 
+  MAINTENANCE_MODE: process.env.MAINTENANCE_MODE || false,
+};
 export default Env;

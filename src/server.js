@@ -5,7 +5,7 @@ import authRoutes from "./routes/auth.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
 import selfGuidedRoutes from "./routes/self-guided.routes.js";
 import checkOutRoutes from "./routes/checkout.routes.js";
-import webhooksRoutes from "./routes/webhook.routes.js"
+import webhooksRoutes from "./routes/webhook.routes.js";
 import transactionRoutes from "./routes/transaction.routes.js";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -18,6 +18,7 @@ import getAppStats from "./controllers/get-app-stats.controller.js";
 import errorHandler from "./middlewares/errorHandler.js";
 const port = Env.PORT;
 const app = express();
+import enableMaintenanceMode from "./middlewares/enableMaintenanceMode.js";
 
 // Middleware
 app.use(helmet());
@@ -48,6 +49,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use(enableMaintenanceMode);
 app.use("/api/auth", authRoutes);
 app.use("/api/me", profileRoutes);
 app.use("/api/checkouts", checkOutRoutes);
