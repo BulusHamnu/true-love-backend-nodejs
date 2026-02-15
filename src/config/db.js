@@ -5,6 +5,7 @@ import Env from "./index.js";
 /* Connect to mongodb */
 const connectDb = async () => {
   try {
+    mongoose.set("autoIndex", false);
     await mongoose.connect(Env.MONGO_DATABASE_URI);
     Logger.info("DB connected sucessfully.");
   } catch (error) {
