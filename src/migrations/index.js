@@ -13,7 +13,8 @@ async function runMigrations() {
 
   const scriptPaths = fs
     .readdirSync(_dirname)
-    .filter((path) => path !== "index.js");
+    .filter((path) => path !== "index.js")
+    .sort();
 
   const migrationCollection = db.collection("migrations");
   const alreadyRanMigration = await migrationCollection.find().toArray();

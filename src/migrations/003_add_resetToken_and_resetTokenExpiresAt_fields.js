@@ -1,24 +1,29 @@
 import Logger from "../utils/logger.js";
 
 /* Add  resetToken and resetTokenExpiresAt field to resetPasswordVerification*/
-// "resetPasswordVerification.otpCode": { $exists: true },
-// "resetPasswordVerification.otpCodeExpiresAt": { $exists: true },
 export async function up(db) {
   const userCollection = db.collection("users");
-  await userCollection.updateMany({}, [
+  const result = await userCollection.updateMany(
     {
-      $set: {
-        "resetPasswordVerification.resetToken": "",
-      },
+      $or: [
+        {
+          "resetPasswordVerification.resetTokenExpiresAt": { $exists: false },
+        },
+        {
+          "resetPasswordVerification.resetToken": { $exists: false },
+        },
+      ],
     },
-    {
-      $set: {
-        "resetPasswordVerification.resetTokenExpiresAt": "",
-      },
-    },
-  ]);
 
-  Logger.info(
-    "resetToken and resetTokenExpiresAt fields was added successfully.",
+    {
+      $set: {
+        "resetPasswordVerification.resetToken": null,
+        "resetPasswordVerification.resetTokenExpiresAt": null,
+      },
+    },
   );
+
+  Logger.info("resetToken and resetTokenExpiresAt field migration completed.", {
+    modifiedCount: result.modifiedCount,
+  });
 }
