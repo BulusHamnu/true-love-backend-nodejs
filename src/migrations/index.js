@@ -25,13 +25,18 @@ async function runMigrations() {
   );
 
   for (const filePath of migrationsTorun) {
-    const currentMigration = await import(`./${filePath}`);
-    await currentMigration.up(db);
+    try {
+      const currentMigration = await import(`./${filePath}`);
+      await currentMigration.up(db);
 
-    await migrationCollection.insertOne({
-      name: filePath,
-      createdAt: new Date(),
-    });
+      await migrationCollection.insertOne({
+        name: filePath,
+        createdAt: new Date(),
+      });
+    } catch (error) {
+      Logger.error(`An error occur in ${filePath} script.`, { error });
+      throw error;
+    }
   }
 }
 
