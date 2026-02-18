@@ -1,12 +1,11 @@
 import Profile from "../models/profile.model.js";
-import Logger from "../utils/logger.js";
+import AppError, { ErrorCodes } from "../errors/appError.js";
 
-const getAppStats = async (req, res) => {
+const getAppStats = async (req, res, next) => {
   try {
     const totalUsers = await Profile.find(); //.countDocuments();
     const date = new Date();
 
-    // users created today
     const newUsersToday = totalUsers.filter((user) => {
       const created = new Date(user.createdAt);
       return (
@@ -16,14 +15,12 @@ const getAppStats = async (req, res) => {
       );
     });
 
-    // get start of current week
     const dayOfWeek = date.getDay();
     const startOfWeek = new Date(
       date.getTime() - dayOfWeek * 60 * 60 * 24 * 1000,
     );
     const endOfWeek = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // users created this week
     const newUsersThisWeek = totalUsers.filter(
       (user) =>
         new Date(user.createdAt) >= startOfWeek &&
@@ -36,14 +33,14 @@ const getAppStats = async (req, res) => {
       newUsersThisWeek: newUsersThisWeek.length,
       timestamp: date,
     };
-    Logger.info("App stats retrive sucessfully.");
-    res.status(200).json(stats);
-  } catch (error) {
-    Logger.error("An error ocurred while retriving app stats.", error);
-    res.status(500).json({
-      status: false,
-      message: "An error occur, please try again later.",
+
+    res.status(200).json({
+      status: true,
+      message: "App stats retrived successfully.",
+      data: stats,
     });
+  } catch (error) {
+    next(error);
   }
 };
 

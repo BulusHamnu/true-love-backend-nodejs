@@ -7,12 +7,12 @@ const router = express.Router();
 
 router.use(withAuth);
 router.get(
-  "/",
+  "/me",
   rateLimter(5 * 60 * 1000, 30, "user-id"),
   profileController.getProfile,
 );
 router.patch(
-  "/",
+  "/me",
   rateLimter(5 * 60 * 1000, 30, "user-id"),
   profileController.updateProfile,
 );

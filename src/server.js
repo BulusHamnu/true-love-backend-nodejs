@@ -14,7 +14,7 @@ import cors from "cors";
 const dirname = import.meta.dirname;
 import cookieParser from "cookie-parser";
 import Logger from "./utils/logger.js";
-import getAppStats from "./controllers/get-app-stats.controller.js";
+import publicRoutes from "./routes/public.routes.js";
 import errorHandler from "./middlewares/errorHandler.js";
 const port = Env.PORT;
 const app = express();
@@ -51,12 +51,12 @@ app.use((req, res, next) => {
 // Routes
 app.use(enableMaintenanceMode);
 app.use("/api/auth", authRoutes);
-app.use("/api/me", profileRoutes);
+app.use("/api/users", profileRoutes);
 app.use("/api/checkouts", checkOutRoutes);
 app.use("/api/webhooks", webhooksRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/self-guided", selfGuidedRoutes);
-app.get("/api/monitor", getAppStats);
+app.use("/api/public", publicRoutes);
 
 // Error handler
 app.use(errorHandler);
