@@ -2,7 +2,7 @@ import express from "express";
 import Env from "./config/index.js";
 import connectDb from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
-import profileRoutes from "./routes/profile.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import selfGuidedRoutes from "./routes/self-guided.routes.js";
 import checkOutRoutes from "./routes/checkout.routes.js";
 import webhooksRoutes from "./routes/webhook.routes.js";
@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 // Routes
 app.use(enableMaintenanceMode);
 app.use("/api/auth", authRoutes);
-app.use("/api/users", profileRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/checkouts", checkOutRoutes);
 app.use("/api/webhooks", webhooksRoutes);
 app.use("/api/transactions", transactionRoutes);

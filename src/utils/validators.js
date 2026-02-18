@@ -45,7 +45,7 @@ export const resetPasswordBodySchema = Joi.object({
 });
 
 /* Profile update body schema */
-export const profileUpdate = Joi.object({
+export const profileUpdateBodySchema = Joi.object({
   fullName: Joi.string().min(3).optional(),
   phone: Joi.string().min(11).optional(),
   age: Joi.number().min(14).optional(),

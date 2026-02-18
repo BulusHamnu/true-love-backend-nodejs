@@ -1,5 +1,5 @@
 import express from "express";
-import * as profileController from "../controllers/profile.controller.js";
+import * as profileController from "../controllers/user.controller.js";
 import withAuth from "../middlewares/withAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 
@@ -9,12 +9,12 @@ router.use(withAuth);
 router.get(
   "/me",
   rateLimter(5 * 60 * 1000, 30, "user-id"),
-  profileController.getProfile,
+  profileController.getProfileHandler,
 );
 router.patch(
   "/me",
   rateLimter(5 * 60 * 1000, 30, "user-id"),
-  profileController.updateProfile,
+  profileController.updateProfileHandler,
 );
 
 export default router;

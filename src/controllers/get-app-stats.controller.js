@@ -1,5 +1,4 @@
 import Profile from "../models/profile.model.js";
-import AppError, { ErrorCodes } from "../errors/appError.js";
 
 const getAppStats = async (req, res, next) => {
   try {

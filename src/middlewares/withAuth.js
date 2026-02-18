@@ -35,7 +35,7 @@ export default async function (req, res, next) {
       );
     }
 
-    req.user = { id: authUser, ...authUser };
+    req.user = { id: authUser._id, ...authUser };
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
