@@ -52,9 +52,9 @@ export const profileUpdateBodySchema = Joi.object({
 });
 
 /* Self-guided body schema */
-export const selfGuidedValidator = Joi.object({
+export const selfGuidedProgressBodySchema = Joi.object({
   programProgress: Joi.object({
-    currentWeek: Joi.number().min(0).max(6).messages({
+    currentWeek: Joi.number().min(1).max(6).messages({
       "number.min": "Week cannot be less than 0",
       "number.max": "Week cannot be greater than 6",
     }),

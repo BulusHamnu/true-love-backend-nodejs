@@ -1,7 +1,6 @@
 import nodemailer from "nodemailer";
 import { env } from "../config/index.js";
 
-// nodemailer config
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,
@@ -12,7 +11,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// create email function
+/* Send email function */
 export const sendEmail = async (to, subject, html) => {
   try {
     await transporter.sendMail({

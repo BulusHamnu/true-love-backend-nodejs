@@ -20,7 +20,7 @@ const port = Env.PORT;
 const app = express();
 import enableMaintenanceMode from "./middlewares/enableMaintenanceMode.js";
 
-// Middleware
+/* Middleware */
 app.use(helmet());
 app.use(express.static(path.join(dirname, "../public")));
 app.use(
@@ -48,17 +48,17 @@ app.use((req, res, next) => {
   express.json()(req, res, next);
 });
 
-// Routes
+/* Routes */
 app.use(enableMaintenanceMode);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/checkouts", checkOutRoutes);
 app.use("/api/webhooks", webhooksRoutes);
 app.use("/api/transactions", transactionRoutes);
-app.use("/api/self-guided", selfGuidedRoutes);
+app.use("/api/self-guided-program", selfGuidedRoutes);
 app.use("/api/public", publicRoutes);
 
-// Error handler
+/* Error handler */
 app.use(errorHandler);
 
 // Start the server

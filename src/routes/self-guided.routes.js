@@ -10,27 +10,20 @@ router.use(withAuth);
 router.get(
   "/",
   rateLimter(5 * 60 * 1000, 25, "user-id"),
-  selfGuidedController.getSelfGuidedProgram,
+  selfGuidedController.getSelfGuidedProgramHandler,
 );
 
 router.use(requiredVerifiedEmail);
 router.patch(
   "/",
   rateLimter(5 * 60 * 1000, 20, "user-id"),
-  selfGuidedController.updateSelfGuidedProgram,
+  selfGuidedController.updateSelfGuidedProgramHandler,
 );
 
-// reflection corner messages
 router.post(
   "/reflection-messages/:weekNumber",
   rateLimter(5 * 60 * 1000, 20, "user-id"),
   selfGuidedController.reflectionCorner,
 );
-// router.get(
-//   "/reflection-messages",
-//   withAuth,
-//   rateLimter(60 * 60 * 1000, 20, "user-id"),
-//   getAllReflectionMessages
-// );
 
 export default router;
