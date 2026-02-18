@@ -1,52 +1,40 @@
-import User from "../models/user.model.js";
-import Profile from "../models/profile.model.js";
-import mongoose from "mongoose";
-import Transaction from "../models/transaction.model.js";
+import * as transactionService from "../services/transaction.service.js";
 
-// get user transactions handler
-export async function getAllTransaction(req, res) {
+/* Get all transactions handler */
+// The reason why there is no pagination when getting all transactions is because there is only two transactions that will ever happen from a user.
+export async function getAllTransaction(req, res, next) {
   try {
-    // get all user transaction
-    const userTransactions = await Transaction.find({ userId: req.user.id });
+    const userId = req.user.id;
+
+    const transactions = await transactionService.getAllTransaction(userId);
 
     res.status(200).json({
       status: true,
-      message: "User transactions retrieved sucessfully",
-      data: userTransactions,
+      message: "Transactions retrieved sucessfully",
+      data: transactions,
     });
   } catch (error) {
-    logger.error(error);
-    res.status(500).json({
-      status: false,
-      message: "An unexpected error occured.",
-    });
+    next(error);
   }
 }
 
-// get user transaction handler
-export async function getTransaction(req, res) {
+/* Get single transactio handler */
+export async function getTransaction(req, res, next) {
   try {
     const transactionId = req.params.id;
-    // get all user transaction
-    const userTransaction = await Transaction.findOne({
-      userId: req.user.id,
-      _id: transactionId,
-    });
-    if (!userTransaction)
-      return res
-        .status(404)
-        .json({ status: false, message: "Transaction not found" });
+    const userId = req.user.id;
+
+    const transaction = await transactionService.retrieveTransaction(
+      userId,
+      transactionId,
+    );
 
     res.status(200).json({
       status: true,
       message: "Transaction retrieved sucessfully",
-      data: userTransaction,
+      data: transaction,
     });
   } catch (error) {
-    logger.error(error.message);
-    res.status(500).json({
-      status: false,
-      message: "An unexpected error occured.",
-    });
+    next(error);
   }
 }
