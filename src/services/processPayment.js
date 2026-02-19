@@ -57,14 +57,14 @@ async function recordPayment({
       ? { hasPremium: true }
       : { paidForCoaching: true, hasPremium: true };
 
-  await Profile.findOneAndUpdate(
-    { userId: user._id },
-    {
-      $set: updates,
-      $push: { transactions: newTransaction._id },
-    },
-    { new: true },
-  );
+  // await Profile.findOneAndUpdate(
+  //   { userId: user._id },
+  //   {
+  //     $set: updates,
+  //     $push: { transactions: newTransaction._id },
+  //   },
+  //   { new: true },
+  // );
 }
 
 export async function processPayment(data) {

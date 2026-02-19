@@ -3,7 +3,6 @@ import Joi from "joi";
 import * as selfGuidedService from "../services/selfGuidedProgram.service.js";
 import * as selfGuidedValidator from "../utils/validators.js";
 import validateAndSanitizeData from "../utils/validateAndSanitizeData.js";
-import AppError, { ErrorCodes } from "../errors/appError.js";
 
 /* Get self-guided-program handler */
 export async function getSelfGuidedProgramHandler(req, res, next) {
