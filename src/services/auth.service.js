@@ -14,7 +14,7 @@ import crypto from "crypto";
 export function createEmailVerificationCode() {
   return {
     code: generateCode(6),
-    expireAt: new Date(Date.now() + 15 * 60 * 1000),
+    expiresAt: new Date(Date.now() + 15 * 60 * 1000),
   };
 }
 
@@ -274,7 +274,7 @@ export async function sendEmailVerificationCode(user) {
   if (user.isVerified)
     throw new AppError(
       ErrorCodes.EMAIL_ALREADY_VERIFIED,
-      "User is already verified",
+      "User already verified",
       400,
       true,
       {
@@ -282,13 +282,13 @@ export async function sendEmailVerificationCode(user) {
       },
     );
 
-  const { code, expireAt } = createEmailVerificationCode();
+  const { code, expiresAt } = createEmailVerificationCode();
   await User.findOneAndUpdate(
     { _id: user.id },
     {
       emailVerification: {
         code,
-        expireAt,
+        expiresAt,
       },
     },
   );
@@ -304,7 +304,7 @@ export async function sendEmailVerificationCode(user) {
 export async function verifyEmailVerificationCode(code) {
   const user = await User.findOne({
     "emailVerification.code": code,
-    "emailVerification.expireAt": { $gt: new Date() },
+    "emailVerification.expiresAt": { $gt: new Date() },
   });
 
   if (!user)
@@ -317,6 +317,6 @@ export async function verifyEmailVerificationCode(code) {
 
   user.isVerified = true;
   user.emailVerification.code = null;
-  user.emailVerification.expireAt = null;
+  user.emailVerification.expiresAt = null;
   await user.save();
 }
