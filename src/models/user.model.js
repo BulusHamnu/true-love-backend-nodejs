@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
   },
   emailVerification: {
     code: String,
-    expireAt: Date,
+    expiresAt: Date,
   },
   provider: {
     type: String,
