@@ -23,7 +23,7 @@ Be brief but meaningful.
 Never repeat the weekly reading text verbatim, but refer to it naturally when relevant.
 `;
 
-export default async function postReflectionStory(weekNo, notes) {
+export default async function sendReflectionMessageToGPT(weekNumber, notes) {
   try {
     const response = await client.responses.create({
       model: "gpt-5",
@@ -35,7 +35,7 @@ export default async function postReflectionStory(weekNo, notes) {
         {
           role: "user",
           content: `Weekly Reading: ${
-            weekReadings[`week${weekNo}`] || ""
+            weekReadings[`week${weekNumber}`] || ""
           }\n\nUser reflectionMessage:\n ${notes}`,
         },
       ],
@@ -45,7 +45,11 @@ export default async function postReflectionStory(weekNo, notes) {
 
     return { message: response.output_text };
   } catch (error) {
-    Logger.error("An error occured while getting GPTResponse", error);
-    return { status: false, message: "" };
+    Logger.error(
+      "An error occured while getting GPTResponse for user reflection message.",
+      error,
+    );
+
+    return { message: "" };
   }
 }
