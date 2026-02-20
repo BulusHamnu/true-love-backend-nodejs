@@ -1,4 +1,3 @@
-import Profile from "../models/profile.model.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import sendReflectionMessageToGPT from "./openai.js";
 import selfGuidedProgram from "../models/selfguidedProgram.model.js";
@@ -34,21 +33,38 @@ export async function updateSelfGuidedProgress(userId, currentWeek) {
   return updatedSelfGuidedDetails;
 }
 
-/* Post reflection message */
-export async function postReflectionMessage({ userId, weekNumber, message }) {
+/* Get a single reflection message */
+export async function getReflectionMessage(userId, weekNumber) {
   const selfGuidedDetails = await retriveUserSelfGuidedProgram(userId);
-
   const reflectionMessages = selfGuidedDetails.reflections;
-  const messageExists = reflectionMessages.find(
-    (reflection) => reflection.week === weekNumber,
-  );
 
+  const message = reflectionMessages.find(
+    (reflection) => reflection.week === Number(weekNumber),
+  );
+  if (!message)
+    throw new AppError(
+      ErrorCodes.REFLECTION_MESSAGE_NOT_FOUND,
+      "Reflection message not found.",
+      404,
+      true,
+      {
+        week: weekNumber,
+      },
+    );
+
+  return message;
+}
+
+/* Post reflection message */
+// Posting and Updating reflection message share the same method because the front-end have a simple message interface.
+export async function postReflectionMessage({ userId, weekNumber, message }) {
   const gptResponse = await sendReflectionMessageToGPT(weekNumber, message);
-  if (messageExists) {
+  try {
+    await getReflectionMessage(userId, weekNumber); // If reflection message not found, it throw an error which will skip this block else it's an update.
     const updatedSelfGuidedDetails = await selfGuidedProgram
       .findOneAndUpdate(
         {
-          _id: selfGuidedDetails._id,
+          userId,
         },
         { $set: { "reflections.$[elem].message": message } },
         { arrayFilters: [{ "elem.week": weekNumber }], new: true },
@@ -58,6 +74,8 @@ export async function postReflectionMessage({ userId, weekNumber, message }) {
     return updatedSelfGuidedDetails.reflections.find(
       (reflection) => reflection.week === weekNumber,
     );
+  } catch (error) {
+    // We do nothing, lol.
   }
 
   const newMessage = {
@@ -69,7 +87,7 @@ export async function postReflectionMessage({ userId, weekNumber, message }) {
   const updatedSelfGuidedDetails = await selfGuidedProgram
     .findOneAndUpdate(
       {
-        _id: selfGuidedDetails._id,
+        userId,
       },
       { $push: { reflections: newMessage } },
       { new: true },

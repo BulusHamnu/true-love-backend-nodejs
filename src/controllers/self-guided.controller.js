@@ -61,7 +61,7 @@ function validateReflectionMessageBody(body) {
   return validateAndSanitizeData(body, reflectionMessageBodySchema);
 }
 
-export async function reflectionMessagesHandler(req, res, next) {
+export async function reflectionMessageHandler(req, res, next) {
   try {
     const userId = req.user.id;
     const { message, weekNumber } = validateReflectionMessageBody(req.body);
@@ -76,6 +76,27 @@ export async function reflectionMessagesHandler(req, res, next) {
       status: true,
       message: "Reflection message posted successfully.",
       data: newMessage,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/* Get reflection message handler */
+export async function getReflectionMessageHandler(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const weekNumber = req.params.weekNumber;
+
+    const message = await selfGuidedService.getReflectionMessage(
+      userId,
+      weekNumber,
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "Reflection message retrived successfully",
+      data: message,
     });
   } catch (error) {
     next(error);

@@ -23,7 +23,13 @@ router.patch(
 router.post(
   "/reflection-messages",
   rateLimter(5 * 60 * 1000, 20, "user-id"),
-  selfGuidedController.reflectionMessagesHandler,
+  selfGuidedController.reflectionMessageHandler,
+);
+
+router.get(
+  "/reflection-messages/:weekNumber",
+  rateLimter(5 * 60 * 1000, 20, "user-id"),
+  selfGuidedController.getReflectionMessageHandler,
 );
 
 export default router;
