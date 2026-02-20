@@ -107,7 +107,7 @@ const profileSchema = new mongoose.Schema({
 });
 
 /* Indexes */
-profileSchema.index({ email: 1 });
+// profileSchema.index({ email: 1 }); // index was deleted
 profileSchema.index({ userId: 1 });
 
 /* Methods */
