@@ -42,14 +42,13 @@ export default async function sendReflectionMessageToGPT(weekNumber, notes) {
     });
 
     Logger.info("GPT response generated sucessfully!");
-
-    return { message: response.output_text };
+    return response.output_text;
   } catch (error) {
     Logger.error(
       "An error occured while getting GPTResponse for user reflection message.",
       error,
     );
 
-    return { message: "" };
+    return null;
   }
 }

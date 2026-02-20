@@ -1,7 +1,5 @@
-import Profile from "../models/profile.model.js";
 import Joi from "joi";
 import * as selfGuidedService from "../services/selfGuidedProgram.service.js";
-import * as selfGuidedValidator from "../utils/validators.js";
 import validateAndSanitizeData from "../utils/validateAndSanitizeData.js";
 
 /* Get self-guided-program handler */
@@ -9,7 +7,7 @@ export async function getSelfGuidedProgramHandler(req, res, next) {
   try {
     const userId = req.user.id;
     const userSelfGuidedDetails =
-      await selfGuidedService.retriveSelfGuidedDetails(userId);
+      await selfGuidedService.retriveUserSelfGuidedProgram(userId);
 
     res.status(200).json({
       status: true,
@@ -23,25 +21,30 @@ export async function getSelfGuidedProgramHandler(req, res, next) {
 
 /* Update Self Guided progress handler*/
 function validateSelfGuidedUpdateBody(body) {
-  return validateAndSanitizeData(
-    body,
-    selfGuidedValidator.selfGuidedProgressBodySchema,
-  );
+  const schema = Joi.object({
+    currentWeek: Joi.number().min(1).max(6).messages({
+      "number.min": "currentWeek cannot be less than 0",
+      "number.max": "currentWeek cannot be greater than 6",
+    }),
+  });
+
+  return validateAndSanitizeData(body, schema);
 }
 
 export async function updateSelfGuidedProgramHandler(req, res, next) {
   try {
     const userId = req.user.id;
-    const { programProgress } = validateSelfGuidedUpdateBody(req.body);
+    const { currentWeek } = validateSelfGuidedUpdateBody(req.body);
 
-    await selfGuidedService.updateSelfGuidedProgress(
+    const updatedSelfGuided = await selfGuidedService.updateSelfGuidedProgress(
       userId,
-      programProgress.currentWeek,
+      currentWeek,
     );
 
     res.status(200).json({
       status: true,
-      message: "Self Guided Program progress updated sucessfully.",
+      message: "Self Guided Program updated sucessfully.",
+      data: updatedSelfGuided,
     });
   } catch (error) {
     next(error);
@@ -63,20 +66,16 @@ export async function reflectionMessagesHandler(req, res, next) {
     const userId = req.user.id;
     const { message, weekNumber } = validateReflectionMessageBody(req.body);
 
-    const { reflectionMessage, gptResponse } =
-      await selfGuidedService.postReflectionMessage({
-        userId,
-        weekNumber,
-        reflectionMessage: message,
-      });
+    const newMessage = await selfGuidedService.postReflectionMessage({
+      userId,
+      weekNumber,
+      message,
+    });
 
     res.status(200).json({
       status: true,
       message: "Reflection message posted successfully.",
-      data: {
-        reflectionMessage,
-        gptResponse,
-      },
+      data: newMessage,
     });
   } catch (error) {
     next(error);

@@ -1,69 +1,82 @@
 import Profile from "../models/profile.model.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import sendReflectionMessageToGPT from "./openai.js";
-import User from "../models/user.model.js";
+import selfGuidedProgram from "../models/selfguidedProgram.model.js";
 
-/* Retrive user selfGuided program details */
-export async function retriveSelfGuidedDetails(userId) {
-  const userProfile = await Profile.findOne({ userId }).lean();
+/* Retrive user Self Guided Program  */
+export async function retriveUserSelfGuidedProgram(userId) {
+  const selfGuidedExists = await selfGuidedProgram.findOne({ userId }).lean();
 
-  if (!userProfile.hasPremium)
+  if (!selfGuidedExists)
     throw new AppError(
       ErrorCodes.SELF_GUIDED_ACCESS_DENIED,
       "You do not have access to the self-guided program.",
       403,
       true,
-      { hasPremium: userProfile.hasPremium },
     );
 
-  return userProfile.selfGuidedProgram;
+  return selfGuidedExists;
 }
 
-/* Update selfGuided program */
+/* Update selfGuided program progress */
 export async function updateSelfGuidedProgress(userId, currentWeek) {
-  const userProfile = await Profile.findOne({ userId });
+  const selfGuidedDetails = await retriveUserSelfGuidedProgram(userId);
+  const updatedSelfGuidedDetails = await selfGuidedProgram
+    .findOneAndUpdate(
+      {
+        _id: selfGuidedDetails._id,
+      },
+      { $set: { currentWeek } },
+      { new: true },
+    )
+    .lean();
 
-  if (!userProfile.hasPremium)
-    throw new AppError(
-      ErrorCodes.SELF_GUIDED_ACCESS_DENIED,
-      "You do not have access to the self-guided program.",
-      403,
-      true,
-      { hasPremium: userProfile.hasPremium },
-    );
-
-  userProfile.selfGuidedProgram.programProgress.currentWeek = currentWeek;
-  await userProfile.save();
+  return updatedSelfGuidedDetails;
 }
 
 /* Post reflection message */
-export async function postReflectionMessage({
-  userId,
-  weekNumber,
-  reflectionMessage,
-}) {
-  const userProfile = await Profile.findOne({ userId });
+export async function postReflectionMessage({ userId, weekNumber, message }) {
+  const selfGuidedDetails = await retriveUserSelfGuidedProgram(userId);
 
-  if (!userProfile.hasPremium)
-    throw new AppError(
-      ErrorCodes.SELF_GUIDED_ACCESS_DENIED,
-      "You do not have access to the self-guided program.",
-      403,
-      true,
-      { hasPremium: userProfile.hasPremium },
-    );
-
-  const gptResponse = await sendReflectionMessageToGPT(
-    weekNumber,
-    reflectionMessage,
+  const reflectionMessages = selfGuidedDetails.reflections;
+  const messageExists = reflectionMessages.find(
+    (reflection) => reflection.week === weekNumber,
   );
 
-  userProfile.selfGuidedProgram.reflectionMessages[`week${weekNumber}`] =
-    reflectionMessage;
+  const gptResponse = await sendReflectionMessageToGPT(weekNumber, message);
+  if (messageExists) {
+    const updatedSelfGuidedDetails = await selfGuidedProgram
+      .findOneAndUpdate(
+        {
+          _id: selfGuidedDetails._id,
+        },
+        { $set: { "reflections.$[elem].message": message } },
+        { arrayFilters: [{ "elem.week": weekNumber }], new: true },
+      )
+      .lean();
 
-  userProfile.selfGuidedProgram.gptResponses[`week${weekNumber}`] =
-    gptResponse.message;
-  await userProfile.save();
+    return updatedSelfGuidedDetails.reflections.find(
+      (reflection) => reflection.week === weekNumber,
+    );
+  }
 
-  return { reflectionMessage, gptResponse: gptResponse.message };
+  const newMessage = {
+    week: weekNumber,
+    message,
+    gptResponse,
+  };
+
+  const updatedSelfGuidedDetails = await selfGuidedProgram
+    .findOneAndUpdate(
+      {
+        _id: selfGuidedDetails._id,
+      },
+      { $push: { reflections: newMessage } },
+      { new: true },
+    )
+    .lean();
+
+  return updatedSelfGuidedDetails.reflections.find(
+    (reflection) => reflection.week === weekNumber,
+  );
 }

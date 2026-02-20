@@ -8,11 +8,11 @@ const selfGuidedProgramSchema = new mongoose.Schema({
     ref: "User",
   },
   currentWeek: {
-    type: String,
+    type: Number,
     default: 0,
   },
   totalWeek: {
-    type: String,
+    type: Number,
     default: 6,
   },
   reflections: [

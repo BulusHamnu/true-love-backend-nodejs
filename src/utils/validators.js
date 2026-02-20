@@ -51,16 +51,6 @@ export const profileUpdateBodySchema = Joi.object({
   age: Joi.number().min(14).optional(),
 });
 
-/* Self-guided body schema */
-export const selfGuidedProgressBodySchema = Joi.object({
-  programProgress: Joi.object({
-    currentWeek: Joi.number().min(1).max(6).messages({
-      "number.min": "Week cannot be less than 0",
-      "number.max": "Week cannot be greater than 6",
-    }),
-  }),
-}).min(1);
-
 /* Checkoutbody schema */
 export const checkoutBodySchema = Joi.object({
   product: Joi.string()
