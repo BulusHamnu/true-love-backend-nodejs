@@ -3,10 +3,10 @@ import { formatAmount } from "../utils/helpers.js";
 import User from "../models/user.model.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import Transaction from "../models/transaction.model.js";
-import Profile from "../models/profile.model.js";
 import sendResendEmail from "./resend.js";
 import { Env } from "../config/index.js";
 import Logger from "../utils/logger.js";
+import selfGuidedProgram from "../models/selfguidedProgram.model.js";
 
 /* Process stripe payment */
 async function recordPayment({
@@ -27,7 +27,7 @@ async function recordPayment({
     phone,
   });
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).lean();
   if (!user) {
     throw new AppError(
       ErrorCodes.USER_NOT_FOUND,
@@ -37,8 +37,8 @@ async function recordPayment({
     );
   }
 
-  // Save transaction record
-  const newTransaction = await Transaction.create({
+  // Record transaction as source of truth.
+  await Transaction.create({
     userId: user._id,
     amount,
     status: "paid",
@@ -47,24 +47,15 @@ async function recordPayment({
     receipt,
   });
 
-  /* 
-      Check the product type to know what to update
-      mark hasPremium if user purchase the self-guided-program
-      mark hasPremium & paidForCoaching if user purchased the coaching-program package
-    */
-  const updates =
-    product === "self-guided-program"
-      ? { hasPremium: true }
-      : { paidForCoaching: true, hasPremium: true };
-
-  // await Profile.findOneAndUpdate(
-  //   { userId: user._id },
-  //   {
-  //     $set: updates,
-  //     $push: { transactions: newTransaction._id },
-  //   },
-  //   { new: true },
-  // );
+  // Users unlock access to Self Guided Program module if they purchase self-guided-program but also unlock it as bonus if they purchase the coaching-program
+  if (
+    product === Env.SELF_GUIDED_PRODUCT_NAME ||
+    product === Env.COACHING_PRODUCT_NAME
+  ) {
+    await selfGuidedProgram.create({
+      userId: user._id,
+    });
+  }
 }
 
 export async function processPayment(data) {
@@ -80,47 +71,53 @@ export async function processPayment(data) {
   });
 
   // Send confirmation email
-  if (data.metadata.product === "self-guided-program") {
-    await sendResendEmail(
-      Env.TOTUR_EMAIL,
-      `Payment For True Love Self-Guided Program`,
-      EmailTemplates.toturSelfGuidedTemplate(
-        "David Prorok",
-        data.customer_details?.name || "new user",
-        data.customer_details?.email || "No Provided",
-        formatAmount(data.amount_subtotal),
-        `${new Date().toLocaleDateString()}`,
+  if (data.metadata.product === Env.SELF_GUIDED_PRODUCT_NAME) {
+    await Promise.all([
+      // Admin payment successful email for Self Guided Program
+      sendResendEmail(
+        Env.TOTUR_EMAIL,
+        `Payment For True Love Self-Guided Program`,
+        EmailTemplates.toturSelfGuidedTemplate(
+          "David Prorok",
+          data.customer_details?.name || "new user",
+          data.customer_details?.email || "No Provided",
+          formatAmount(data.amount_subtotal),
+          `${new Date().toLocaleDateString()}`,
+        ),
       ),
-    );
-
-    await sendResendEmail(
-      data.customer_details?.email,
-      "Payment Successful",
-      EmailTemplates.customerSelfGuidedTemplate(
-        data.customer_details?.name || "Cupid’s pick",
+      // Customer confirmation email for Self Guided Program
+      sendResendEmail(
+        data.customer_details?.email,
+        "Payment Successful",
+        EmailTemplates.customerSelfGuidedTemplate(
+          data.customer_details?.name || "Cupid’s pick",
+        ),
       ),
-    );
+    ]);
   }
 
-  if (data.metadata.product === "coaching-program") {
-    await sendResendEmail(
-      Env.TOTUR_EMAIL,
-      "Payment For True Love Transformation Program",
-      EmailTemplates.toturCoachingTemplate(
-        "David Prorok",
-        data.customer_details?.name || "New user",
-        data.customer_details?.email || "No Provided",
-        formatAmount(data.amount_subtotal),
-        `${new Date().toLocaleDateString()}`,
+  if (data.metadata.product === Env.COACHING_PRODUCT_NAME) {
+    await Promise.all([
+      // Admin payment successful email for Coaching Program
+      sendResendEmail(
+        Env.TOTUR_EMAIL,
+        "Payment For True Love Transformation Program",
+        EmailTemplates.toturCoachingTemplate(
+          "David Prorok",
+          data.customer_details?.name || "New user",
+          data.customer_details?.email || "No Provided",
+          formatAmount(data.amount_subtotal),
+          `${new Date().toLocaleDateString()}`,
+        ),
       ),
-    );
-
-    await sendResendEmail(
-      data.customer_details?.email,
-      "Payment Successful",
-      EmailTemplates.customerCoachingTemplate(
-        data.customer_details?.name || "Cupid’s pick",
+      // Customer confirmation email for Coaching Program
+      sendResendEmail(
+        data.customer_details?.email,
+        "Payment Successful",
+        EmailTemplates.customerCoachingTemplate(
+          data.customer_details?.name || "Cupid’s pick",
+        ),
       ),
-    );
+    ]);
   }
 }

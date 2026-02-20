@@ -1,6 +1,7 @@
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import Profile from "../models/profile.model.js";
 import Env, { StripeClient } from "../config/index.js";
+import Transaction from "../models/transaction.model.js";
 
 /* Create checkout function */
 // Create StripeClient customer
@@ -41,14 +42,14 @@ export async function createStripeSession(
   let errorUrl;
   let allowCoupon;
 
-  if (product === "self-guided-program") {
+  if (product === Env.SELF_GUIDED_PRODUCT_NAME) {
     priceId = Env.SELF_GUIDED_PRICE_ID;
     successUrl = `${Env.FRONTEND_URL}/self-guided-success`;
     errorUrl = `${Env.FRONTEND_URL}/self-guided-error`;
     allowCoupon = true;
   }
 
-  if (product === "coaching-program") {
+  if (product === Env.COACHING_PRODUCT_NAME) {
     priceId = newDoor ? Env.NEWDOOR_COACHING_PRICE_ID : Env.COACHING_PRICE_ID;
     successUrl = `${Env.FRONTEND_URL}/success`;
     errorUrl = `${Env.FRONTEND_URL}/error`;
@@ -79,23 +80,33 @@ export async function createStripeSession(
 }
 
 export async function createCheckout(user, product, newDoor) {
-  if (product === "self-guided-program" && user.hasPremium === true) {
+  const transactions = await Transaction.find({ userId: user.id }).lean();
+  const userPurchases = transactions.map((transaction) => transaction.type);
+
+  if (
+    product === Env.SELF_GUIDED_PRODUCT_NAME &&
+    (userPurchases.includes(Env.SELF_GUIDED_PRODUCT_NAME) ||
+      userPurchases.includes(Env.COACHING_PRODUCT_NAME))
+  ) {
     throw new AppError(
       ErrorCodes.SELFGUIDED_ALREADY_PURCHASED,
       "User already paid for the Self-guided Program.",
       409,
       true,
-      { email: user.email, hasPremium: true },
+      { email: user.email, paidForSelfGuidedProgram: true },
     );
   }
 
-  if (product === "coaching-program" && user.paidForCoaching === true) {
+  if (
+    product === Env.COACHING_PRODUCT_NAME &&
+    userPurchases.includes(Env.COACHING_PRODUCT_NAME)
+  ) {
     throw new AppError(
       ErrorCodes.COACHING_ALREADY_PURCHASED,
       "User already paid for the Coaching Program.",
       409,
       true,
-      { email: user.email, paidForCoaching: true },
+      { email: user.email, paidForCoachingProgram: true },
     );
   }
 

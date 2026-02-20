@@ -42,7 +42,7 @@ app.use(cookieParser());
 app.set("trust proxy", true);
 app.use((req, res, next) => {
   // skip json parsing for stripe webhook route
-  if (req.originalUrl === "/api/checkout/stripe-webhook") {
+  if (req.originalUrl === "/api/webhooks/stripe") {
     return next();
   }
   express.json()(req, res, next);
