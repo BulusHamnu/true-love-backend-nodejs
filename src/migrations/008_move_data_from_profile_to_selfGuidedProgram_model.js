@@ -1,4 +1,5 @@
 import Logger from "../utils/logger.js";
+import Env from "../config/index.js";
 
 /* Move old selfGuidedProgram data from profile table to new selfGuidedProgram */
 export async function up(db) {
@@ -7,22 +8,40 @@ export async function up(db) {
   const transactionCollection = db.collection("transactions");
 
   const [profiles, transactions] = await Promise.all([
-    profileCollection.find().toArray(),
-    transactionCollection.find().toArray(),
+    profileCollection.find({ selfGuidedProgram: { $exists: true } }).toArray(),
+    transactionCollection
+      .find({
+        $or: [
+          // Both transaction type grant access for Self Guided Program
+          { type: Env.SELF_GUIDED_PRODUCT_NAME },
+          { type: Env.COACHING_PRODUCT_NAME },
+        ],
+      })
+      .toArray(),
   ]);
 
-  const transactionsMap = new Map();
-  transactions.forEach((transaction) =>
-    transactionsMap.set(String(transaction.userId), transaction),
+  const usersThatPurchasedProgram = transactions.map(
+    (transaction) => transaction.userId,
   );
+  const selfGuidedPrograms = await selfGuidedProgramCollection
+    .find({
+      userId: { $in: usersThatPurchasedProgram },
+    })
+    .toArray();
+
+  const programs = selfGuidedPrograms.map((program) => String(program.userId));
+  const userIdsStringList = usersThatPurchasedProgram.map((P) => String(P));
 
   const allNewSelfGuidedProgram = [];
   profiles.forEach((profile) => {
-    if (!transactionsMap.get(String(profile.userId))) return; // As long as their is a transaction, because transaction can either be self-guided-program or coaching-program and both give access to the Self Guided Program
+    const userId = String(profile.userId);
+
+    if (!userIdsStringList.includes(userId)) return;
+    if (programs.includes(userId)) return;
 
     const selfGuidedProgram = profile.selfGuidedProgram;
     const oldReflectionMessages = selfGuidedProgram.reflectionMessages;
-    const oldGptResponse = selfGuidedProgram.gptResponses || {}; // Some profile don't have gptResponse obj
+    const oldGptResponse = selfGuidedProgram.gptResponses || {}; // Some profiles don't have gptResponse obj
 
     const newSelfGuidedObj = {};
     newSelfGuidedObj.reflections = [];
@@ -49,9 +68,17 @@ export async function up(db) {
     allNewSelfGuidedProgram.push(newSelfGuidedObj);
   });
 
+  if (allNewSelfGuidedProgram && allNewSelfGuidedProgram.length <= 0) {
+    Logger.info("selfGuidedProgram migration completed.", {
+      insertedCount: 0,
+    });
+    return;
+  }
+
   const result = await selfGuidedProgramCollection.insertMany(
     allNewSelfGuidedProgram,
   );
+
   Logger.info("selfGuidedProgram migration completed.", {
     insertedCount: result.insertedCount,
   });
