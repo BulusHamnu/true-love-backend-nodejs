@@ -9,7 +9,7 @@ const selfGuidedProgramSchema = new mongoose.Schema({
   },
   currentWeek: {
     type: Number,
-    default: 0,
+    default: 1,
   },
   totalWeek: {
     type: Number,

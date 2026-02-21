@@ -22,84 +22,6 @@ const profileSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
-  transactions: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Transaction",
-    },
-  ],
-  hasPremium: {
-    type: Boolean,
-    default: false,
-  },
-  paidForCoaching: {
-    type: Boolean,
-    default: false,
-  },
-  selfGuidedProgram: {
-    programProgress: {
-      currentWeek: {
-        type: Number,
-        default: 0,
-      },
-      totalWeek: {
-        type: Number,
-        default: 6,
-      },
-    },
-    reflectionMessages: {
-      week1: {
-        type: String,
-        default: "",
-      },
-      week2: {
-        type: String,
-        default: "",
-      },
-      week3: {
-        type: String,
-        default: "",
-      },
-      week4: {
-        type: String,
-        default: "",
-      },
-      week5: {
-        type: String,
-        default: "",
-      },
-      week6: {
-        type: String,
-        default: "",
-      },
-    },
-    gptResponses: {
-      week1: {
-        type: String,
-        default: "",
-      },
-      week2: {
-        type: String,
-        default: "",
-      },
-      week3: {
-        type: String,
-        default: "",
-      },
-      week4: {
-        type: String,
-        default: "",
-      },
-      week5: {
-        type: String,
-        default: "",
-      },
-      week6: {
-        type: String,
-        default: "",
-      },
-    },
-  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -107,7 +29,6 @@ const profileSchema = new mongoose.Schema({
 });
 
 /* Indexes */
-// profileSchema.index({ email: 1 }); // index was deleted
 profileSchema.index({ userId: 1 });
 
 /* Methods */

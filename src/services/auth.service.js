@@ -56,7 +56,7 @@ export async function createNewUser({
   });
 
   // Create profile
-  const userProfile = await Profile.create({
+  await Profile.create({
     userId: newUser._id,
     fullName,
     phone,
@@ -81,7 +81,6 @@ export async function createNewUser({
   return {
     id: newUser._id,
     email: newUser.email,
-    ...userProfile.removeUnwantedFields(),
     isVerified: newUser.isVerified,
   };
 }
@@ -110,23 +109,30 @@ export async function validatePasswordAndSignTokens({ email, password }) {
     );
   }
 
-  let safeUserData = user.removeUnwantedFields();
   const accessToken = signToken({
-    ...safeUserData,
-    id: safeUserData._id,
+    email: user.email,
+    id: user._id,
     type: "accessToken",
   });
 
   const refreshToken = signToken({
-    ...safeUserData,
-    id: safeUserData._id,
+    email: user.email,
+    id: user._id,
     type: "refreshToken",
   });
 
   return {
     accessToken,
     refreshToken,
-    user: { id: safeUserData._id, ...safeUserData },
+    user: {
+      id: user._id,
+      email: user.email,
+      isVerified: user.isVerified,
+      isActive: user.isActive,
+      role: user.role,
+      provider: user.provider,
+      createdAt: user.createdAt,
+    },
   };
 }
 
@@ -157,10 +163,9 @@ export async function refreshAccessToken(refreshToken) {
       );
     }
 
-    const safeUserData = user.removeUnwantedFields();
     const accessToken = signToken({
-      ...safeUserData,
-      id: safeUserData._id,
+      email: user.email,
+      id: user._id,
       type: "accessToken",
     });
 

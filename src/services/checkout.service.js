@@ -5,35 +5,27 @@ import Transaction from "../models/transaction.model.js";
 
 /* Create checkout function */
 // Create StripeClient customer
-export async function get0rCreateStripeCustomerId({
-  fullName,
-  email,
-  phone,
-  userId,
-  StripeClientCustomerId,
-}) {
-  if (StripeClientCustomerId) {
-    return StripeClientCustomerId;
+export async function get0rCreateStripeCustomerId({ userId, email }) {
+  const userProfile = await Profile.findOne({ userId });
+  if (userProfile.stripeCustomerId) {
+    return stripeCustomerId;
   }
 
   const customer = await StripeClient.customers.create({
-    name: fullName,
+    name: userProfile.fullName,
     email,
-    phone,
+    phone: userProfile.phone,
   });
 
-  await Profile.findOneAndUpdate(
-    { userId },
-    { StripeClientCustomerId: customer.id },
-    { new: true },
-  );
+  userProfile.stripeCustomerId = customer.id;
+  await userProfile.save();
 
   return customer.id;
 }
 
 // create StripeClient session
 export async function createStripeSession(
-  StripeClientCustomerId,
+  stripeCustomerId,
   product,
   newDoor = false,
 ) {
@@ -64,7 +56,7 @@ export async function createStripeSession(
       },
     ],
     allow_promotion_codes: allowCoupon,
-    customer: StripeClientCustomerId,
+    customer: stripeCustomerId,
     phone_number_collection: { enabled: true },
     mode: "payment",
     success_url: successUrl,
@@ -110,13 +102,13 @@ export async function createCheckout(user, product, newDoor) {
     );
   }
 
-  const StripeClientCustomerId = await get0rCreateStripeCustomerId({
-    ...user,
-    userId: user._id,
+  const stripeCustomerId = await get0rCreateStripeCustomerId({
+    userId: user.id,
+    email: user.email,
   });
 
   const sessionUrl = await createStripeSession(
-    StripeClientCustomerId,
+    stripeCustomerId,
     product,
     newDoor,
   );

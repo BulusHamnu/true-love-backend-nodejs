@@ -23,8 +23,11 @@ export default async function autoCreateUser(req, res, next) {
 
     const user = await User.findOne({ email }).lean();
     if (user) {
-      const userProfile = await Profile.findOne({ userId: user._id }).lean();
-      req.user = { ...user, id: user._id, ...userProfile };
+      req.user = {
+        ...user,
+        id: user._id,
+      };
+
       return next();
     }
 
@@ -36,8 +39,8 @@ export default async function autoCreateUser(req, res, next) {
     });
 
     const refreshToken = signToken({
-      ...newUser,
-      id: newUser._id,
+      email: newUser.email,
+      id: newUser.id,
       type: "refreshToken",
     });
 
