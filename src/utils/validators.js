@@ -1,5 +1,7 @@
 import Joi from "joi";
+import { Types } from "mongoose";
 
+/* Password field */
 const passwordField = Joi.string()
   .required()
   .min(6)
@@ -12,9 +14,24 @@ const passwordField = Joi.string()
     "string.min": "Password is too short.",
   });
 
+/* Email field */
 export const emailField = Joi.string()
   .email({ minDomainSegments: 2, tlds: { allow: ["net", "com"] } })
   .required();
+
+/* Resource objectId field */
+export const objectIdField = Joi.string()
+  .required()
+  .custom((value, helpers) => {
+    if (!Types.ObjectId.isValid(value)) {
+      return helpers.error("id.invalid");
+    }
+    return value;
+  })
+  .label("id")
+  .messages({
+    "id.invalid": "Invalid Id parameter.",
+  });
 
 /* Signup body schema */
 export const signupSchema = Joi.object({

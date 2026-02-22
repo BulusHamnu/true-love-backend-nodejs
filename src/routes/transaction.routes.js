@@ -14,7 +14,7 @@ router.get(
 router.get(
   "/:id",
   rateLimter(5 * 60 * 1000, 25),
-  transactionController.getTransaction,
+  transactionController.getTransactionHandler,
 );
 
 export default router;
