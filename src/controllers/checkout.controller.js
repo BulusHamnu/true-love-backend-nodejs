@@ -1,5 +1,6 @@
 import * as checkoutService from "../services/checkout.service.js";
 import { checkoutBodySchema } from "../utils/validators.js";
+import validateAndSanitizeData from "../utils/validateAndSanitizeData.js";
 import Logger from "../utils/logger.js";
 
 /* Create checkout handler */
