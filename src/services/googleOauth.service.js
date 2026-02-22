@@ -100,6 +100,8 @@ export async function processGoogleCallbackReq(state, code) {
         true,
       );
     }
+
+    user.id = user._id; // To be able to access 'id' when signing the tokens.
   } else {
     throw new AppError(
       ErrorCodes.UNEXPECTED_ERROR,
@@ -111,14 +113,14 @@ export async function processGoogleCallbackReq(state, code) {
   }
 
   const accessToken = signToken({
-    ...user,
-    id: user._id,
+    email: user.email,
+    id: user.id,
     type: "accessToken",
   });
 
   const refreshToken = signToken({
-    ...user,
-    id: user._id,
+    email: user.email,
+    id: user.id,
     type: "refreshToken",
   });
 

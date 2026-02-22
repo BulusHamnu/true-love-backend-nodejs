@@ -279,7 +279,7 @@ export async function sendEmailVerificationCode(user) {
   if (user.isVerified)
     throw new AppError(
       ErrorCodes.EMAIL_ALREADY_VERIFIED,
-      "User already verified",
+      "User already verified.",
       400,
       true,
       {

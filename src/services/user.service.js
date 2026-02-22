@@ -2,8 +2,7 @@ import Profile from "../models/profile.model.js";
 
 /* Get user profile */
 export async function getProfile(user) {
-  const userProfile = await Profile.findOne({ userId: user.id });
-  const safeUserProfileData = userProfile.removeUnwantedFields();
+  const userProfile = await Profile.findOne({ userId: user.id }).lean();
 
   return {
     id: user.id,
@@ -12,7 +11,7 @@ export async function getProfile(user) {
     isActive: user.isActive,
     role: user.role,
     provider: user.provider,
-    ...safeUserProfileData,
+    ...userProfile,
   };
 }
 
@@ -29,9 +28,7 @@ export async function updateProfile(user, updates) {
     { userId: user.id },
     { $set: { ...updates } },
     { new: true },
-  );
-
-  const safeProfileData = updatedProfile.removeUnwantedFields();
+  ).lean();
 
   return {
     id: user.id,
@@ -40,6 +37,6 @@ export async function updateProfile(user, updates) {
     isActive: user.isActive,
     role: user.role,
     provider: user.provider,
-    ...safeProfileData,
+    ...updatedProfile,
   };
 }

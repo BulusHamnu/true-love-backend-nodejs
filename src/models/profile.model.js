@@ -31,13 +31,5 @@ const profileSchema = new mongoose.Schema({
 /* Indexes */
 profileSchema.index({ userId: 1 });
 
-/* Methods */
-profileSchema.methods.removeUnwantedFields = function () {
-  const obj = this.toObject();
-  delete obj.selfGuidedProgram;
-  delete obj.transactions;
-  return obj;
-};
-
 const Profile = mongoose.model("Profile", profileSchema);
 export default Profile;
