@@ -1,5 +1,4 @@
 import Joi from "joi";
-import validateAndSanitizeData from "./validateAndSanitizeData.js";
 
 const passwordField = Joi.string()
   .required()
@@ -61,7 +60,3 @@ export const checkoutBodySchema = Joi.object({
     }),
   newDoor: Joi.boolean().optional().default(false),
 });
-
-export function validateCheckoutBody(body) {
-  return validateAndSanitizeData(body, checkoutBodySchema);
-}

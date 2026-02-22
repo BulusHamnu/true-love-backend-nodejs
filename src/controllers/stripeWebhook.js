@@ -1,5 +1,5 @@
 import AppError, { ErrorCodes } from "../errors/appError.js";
-import Env, { StripeClient, } from "../config/index.js";
+import Env, { StripeClient } from "../config/index.js";
 import Logger from "../utils/logger.js";
 import { processPayment } from "../services/processPayment.js";
 

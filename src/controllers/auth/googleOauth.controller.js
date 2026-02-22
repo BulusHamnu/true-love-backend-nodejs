@@ -6,7 +6,7 @@ import { processGoogleCallbackReq } from "../../services/googleOauth.service.js"
 import AppError, { ErrorCodes } from "../../errors/appError.js";
 
 /* Google Oauth handlers */
-function verifyGoogleQueryBody(queries) {
+function validateGoogleQueryBody(queries) {
   const schema = Joi.object({
     flow: Joi.string().required(true).valid("signup", "login").messages({
       "any.only": "flow value must be signup or login.",
@@ -17,7 +17,7 @@ function verifyGoogleQueryBody(queries) {
 
 export async function retriveGoogleOauthUrl(req, res, next) {
   try {
-    const { flow } = verifyGoogleQueryBody(req.query);
+    const { flow } = validateGoogleQueryBody(req.query);
     Logger.info("User request for google oauth url.");
 
     const params = new URLSearchParams({

@@ -52,19 +52,19 @@ export async function updateSelfGuidedProgramHandler(req, res, next) {
 }
 
 /* Post reflection messages handler */
-function validateReflectionMessageBody(body) {
-  const reflectionMessageBodySchema = Joi.object({
+function validateReflectionBody(body) {
+  const reflectionBodySchema = Joi.object({
     weekNumber: Joi.number().min(1).max(6).required(),
     message: Joi.string().required().min(10),
   });
 
-  return validateAndSanitizeData(body, reflectionMessageBodySchema);
+  return validateAndSanitizeData(body, reflectionBodySchema);
 }
 
 export async function reflectionMessageHandler(req, res, next) {
   try {
     const userId = req.user.id;
-    const { message, weekNumber } = validateReflectionMessageBody(req.body);
+    const { message, weekNumber } = validateReflectionBody(req.body);
 
     const newMessage = await selfGuidedService.postReflectionMessage({
       userId,

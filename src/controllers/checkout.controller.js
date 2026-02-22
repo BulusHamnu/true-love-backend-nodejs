@@ -1,8 +1,12 @@
-import { validateCheckoutBody } from "../utils/validators.js";
 import * as checkoutService from "../services/checkout.service.js";
+import { checkoutBodySchema } from "../utils/validators.js";
 import Logger from "../utils/logger.js";
 
 /* Create checkout handler */
+function validateCheckoutBody(body) {
+  return validateAndSanitizeData(body, checkoutBodySchema);
+}
+
 export async function createCheckOutHandler(req, res, next) {
   try {
     const { product, newDoor } = validateCheckoutBody(req.body);
