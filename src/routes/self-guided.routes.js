@@ -9,26 +9,26 @@ const router = express.Router();
 router.use(withAuth);
 router.get(
   "/",
-  rateLimter(5 * 60 * 1000, 25, "user-id"),
+  rateLimter(5 * 60 * 1000, 25),
   selfGuidedController.getSelfGuidedProgramHandler,
 );
 
 router.use(requiredVerifiedEmail);
 router.patch(
   "/",
-  rateLimter(5 * 60 * 1000, 20, "user-id"),
+  rateLimter(5 * 60 * 1000, 20),
   selfGuidedController.updateSelfGuidedProgramHandler,
 );
 
 router.post(
   "/reflection-messages",
-  rateLimter(5 * 60 * 1000, 20, "user-id"),
+  rateLimter(5 * 60 * 1000, 20),
   selfGuidedController.reflectionMessageHandler,
 );
 
 router.get(
   "/reflection-messages/:weekNumber",
-  rateLimter(5 * 60 * 1000, 20, "user-id"),
+  rateLimter(5 * 60 * 1000, 20),
   selfGuidedController.getReflectionMessageHandler,
 );
 

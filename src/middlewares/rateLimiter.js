@@ -2,17 +2,23 @@ import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 import Logger from "../utils/logger.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 
-const getClientIp = (req) => {
+/* Rate limiter middleware */
+const getClientIdentifier = (req, res) => {
+  if (req.user && req.user.id) {
+    return String(req.user.id);
+  }
+
   const forwardedIp = req.headers["x-forwarded-for"];
   if (forwardedIp) {
     Logger.info(`X-Forwarded-For: ${forwardedIp}`);
-    return req.headers?.["x-forwarded-for"]?.split(",")[0].trim();
+    const realClientIp = req.headers?.["x-forwarded-for"]?.split(",")[0].trim();
+    return ipKeyGenerator(realClientIp);
   }
 
-  return req.ip;
+  return ipKeyGenerator(req.ip);
 };
 
-const rateLimter = (time, limit, key) => {
+const rateLimter = (time, limit) => {
   return rateLimit({
     windowMs: time,
     limit: limit,
@@ -20,7 +26,7 @@ const rateLimter = (time, limit, key) => {
     handler: (req, res) => {
       Logger.warn("Too many requests.", {
         route: req.originalUrl,
-        identifier: req.user ? req.user?.email : req.ip,
+        identifier: req.user ? String(req.user?.id) : req.ip,
       });
 
       throw new AppError(
@@ -31,11 +37,7 @@ const rateLimter = (time, limit, key) => {
       );
     },
     keyGenerator: (req, res) => {
-      if (key === "user-id" && req.user && req.user.id) {
-        return req.user.id;
-      }
-
-      return ipKeyGenerator(getClientIp(req));
+      return getClientIdentifier(req, res);
     },
   });
 };

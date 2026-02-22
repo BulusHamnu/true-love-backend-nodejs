@@ -8,7 +8,7 @@ const router = Router();
 // Users should be able to make purchase even without an account, that is why the autoCreateUser middleware is added.
 router.post(
   "/",
-  rateLimter(3 * 60 * 1000, 10, "ip"),
+  rateLimter(3 * 60 * 1000, 10),
   autoCreateUser,
   checkOutController.createCheckOutHandler,
 );

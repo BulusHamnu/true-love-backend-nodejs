@@ -8,12 +8,12 @@ const router = express.Router();
 router.use(withAuth);
 router.get(
   "/",
-  rateLimter(5 * 60 * 1000, 25, "user-id"),
+  rateLimter(5 * 60 * 1000, 25),
   transactionController.getAllTransaction,
 );
 router.get(
   "/:id",
-  rateLimter(5 * 60 * 1000, 25, "user-id"),
+  rateLimter(5 * 60 * 1000, 25),
   transactionController.getTransaction,
 );
 
