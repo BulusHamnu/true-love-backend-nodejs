@@ -4,9 +4,9 @@ import Env from "../config/index.js";
 import EmailTemplates from "../utils/emailTemplates.js";
 import sendResendEmail from "../services/resend.js";
 import * as authService from "../services/auth.service.js";
-import Profile from "../models/profile.model.js";
 import { generateRandPassword, signToken } from "../utils/helpers.js";
 import validateAndSanitizeData from "../utils/validateAndSanitizeData.js";
+import { ErrorCodes } from "../errors/appError.js";
 
 /* Email validator */
 function validateCheckoutBody(data) {
@@ -18,18 +18,9 @@ function validateCheckoutBody(data) {
 
 /*  Auto create user. In a case were user try checking out without creating an account, this middleware create a new account for them and send them an email with the default logins.*/
 export default async function autoCreateUser(req, res, next) {
+  const email = req.body.email;
   try {
-    const { email } = validateCheckoutBody(req.body); // Even if a user already have an account the client should send the user email for verification in the middleware.
-
-    const user = await User.findOne({ email }).lean();
-    if (user) {
-      req.user = {
-        ...user,
-        id: user._id,
-      };
-
-      return next();
-    }
+    const { email } = validateCheckoutBody(req.body); // Even if a user already have an account the client should send the user email for verification when making payment.
 
     const password = generateRandPassword();
     const newUser = await authService.createNewUser({
@@ -56,6 +47,15 @@ export default async function autoCreateUser(req, res, next) {
     req.user = newUser;
     next();
   } catch (error) {
+    if (error.code == ErrorCodes.USER_ALREADY_EXISTS) {
+      const user = await User.findOne({ email }).lean();
+      req.user = {
+        ...user,
+        id: user._id,
+      };
+
+      return next();
+    }
     next(error);
   }
 }

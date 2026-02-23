@@ -13,7 +13,6 @@ export async function signup(req, res, next) {
       authValidator.signupSchema,
     );
 
-    // create user
     const newUser = await authService.createNewUser({
       password,
       email,

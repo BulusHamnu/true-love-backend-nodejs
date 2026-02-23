@@ -8,7 +8,7 @@ import Transaction from "../models/transaction.model.js";
 export async function get0rCreateStripeCustomerId({ userId, email }) {
   const userProfile = await Profile.findOne({ userId });
   if (userProfile.stripeCustomerId) {
-    return stripeCustomerId;
+    return userProfile.stripeCustomerId;
   }
 
   const customer = await StripeClient.customers.create({
