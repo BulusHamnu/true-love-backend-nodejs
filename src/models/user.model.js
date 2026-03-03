@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
+    unique: true,
   },
   password: {
     type: String,
@@ -39,11 +40,10 @@ const userSchema = new mongoose.Schema({
   google: {
     googleId: {
       type: String,
-      default: "",
+      unique: true,
     },
     idToken: {
       type: String,
-      default: "",
     },
   },
   createdAt: {
