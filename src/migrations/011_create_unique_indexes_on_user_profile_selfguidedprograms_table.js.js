@@ -70,7 +70,7 @@ export async function up(db) {
     field: "google.googleId",
     cleanupQuery: { "google.googleId": "" },
     unsetFields: { "google.googleId": "", "google.idToken": "" },
-    filterExpression: { "google.googleId": { $exists: true } },
+    filterExpression: { $exists: true },
   });
 
   // Profiles userId index migration
@@ -80,7 +80,7 @@ export async function up(db) {
     field: "stripeCustomerId",
     cleanupQuery: { stripeCustomerId: "" },
     unsetFields: { stripeCustomerId: "" },
-    filterExpression: { stripeCustomerId: { $exists: true } },
+    filterExpression: { $exists: true },
   });
 
   Logger.info(
