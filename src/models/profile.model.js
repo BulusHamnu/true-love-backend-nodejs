@@ -5,7 +5,6 @@ const profileSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    unique: true,
   },
   stripeCustomerId: {
     type: String,
@@ -30,7 +29,7 @@ const profileSchema = new mongoose.Schema({
 });
 
 /* Indexes */
-profileSchema.index({ userId: 1 });
+profileSchema.index({ userId: 1 }, { unique: true });
 
 const Profile = mongoose.model("Profile", profileSchema);
 export default Profile;

@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
   },
   password: {
     type: String,
@@ -53,7 +52,7 @@ const userSchema = new mongoose.Schema({
 });
 
 /* Indexes */
-userSchema.index({ email: 1 });
+userSchema.index({ email: 1 }, { unique: true });
 
 /* Methods */
 userSchema.methods.removeUnwantedFields = function () {
