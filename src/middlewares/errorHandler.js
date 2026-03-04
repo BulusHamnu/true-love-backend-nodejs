@@ -1,4 +1,4 @@
-import AppError from "../errors/appError.js";
+import AppError, { ErrorCodes } from "../errors/appError.js";
 import Logger from "../utils/logger.js";
 
 /* Error handler */
@@ -15,11 +15,23 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  if (err.code == 11000) {
+    const field = Object.keys(err.keyPattern)[0];
+    return res.status(409).json({
+      status: false,
+      message: `${field} already exists.`,
+      error: {
+        code: ErrorCodes.DUPLICATE_KEY,
+        details: err.keyValue,
+      },
+    });
+  }
+
   res.status(500).json({
     status: false,
     message: "An unexpected error occured.",
     error: {
-      code: "UNEXPECTED_ERROR",
+      code: ErrorCodes.UNEXPECTED_ERROR,
       details: null,
     },
   });
