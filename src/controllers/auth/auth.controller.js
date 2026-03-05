@@ -129,14 +129,18 @@ export async function forgetPassword(req, res, next) {
 function validateCodeBody(data) {
   const schema = Joi.object({
     code: Joi.string().required().length(6),
+    email: authValidator.emailField,
   });
   return validateAndSanitizeData(data, schema);
 }
 
 export async function verifyPasswordResetOpt(req, res, next) {
   try {
-    const { code } = validateCodeBody(req.body);
-    const resetToken = await authService.verifyOptCodeAndIssueToken(code);
+    const { code, email } = validateCodeBody(req.body);
+    const resetToken = await authService.verifyOptCodeAndIssueToken(
+      code,
+      email,
+    );
 
     res.status(200).json({
       status: true,
@@ -151,12 +155,13 @@ export async function verifyPasswordResetOpt(req, res, next) {
 /* Reset password handler */
 export async function resetPassword(req, res, next) {
   try {
-    const { password, resetToken } = validateAndSanitizeData(
+    const { password, resetToken, email } = validateAndSanitizeData(
       req.body,
       authValidator.resetPasswordBodySchema,
     );
 
-    await authService.resetPassword(password, resetToken);
+    await authService.resetPassword(email, password, resetToken);
+
     res.status(200).json({
       status: true,
       message: "Password was reset sucessfully.",

@@ -53,6 +53,7 @@ export const loginBodySchema = Joi.object({
 
 /* Email and Password body schema */
 export const resetPasswordBodySchema = Joi.object({
+  email: emailField,
   password: passwordField,
   confirmPassword: Joi.string().required().valid(Joi.ref("password")).messages({
     "any.only": "Confirm password must be the same with password.",

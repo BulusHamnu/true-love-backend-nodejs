@@ -200,12 +200,12 @@ export async function createAndSendPasswordResetOpt(email) {
     throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
 
   const otpCode = generateCode(6);
+  const otpCodeHash = await bcrypt.hash(otpCode, Env.PASSWORD_HASH_SALT);
   const otpCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
-  user.resetPasswordVerification.otpCode = otpCode;
+  user.resetPasswordVerification.otpCode = otpCodeHash;
   user.resetPasswordVerification.otpCodeExpiresAt = otpCodeExpiresAt;
   await user.save();
 
-  // send verfication email
   await sendResendEmail(
     email,
     "Reset Your Password",
@@ -217,45 +217,92 @@ export async function createAndSendPasswordResetOpt(email) {
 function generateResetToken() {
   return crypto.randomBytes(16).toString("hex");
 }
-export async function verifyOptCodeAndIssueToken(code) {
-  const user = await User.findOne({
-    "resetPasswordVerification.otpCode": code,
-    "resetPasswordVerification.otpCodeExpiresAt": { $gt: new Date() },
-  });
 
-  if (!user)
-    throw new AppError(
+async function validateHashedSecret({
+  value,
+  hash,
+  expiresAt,
+  invalidError,
+  expiredError,
+}) {
+  const isValid = await bcrypt.compare(value, hash || "");
+  if (!isValid) throw invalidError;
+
+  const isExpired = new Date(expiresAt) < new Date();
+  if (isExpired) throw expiredError;
+}
+
+async function validateResetOtpCode(code, otpHashValue, otpCodeExpiresAt) {
+  return validateHashedSecret({
+    value: code,
+    hash: otpHashValue,
+    expiresAt: otpCodeExpiresAt,
+    invalidError: new AppError(
       ErrorCodes.RESET_OTP_INVALID,
-      "Code expired or code is invalid",
+      "Code is invalid.",
       400,
       true,
-    );
+    ),
+    expiredError: new AppError(
+      ErrorCodes.RESET_OTP_EXPIRED,
+      "Code expired.",
+      400,
+      true,
+    ),
+  });
+}
+
+export async function verifyOptCodeAndIssueToken(code, email) {
+  const user = await User.findOne({ email });
+  if (!user)
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
+
+  const optHashValue = user.resetPasswordVerification.otpCode;
+  const optCodeExpiresAt = user.resetPasswordVerification.otpCodeExpiresAt;
+  await validateResetOtpCode(code, optHashValue, optCodeExpiresAt);
 
   const resetToken = generateResetToken();
+  const resetTokenHash = await bcrypt.hash(resetToken, Env.PASSWORD_HASH_SALT);
   const resetTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  user.resetPasswordVerification.resetToken = resetTokenHash;
+  user.resetPasswordVerification.resetTokenExpiresAt = resetTokenExpiresAt;
   user.resetPasswordVerification.otpCode = null;
   user.resetPasswordVerification.otpCodeExpiresAt = null;
-  user.resetPasswordVerification.resetToken = resetToken;
-  user.resetPasswordVerification.resetTokenExpiresAt = resetTokenExpiresAt;
   await user.save();
 
   return resetToken;
 }
 
 /* Reset password function */
-export async function resetPassword(password, resetToken) {
-  const user = await User.findOne({
-    "resetPasswordVerification.resetToken": resetToken,
-    "resetPasswordVerification.resetTokenExpiresAt": { $gt: new Date() },
-  });
-
-  if (!user)
-    throw new AppError(
-      ErrorCodes.RESET_TOKEN_EXPIRED,
-      "Reset token has expired.",
+async function validateResetToken(resetToken, tokenHashValue, tokenExpiresAt) {
+  return validateHashedSecret({
+    value: resetToken,
+    hash: tokenHashValue,
+    expiresAt: tokenExpiresAt,
+    invalidError: new AppError(
+      ErrorCodes.RESET_TOKEN_INVALID,
+      "Token is invalid.",
       400,
       true,
-    );
+    ),
+    expiredError: new AppError(
+      ErrorCodes.RESET_TOKEN_EXPIRED,
+      "Token expired.",
+      400,
+      true,
+    ),
+  });
+}
+
+export async function resetPassword(email, password, resetToken) {
+  const user = await User.findOne({ email });
+  if (!user)
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
+
+  const tokenHashValue = user.resetPasswordVerification.resetToken;
+  const tokenExpiresAt = user.resetPasswordVerification.resetTokenExpiresAt;
+  await validateResetToken(resetToken, tokenHashValue, tokenExpiresAt);
 
   const newPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
   user.password = newPassword;
