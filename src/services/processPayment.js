@@ -13,7 +13,7 @@ async function createSelfGuidedProgram(userId) {
     await selfGuidedProgram.create({ userId });
   } catch (error) {
     if (error.code === 11000)
-      Logger.error("User already has selfGuidedProgram.", error);
+      Logger.error("User already has selfGuidedProgram data.", error);
 
     Logger.error(
       `Error while creating selfGuidedProgram for user: ${userId}`,

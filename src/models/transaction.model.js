@@ -7,16 +7,25 @@ const transactionSchema = mongoose.Schema({
     ref: "Profile",
     required: true,
   },
-  amount: Number,
+  amount: {
+    type: Number,
+    required: true,
+  },
   status: {
     type: String,
+    required: true,
     enum: ["pending", "failed", "paid"],
   },
   type: {
     type: String,
+    required: true,
     enum: ["coaching-program", "self-guided-program"],
   },
-  paymentIntent: String,
+  paymentIntent: {
+    type: String,
+    required: true,
+    minLength: 4,
+  },
   receipt: String,
   createdAt: {
     type: Date,
@@ -26,6 +35,7 @@ const transactionSchema = mongoose.Schema({
 
 /* Indexes */
 transactionSchema.index({ userId: 1 });
+transactionSchema.index({ paymentIntent: 1 }, { unique: true });
 
 const Transaction = mongoose.model("Transaction", transactionSchema);
 export default Transaction;
