@@ -13,7 +13,9 @@ async function runMigrations() {
 
   const scriptPaths = fs
     .readdirSync(_dirname)
-    .filter((path) => path !== "index.js")
+    .filter((path) => {
+      return path === "index.js" || path === "helpers" ? false : true;
+    })
     .sort();
 
   const migrationCollection = db.collection("migrations");

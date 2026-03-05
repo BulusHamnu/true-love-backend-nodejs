@@ -1,58 +1,10 @@
 import Logger from "../utils/logger.js";
+import {
+  createUniqueIndex,
+  createUniquePartialIndexWithCleanup,
+} from "./helpers/migrationUtils.js";
 
 /* Change or create new indexes for Users, SelfGuidedProgram and Profiles tables. */
-async function createUniqueIndex(db, collectionName, field) {
-  const collection = db.collection(collectionName);
-  const indexes = await collection.indexes();
-
-  const index = indexes.find((index) => index.key[field]);
-  if (!index?.unique) {
-    if (index) {
-      await collection.dropIndex(index.name);
-      Logger.info(`Old ${field} index was deleted.`);
-    }
-
-    const newIndex = await collection.createIndex(
-      { [field]: 1 },
-      { unique: true },
-    );
-
-    Logger.info(`New unique ${field} index created: ${newIndex}.`);
-  }
-}
-
-async function createUniquePartialIndexWithCleanup({
-  db,
-  collectionName,
-  field,
-  cleanupQuery,
-  unsetFields,
-  filterExpression,
-}) {
-  const collection = db.collection(collectionName);
-  const indexes = await collection.indexes();
-
-  const index = indexes.find((index) => index.key[field]);
-  if (!index?.unique || !index?.partialFilterExpression) {
-    if (index) {
-      await collection.dropIndex(index.name);
-      Logger.info(`Old ${field} index was deleted.`);
-    }
-
-    // Function for cleaning up old documents or unsetting fields that may cause duplicate key error.
-    await collection.updateMany(cleanupQuery, { $unset: unsetFields });
-    const newIndex = await collection.createIndex(
-      { [field]: 1 },
-      {
-        unique: true,
-        partialFilterExpression: { [field]: filterExpression },
-      },
-    );
-
-    Logger.info(`New unique ${field} index created: ${newIndex}.`);
-  }
-}
-
 export async function up(db) {
   // Users email index migration
   await createUniqueIndex(db, "users", "email");
