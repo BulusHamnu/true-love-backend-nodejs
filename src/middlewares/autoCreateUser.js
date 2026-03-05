@@ -45,9 +45,14 @@ export default async function autoCreateUser(req, res, next) {
     // For automatic login
     res.cookie("refreshToken", refreshToken, Env.LOGIN_COOKIE_OPTS);
     req.user = newUser;
+
     next();
   } catch (error) {
-    if (error.code == ErrorCodes.USER_ALREADY_EXISTS) {
+    const userAlreadyExists =
+      error.code == ErrorCodes.USER_ALREADY_EXISTS || err.code === 11000;
+
+    if (userAlreadyExists) {
+      // No need to create new user if they already exists.
       const user = await User.findOne({ email }).lean();
       req.user = {
         ...user,
