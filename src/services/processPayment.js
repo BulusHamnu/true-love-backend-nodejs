@@ -8,6 +8,20 @@ import { Env } from "../config/index.js";
 import Logger from "../utils/logger.js";
 import selfGuidedProgram from "../models/selfguidedProgram.model.js";
 
+async function createSelfGuidedProgram(userId) {
+  try {
+    await selfGuidedProgram.create({ userId });
+  } catch (error) {
+    if (error.code === 11000)
+      Logger.error("User already has selfGuidedProgram.", error);
+
+    Logger.error(
+      `Error while creating selfGuidedProgram for user: ${userId}`,
+      error,
+    );
+  }
+}
+
 /* Process stripe payment */
 async function recordPayment({
   email,
@@ -52,9 +66,7 @@ async function recordPayment({
     product === Env.SELF_GUIDED_PRODUCT_NAME ||
     product === Env.COACHING_PRODUCT_NAME
   ) {
-    await selfGuidedProgram.create({
-      userId: user._id,
-    });
+    await createSelfGuidedProgram(user._id);
   }
 }
 
