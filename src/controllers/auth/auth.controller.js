@@ -4,6 +4,7 @@ import Joi from "joi";
 import * as authService from "../../services/auth.service.js";
 import validateAndSanitizeData from "../../utils/validateAndSanitizeData.js";
 import Logger from "../../utils/logger.js";
+import AppError, { ErrorCodes } from "../../errors/appError.js";
 
 /* Sign up user handler */
 export async function signup(req, res, next) {
@@ -13,13 +14,30 @@ export async function signup(req, res, next) {
       authValidator.signupSchema,
     );
 
-    const newUser = await authService.createNewUser({
-      password,
-      email,
-      fullName,
-      age,
-      phone,
-    });
+    let newUser = undefined;
+    try {
+      const K = await authService.createNewUser({
+        password,
+        email,
+        fullName,
+        age,
+        phone,
+      });
+
+      newUser = K;
+    } catch (error) {
+      // Mongodb duplicate key error.
+      if (error.code === 11000) {
+        throw new AppError(
+          ErrorCodes.USER_ALREADY_EXISTS,
+          "User already exist.",
+          409,
+          true,
+        );
+      }
+
+      throw error;
+    }
 
     res.status(201).json({
       status: true,
