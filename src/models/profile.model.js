@@ -8,7 +8,6 @@ const profileSchema = new mongoose.Schema({
   },
   stripeCustomerId: {
     type: String,
-    unique: true,
   },
   fullName: {
     type: String,
@@ -30,6 +29,13 @@ const profileSchema = new mongoose.Schema({
 
 /* Indexes */
 profileSchema.index({ userId: 1 }, { unique: true });
+profileSchema.index(
+  { stripeCustomerId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { stripeCustomerId: { $exists: true } },
+  },
+);
 
 const Profile = mongoose.model("Profile", profileSchema);
 export default Profile;

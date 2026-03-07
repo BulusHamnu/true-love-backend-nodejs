@@ -75,7 +75,7 @@ export async function googleCallbackHandler(req, res) {
         `${Env.FRONTEND_URL}/oauth/google/callback?flow=${flow}&error=consent_cancelled`,
       );
 
-    if (error.code === ErrorCodes.USER_ALREADY_EXISTS || err.code === 11000)
+    if (error.code === ErrorCodes.USER_ALREADY_EXISTS || error.code === 11000)
       return res.redirect(
         `${Env.FRONTEND_URL}/oauth/google/callback?flow=${flow}&error=user_already_exists`,
       );
