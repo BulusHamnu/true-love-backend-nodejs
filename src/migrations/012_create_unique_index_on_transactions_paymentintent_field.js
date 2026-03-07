@@ -12,12 +12,5 @@ export async function up(db) {
     filterExpression: { $type: "string" },
   });
 
-  const K = ["users", "profiles", "transactions", "selfguidedprograms"];
-  const J = K.map((collection) => {
-    const w = db.collection(collection);
-    return w.indexes();
-  });
-  console.dir(await Promise.all(J), { depth: null });
-
   Logger.info("transaction paymentIntent field migration completed.");
 }

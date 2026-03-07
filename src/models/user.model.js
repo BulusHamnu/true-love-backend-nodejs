@@ -39,7 +39,6 @@ const userSchema = new mongoose.Schema({
   google: {
     googleId: {
       type: String,
-      unique: true,
     },
     idToken: {
       type: String,
@@ -53,6 +52,13 @@ const userSchema = new mongoose.Schema({
 
 /* Indexes */
 userSchema.index({ email: 1 }, { unique: true });
+userSchema.index(
+  { "google.googleId": 1 },
+  {
+    unique: true,
+    partialFilterExpression: { "google.googleId": { $exists: true } },
+  },
+);
 
 /* Methods */
 userSchema.methods.removeUnwantedFields = function () {

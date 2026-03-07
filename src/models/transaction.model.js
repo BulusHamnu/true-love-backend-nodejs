@@ -14,7 +14,7 @@ const transactionSchema = mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: ["pending", "failed", "paid"],
+    enum: ["pending", "failed", "paid", "refunded"],
   },
   type: {
     type: String,
@@ -35,7 +35,13 @@ const transactionSchema = mongoose.Schema({
 
 /* Indexes */
 transactionSchema.index({ userId: 1 });
-transactionSchema.index({ paymentIntent: 1 }, { unique: true });
+transactionSchema.index(
+  { paymentIntent: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { paymentIntent: { $type: "string" } },
+  },
+);
 
 const Transaction = mongoose.model("Transaction", transactionSchema);
 export default Transaction;
