@@ -25,7 +25,7 @@ router.post(
 router.post(
   "/verify-email",
   rateLimter(5 * 60 * 1000, 5),
-  authController.verifyEmail,
+  authController.verifyEmailHandler,
 );
 router.post(
   "/resend-email",

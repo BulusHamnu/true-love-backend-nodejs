@@ -189,10 +189,10 @@ export async function resendEmaiVerificationCode(req, res, next) {
 }
 
 /* Verify email code handler */
-export async function verifyEmail(req, res, next) {
+export async function verifyEmailHandler(req, res, next) {
   try {
-    const { code } = validateCodeBody(req.body);
-    await authService.verifyEmailVerificationCode(code);
+    const { code, email } = validateCodeBody(req.body);
+    await authService.verifyUserEmail(code, email);
 
     res.status(200).json({
       status: true,

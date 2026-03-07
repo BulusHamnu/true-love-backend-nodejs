@@ -335,11 +335,13 @@ export async function sendEmailVerificationCode(user) {
     );
 
   const { code, expiresAt } = createEmailVerificationCode();
+  const codeHash = await bcrypt.hash(code, Env.PASSWORD_HASH_SALT);
+
   await User.findOneAndUpdate(
     { _id: user.id },
     {
       emailVerification: {
-        code,
+        code: codeHash,
         expiresAt,
       },
     },
@@ -353,19 +355,34 @@ export async function sendEmailVerificationCode(user) {
 }
 
 /* Verify email verification code */
-export async function verifyEmailVerificationCode(code) {
-  const user = await User.findOne({
-    "emailVerification.code": code,
-    "emailVerification.expiresAt": { $gt: new Date() },
-  });
-
-  if (!user)
-    throw new AppError(
+async function validateVerificationCode(code, codeHashValue, codeExpiresAt) {
+  return validateHashedSecret({
+    value: code,
+    hash: codeHashValue,
+    expiresAt: codeExpiresAt,
+    invalidError: new AppError(
       ErrorCodes.VERIFICATION_CODE_INVALID,
-      "Code expired or code is invalid",
+      "Code is invalid",
       400,
       true,
-    );
+    ),
+    expiredError: new AppError(
+      ErrorCodes.VERIFICATION_CODE_EXPIRED,
+      "Code expired.",
+      400,
+      true,
+    ),
+  });
+}
+
+export async function verifyUserEmail(code, email) {
+  const user = await User.findOne({ email });
+  if (!user)
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
+
+  const codeHashValue = user.emailVerification.code;
+  const codeExpiresAt = user.emailVerification.expiresAt;
+  await validateVerificationCode(code, codeHashValue, codeExpiresAt);
 
   user.isVerified = true;
   user.emailVerification.code = null;
