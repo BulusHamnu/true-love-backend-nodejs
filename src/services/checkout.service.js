@@ -2,11 +2,12 @@ import AppError, { ErrorCodes } from "../errors/appError.js";
 import Profile from "../models/profile.model.js";
 import Env, { StripeClient } from "../config/index.js";
 import Transaction from "../models/transaction.model.js";
+import IdempotencyKey from "../models/idempotency_key.model.js";
+import crypto from "crypto";
 
 /* Create checkout function */
-// Create StripeClient customer
-export async function get0rCreateStripeCustomerId({ userId, email }) {
-  const userProfile = await Profile.findOne({ userId });
+export async function retriveOrCreateStripeCustomerId({ userId, email }) {
+  const userProfile = await Profile.findOne({ userId }).lean();
   if (userProfile.stripeCustomerId) {
     return userProfile.stripeCustomerId;
   }
@@ -17,13 +18,14 @@ export async function get0rCreateStripeCustomerId({ userId, email }) {
     phone: userProfile.phone,
   });
 
-  userProfile.stripeCustomerId = customer.id;
-  await userProfile.save();
+  await Profile.findOneAndUpdate(
+    { _id: userProfile._id },
+    { $set: { stripeCustomerId: customer.id } },
+  );
 
   return customer.id;
 }
 
-// create StripeClient session
 export async function createStripeSession(
   stripeCustomerId,
   product,
@@ -71,7 +73,65 @@ export async function createStripeSession(
   return session.url;
 }
 
-export async function createCheckout(user, product, newDoor) {
+function generateRequestHash(data) {
+  const sortedRequestData = Object.keys(data)
+    .sort()
+    .reduce((obj, key) => {
+      obj[key] = data[key];
+      return obj;
+    }, {});
+
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify(sortedRequestData))
+    .digest("hex");
+}
+
+async function checkAndValidateIdempotencyRecord(
+  userId,
+  idempotencyKey,
+  requestBody,
+) {
+  if (!idempotencyKey) return null;
+
+  const idempotencyRecord = await IdempotencyKey.findOne({
+    userId,
+    key: idempotencyKey,
+  });
+
+  if (!idempotencyRecord) return null;
+
+  const requestHash = generateRequestHash(requestBody);
+  const sameReq = requestHash === idempotencyRecord.requestHash;
+  if (!sameReq)
+    throw new AppError(
+      ErrorCodes.IDEMPOTENCY_KEY_ERROR,
+      "The same idempotency key used for different request body.",
+      400,
+      false,
+      { idempotencyKey },
+    );
+
+  const isExpired = new Date(idempotencyRecord.expiresAt) < new Date();
+  if (isExpired) return null;
+
+  return idempotencyRecord;
+}
+
+export async function createCheckout({
+  user,
+  product,
+  newDoor,
+  idempotencyKey,
+  requestBody,
+}) {
+  const result = await checkAndValidateIdempotencyRecord(
+    user.id,
+    idempotencyKey,
+    requestBody,
+  );
+  if (result) return result.responseBody;
+
   const transactions = await Transaction.find({ userId: user.id }).lean();
   const userPurchases = transactions.map((transaction) => transaction.type);
 
@@ -102,7 +162,7 @@ export async function createCheckout(user, product, newDoor) {
     );
   }
 
-  const stripeCustomerId = await get0rCreateStripeCustomerId({
+  const stripeCustomerId = await retriveOrCreateStripeCustomerId({
     userId: user.id,
     email: user.email,
   });
@@ -112,6 +172,33 @@ export async function createCheckout(user, product, newDoor) {
     product,
     newDoor,
   );
+
+  if (idempotencyKey) {
+    try {
+      const requestHash = generateRequestHash(requestBody);
+      await IdempotencyKey.create({
+        key: idempotencyKey,
+        userId: user.id,
+        status: "success",
+        responseBody: {
+          url: sessionUrl,
+        },
+        requestHash,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+    } catch (error) {
+      if (error.code === 11000) {
+        const result = await checkAndValidateIdempotencyRecord(
+          user.id,
+          idempotencyKey,
+          requestBody,
+        );
+        if (result) return result.responseBody;
+      }
+
+      throw error;
+    }
+  }
 
   return sessionUrl;
 }

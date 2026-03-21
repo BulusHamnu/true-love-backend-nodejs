@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema({
   },
   provider: {
     type: String,
-    default: "",
+    default: "local",
   },
   google: {
     googleId: {
