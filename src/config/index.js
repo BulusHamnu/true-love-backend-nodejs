@@ -25,8 +25,7 @@ export const Env = {
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD || "",
   RESEND_API_KEY: process.env.RESEND_API_KEY || "",
   TOTUR_EMAIL: process.env.TOTUR_EMAIL,
-  RESEND_EMAIL_DOMAIN:
-    process.env.RESEND_EMAIL_DOMAIN || "exponentialenlightenment.com",
+  RESEND_EMAIL_DOMAIN: process.env.RESEND_EMAIL_DOMAIN,
 
   GOOGLE_OAUTH2_ENDPOINT: process.env.GOOGLE_OAUTH2_ENDPOINT || "",
   GOOGLE_TOKEN_REQUEST_URL: process.env.GOOGLE_TOKEN_REQUEST_URL || "",
@@ -41,8 +40,9 @@ export const Env = {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "none",
-    maxAge: 1000 * 60 * 60 * 24 * 30,
+    maxAge: 1000 * 60 * 60 * 24 * 7,
   },
+
   PRODUCTION: process.env.PRODUCTION,
   ALLOWED_ORIGIN: process.env.ALLOWED_ORIGIN,
   PORT: process.env.PORT,
