@@ -59,6 +59,7 @@ export async function getReflectionMessage(userId, weekNumber) {
 // Posting and Updating reflection message share the same method because the front-end have a simple message interface.
 export async function postReflectionMessage({ userId, weekNumber, message }) {
   const gptResponse = await sendReflectionMessageToGPT(weekNumber, message);
+  //
   try {
     await getReflectionMessage(userId, weekNumber); // If reflection message not found, it throw an error which will skip this block else it's an update.
     const updatedSelfGuidedDetails = await selfGuidedProgram

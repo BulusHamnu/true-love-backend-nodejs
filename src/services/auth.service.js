@@ -31,13 +31,13 @@ export async function createNewUser({
   provider = "local",
   email,
   fullName,
-  googleId = "",
+  googleId = null,
   idToken = "",
   password,
   age,
   phone,
 }) {
-  const userExist = await User.findOne({ email: email });
+  const userExist = await User.findOne({ email }).lean();
   if (userExist)
     throw new AppError(
       ErrorCodes.USER_ALREADY_EXISTS,
@@ -46,12 +46,12 @@ export async function createNewUser({
       true,
     );
 
-  const isVerified = provider === "google" ? true : false;
   const hashedPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
-
   const { code, expiresAt, codeHash } = createEmailVerificationCode();
-  const emailVerification =
-    provider === "google" ? {} : { code: codeHash, expiresAt };
+
+  const isVerified = provider === "google" ? true : false;
+  const emailVerification = isVerified ? {} : { code: codeHash, expiresAt };
+  const userGoogleIds = isVerified && googleId ? { googleId, idToken } : {};
 
   const session = await mongoose.startSession();
   let newUser = undefined;
@@ -62,10 +62,7 @@ export async function createNewUser({
         password: hashedPassword,
         email,
         emailVerification,
-        google: {
-          googleId,
-          idToken,
-        },
+        google: userGoogleIds,
         isVerified,
       });
       await newUser.save({ session });
