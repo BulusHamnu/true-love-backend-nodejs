@@ -59,7 +59,9 @@ async function exchangeCodeForUserToken(accessCode) {
 
 export async function processGoogleCallbackReq(state, code) {
   const response = await exchangeCodeForUserToken(code);
-  const payload = await verifyIdToken(response?.data.id_token);
+
+  const idToken = response?.data.id_token;
+  const payload = await verifyIdToken(idToken);
   if (!payload)
     throw new AppError(
       ErrorCodes.UNEXPECTED_ERROR,
@@ -77,7 +79,7 @@ export async function processGoogleCallbackReq(state, code) {
       email: payload.email,
       fullName: payload.name,
       googleId: payload.sub,
-      idToken: payload.idToken,
+      idToken: idToken,
       isVerified: payload.email_verified,
     });
 

@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import EmailTemplates from "../utils/emailTemplates.js";
 import Env from "../config/index.js";
 import crypto from "crypto";
+import mongoose from "mongoose";
 
 function generateHashValue(code) {
   return crypto.createHash("sha256").update(code).digest("hex");
@@ -52,29 +53,39 @@ export async function createNewUser({
   const emailVerification =
     provider === "google" ? {} : { code: codeHash, expiresAt };
 
-  const newUser = await User.create({
-    provider,
-    password: hashedPassword,
-    email,
-    emailVerification,
-    google: {
-      googleId,
-      idToken,
-    },
-    isVerified,
-  });
+  const session = await mongoose.startSession();
+  let newUser = undefined;
+  try {
+    await session.withTransaction(async () => {
+      newUser = new User({
+        provider,
+        password: hashedPassword,
+        email,
+        emailVerification,
+        google: {
+          googleId,
+          idToken,
+        },
+        isVerified,
+      });
+      await newUser.save({ session });
 
-  // Create profile
-  await Profile.create({
-    userId: newUser._id,
-    fullName,
-    phone,
-    age,
-  });
+      const profile = new Profile({
+        userId: newUser._id,
+        fullName,
+        phone,
+        age,
+      });
+      await profile.save({ session });
+    });
 
-  Logger.info("User created sucessfully.", {
-    id: newUser._id,
-  });
+    Logger.info("User created sucessfully.", {
+      id: newUser._id,
+    });
+    //
+  } finally {
+    await session.endSession();
+  }
 
   // Send verfication email if user is not verified or not google
   if (!isVerified)
