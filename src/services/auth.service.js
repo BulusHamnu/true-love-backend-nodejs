@@ -10,10 +10,18 @@ import EmailTemplates from "../utils/emailTemplates.js";
 import Env from "../config/index.js";
 import crypto from "crypto";
 
+function generateHashValue(code) {
+  return crypto.createHash("sha256").update(code).digest("hex");
+}
+
 /* Sign up user */
 export function createEmailVerificationCode() {
+  const code = generateCode(6);
+  const codeHash = generateHashValue(code);
+
   return {
-    code: generateCode(6),
+    code,
+    codeHash,
     expiresAt: new Date(Date.now() + 15 * 60 * 1000),
   };
 }
@@ -40,8 +48,9 @@ export async function createNewUser({
   const isVerified = provider === "google" ? true : false;
   const hashedPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
 
+  const { code, expiresAt, codeHash } = createEmailVerificationCode();
   const emailVerification =
-    provider !== "google" ? createEmailVerificationCode() : {};
+    provider === "google" ? {} : { code: codeHash, expiresAt };
 
   const newUser = await User.create({
     provider,
@@ -72,10 +81,7 @@ export async function createNewUser({
     await sendResendEmail(
       email,
       "Please verify your email address",
-      EmailTemplates.emailVerificationTemplate(
-        fullName,
-        emailVerification?.code,
-      ),
+      EmailTemplates.emailVerificationTemplate(fullName, code),
     );
 
   return {
@@ -200,8 +206,9 @@ export async function createAndSendPasswordResetOpt(email) {
     throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
 
   const otpCode = generateCode(6);
-  const otpCodeHash = await bcrypt.hash(otpCode, Env.PASSWORD_HASH_SALT);
+  const otpCodeHash = generateHashValue(otpCode);
   const otpCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
   user.resetPasswordVerification.otpCode = otpCodeHash;
   user.resetPasswordVerification.otpCodeExpiresAt = otpCodeExpiresAt;
   await user.save();
@@ -214,28 +221,25 @@ export async function createAndSendPasswordResetOpt(email) {
 }
 
 /* Verify reset otp  */
-function generateResetToken() {
-  return crypto.randomBytes(16).toString("hex");
-}
-
-async function validateHashedSecret({
+function validateHashedSecret({
   value,
-  hash,
+  storedHash,
   expiresAt,
   invalidError,
   expiredError,
 }) {
-  const isValid = await bcrypt.compare(value, hash || "");
+  const hashCode = generateHashValue(value);
+  const isValid = hashCode === storedHash;
   if (!isValid) throw invalidError;
 
   const isExpired = new Date(expiresAt) < new Date();
   if (isExpired) throw expiredError;
 }
 
-async function validateResetOtpCode(code, otpHashValue, otpCodeExpiresAt) {
+function validateResetOtpCode(code, otpHashValue, otpCodeExpiresAt) {
   return validateHashedSecret({
     value: code,
-    hash: otpHashValue,
+    storedHash: otpHashValue,
     expiresAt: otpCodeExpiresAt,
     invalidError: new AppError(
       ErrorCodes.RESET_OTP_INVALID,
@@ -252,6 +256,10 @@ async function validateResetOtpCode(code, otpHashValue, otpCodeExpiresAt) {
   });
 }
 
+function generateResetToken() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
 export async function verifyOptCodeAndIssueToken(code, email) {
   const user = await User.findOne({ email });
   if (!user)
@@ -259,11 +267,11 @@ export async function verifyOptCodeAndIssueToken(code, email) {
 
   const optHashValue = user.resetPasswordVerification.otpCode;
   const optCodeExpiresAt = user.resetPasswordVerification.otpCodeExpiresAt;
-  await validateResetOtpCode(code, optHashValue, optCodeExpiresAt);
+  validateResetOtpCode(code, optHashValue, optCodeExpiresAt);
 
   const resetToken = generateResetToken();
-  const resetTokenHash = await bcrypt.hash(resetToken, Env.PASSWORD_HASH_SALT);
-  const resetTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  const resetTokenHash = generateHashValue(resetToken);
+  const resetTokenExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
   user.resetPasswordVerification.resetToken = resetTokenHash;
   user.resetPasswordVerification.resetTokenExpiresAt = resetTokenExpiresAt;
@@ -278,7 +286,7 @@ export async function verifyOptCodeAndIssueToken(code, email) {
 async function validateResetToken(resetToken, tokenHashValue, tokenExpiresAt) {
   return validateHashedSecret({
     value: resetToken,
-    hash: tokenHashValue,
+    storedHash: tokenHashValue,
     expiresAt: tokenExpiresAt,
     invalidError: new AppError(
       ErrorCodes.RESET_TOKEN_INVALID,
@@ -334,9 +342,7 @@ export async function sendEmailVerificationCode(user) {
       },
     );
 
-  const { code, expiresAt } = createEmailVerificationCode();
-  const codeHash = await bcrypt.hash(code, Env.PASSWORD_HASH_SALT);
-
+  const { code, expiresAt, codeHash } = createEmailVerificationCode();
   await User.findOneAndUpdate(
     { _id: user.id },
     {
@@ -355,10 +361,10 @@ export async function sendEmailVerificationCode(user) {
 }
 
 /* Verify email verification code */
-async function validateVerificationCode(code, codeHashValue, codeExpiresAt) {
+function validateVerificationCode(code, codeHashValue, codeExpiresAt) {
   return validateHashedSecret({
     value: code,
-    hash: codeHashValue,
+    storedHash: codeHashValue,
     expiresAt: codeExpiresAt,
     invalidError: new AppError(
       ErrorCodes.VERIFICATION_CODE_INVALID,
@@ -382,7 +388,7 @@ export async function verifyUserEmail(code, email) {
 
   const codeHashValue = user.emailVerification.code;
   const codeExpiresAt = user.emailVerification.expiresAt;
-  await validateVerificationCode(code, codeHashValue, codeExpiresAt);
+  validateVerificationCode(code, codeHashValue, codeExpiresAt);
 
   user.isVerified = true;
   user.emailVerification.code = null;
