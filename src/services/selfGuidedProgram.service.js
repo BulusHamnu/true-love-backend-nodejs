@@ -58,44 +58,60 @@ export async function getReflectionMessage(userId, weekNumber) {
 /* Post reflection message */
 // Posting and Updating reflection message share the same method because the front-end have a simple message interface.
 export async function postReflectionMessage({ userId, weekNumber, message }) {
-  const gptResponse = await sendReflectionMessageToGPT(weekNumber, message);
-  //
-  try {
-    await getReflectionMessage(userId, weekNumber); // If reflection message not found, it throw an error which will skip this block else it's an update.
-    const updatedSelfGuidedDetails = await selfGuidedProgram
+  let updatedResult = await selfGuidedProgram.updateOne(
+    {
+      userId,
+      "reflections.week": weekNumber,
+    },
+    {
+      $set: {
+        "reflections.$.message": message,
+      },
+    },
+  );
+
+  let newPushResult = null;
+  if (updatedResult.matchedCount === 0) {
+    const newMessage = {
+      week: weekNumber,
+      message,
+    };
+
+    newPushResult = await selfGuidedProgram.updateOne(
+      {
+        userId,
+        "reflections.week": { $ne: weekNumber },
+      },
+      { $push: { reflections: newMessage } },
+    );
+  }
+
+  const needsGPTResponse =
+    updatedResult?.modifiedCount === 1 || newPushResult?.modifiedCount === 1;
+
+  let selfGuidedDetails = undefined;
+  if (needsGPTResponse) {
+    const gptResponse = null; // await sendReflectionMessageToGPT(weekNumber, message); No GPT quota.
+
+    selfGuidedDetails = await selfGuidedProgram
       .findOneAndUpdate(
         {
           userId,
+          "reflections.week": weekNumber,
         },
-        { $set: { "reflections.$[elem].message": message } },
-        { arrayFilters: [{ "elem.week": weekNumber }], new: true },
+        {
+          $set: {
+            "reflections.$.gptResponse": gptResponse,
+          },
+        },
+        { new: true },
       )
       .lean();
-
-    return updatedSelfGuidedDetails.reflections.find(
-      (reflection) => reflection.week === weekNumber,
-    );
-  } catch (error) {
-    // We do nothing, lol.
+  } else {
+    selfGuidedDetails = await selfGuidedProgram.findOne({ userId }).lean();
   }
 
-  const newMessage = {
-    week: weekNumber,
-    message,
-    gptResponse,
-  };
-
-  const updatedSelfGuidedDetails = await selfGuidedProgram
-    .findOneAndUpdate(
-      {
-        userId,
-      },
-      { $push: { reflections: newMessage } },
-      { new: true },
-    )
-    .lean();
-
-  return updatedSelfGuidedDetails.reflections.find(
+  return selfGuidedDetails.reflections.find(
     (reflection) => reflection.week === weekNumber,
   );
 }
