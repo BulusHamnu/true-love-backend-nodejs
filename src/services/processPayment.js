@@ -7,6 +7,7 @@ import sendResendEmail from "./resend.js";
 import { Env } from "../config/index.js";
 import Logger from "../utils/logger.js";
 import selfGuidedProgram from "../models/selfguidedProgram.model.js";
+import mongoose from "mongoose";
 
 async function createSelfGuidedProgram(userId) {
   try {
@@ -14,16 +15,12 @@ async function createSelfGuidedProgram(userId) {
   } catch (error) {
     if (error.code === 11000)
       Logger.error("User already has selfGuidedProgram data.", error);
-
-    Logger.error(
-      `Error while creating selfGuidedProgram for user: ${userId}`,
-      error,
-    );
   }
 }
 
 /* Process stripe payment */
 async function recordPayment({
+  userId,
   email,
   amount,
   product,
@@ -41,7 +38,7 @@ async function recordPayment({
     phone,
   });
 
-  const user = await User.findOne({ email }).lean();
+  const user = await User.findOne({ _id: userId }).lean();
   if (!user) {
     throw new AppError(
       ErrorCodes.USER_NOT_FOUND,
@@ -52,14 +49,27 @@ async function recordPayment({
   }
 
   // Record transaction as source of truth.
-  await Transaction.create({
-    userId: user._id,
-    amount,
-    status: "paid",
-    type: product,
-    paymentIntent,
-    receipt,
-  });
+  try {
+    await Transaction.create({
+      userId: user._id,
+      amount,
+      status,
+      type: product,
+      paymentIntent,
+      receipt,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      throw new AppError(
+        "DUPLICATE_PAYEMNT_INTENT",
+        "Duplicate transaction.",
+        409,
+        false,
+      );
+    }
+
+    throw error;
+  }
 
   // Users unlock access to Self Guided Program module if they purchase self-guided-program but also unlock it as bonus if they purchase the coaching-program
   if (
@@ -71,7 +81,12 @@ async function recordPayment({
 }
 
 export async function processPayment(data) {
+  const userId = data.metadata?.userId
+    ? new mongoose.Types.ObjectId(data.metadata.userId)
+    : null;
+
   await recordPayment({
+    userId,
     email: data.customer_details?.email,
     amount: data.amount_subtotal,
     product: data.metadata.product,

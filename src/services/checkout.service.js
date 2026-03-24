@@ -33,6 +33,7 @@ export async function createStripeSession(
   stripeCustomerId,
   product,
   newDoor = false,
+  userId,
 ) {
   let priceId;
   let successUrl;
@@ -70,6 +71,7 @@ export async function createStripeSession(
     metadata: {
       site: "true-love-app",
       product,
+      userId,
     },
   });
 
@@ -177,9 +179,6 @@ export async function createCheckout({
   idempotencyKey,
   requestBody,
 }) {
-  const result = await createIdempotency(user.id, idempotencyKey, requestBody);
-  if (result) return result;
-
   const transactions = await Transaction.find({ userId: user.id }).lean();
   const userPurchases = transactions.map((transaction) => transaction.type);
 
@@ -210,6 +209,9 @@ export async function createCheckout({
     );
   }
 
+  const result = await createIdempotency(user.id, idempotencyKey, requestBody);
+  if (result) return result;
+
   const stripeCustomerId = await retriveOrCreateStripeCustomerId({
     userId: user.id,
     email: user.email,
@@ -219,6 +221,7 @@ export async function createCheckout({
     stripeCustomerId,
     product,
     newDoor,
+    String(user.id),
   );
 
   if (idempotencyKey) {

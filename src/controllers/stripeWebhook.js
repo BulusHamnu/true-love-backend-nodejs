@@ -17,11 +17,15 @@ export default async function stripeWebhookHandler(req, res) {
       );
     }
 
-    // To verify if event is from stripe
-    const event = StripeClient.webhooks.constructEvent(
+    const webhookSecret =
+      Env.NODE_ENV === "production"
+        ? Env.STRIPE_WEBHOOK_SECRET_KEY_LIVE
+        : Env.STRIPE_WEBHOOK_SECRET_KEY_TEST;
+
+    let event = StripeClient.webhooks.constructEvent(
       rawBody,
       stripeSig,
-      Env.STRIPE_WEBHOOK_SECRET_KEY,
+      webhookSecret,
     );
 
     if (event.type !== "checkout.session.completed") {
@@ -39,7 +43,10 @@ export default async function stripeWebhookHandler(req, res) {
     await processPayment(eventObj);
     res.status(200).send("Event received.");
   } catch (error) {
+    if (error.code === "DUPLICATE_PAYEMNT_INTENT")
+      return res.status(200).send("Event already processed.");
+
     Logger.error(error);
-    res.status(400);
+    res.status(400).send("An error occured.");
   }
 }
