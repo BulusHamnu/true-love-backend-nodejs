@@ -16,10 +16,11 @@ const idempotencyKey = new mongoose.Schema({
   status: {
     type: String,
     required: true,
+    enum: ["pending", "success"],
   },
   responseBody: {
     type: Schema.Types.Mixed,
-    required: true,
+    // required: true,
   },
   requestHash: {
     type: Schema.Types.Mixed,

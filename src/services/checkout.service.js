@@ -12,11 +12,14 @@ export async function retriveOrCreateStripeCustomerId({ userId, email }) {
     return userProfile.stripeCustomerId;
   }
 
-  const customer = await StripeClient.customers.create({
-    name: userProfile.fullName,
-    email,
-    phone: userProfile.phone,
-  });
+  const customer = await StripeClient.customers.create(
+    {
+      name: userProfile.fullName,
+      email,
+      phone: userProfile.phone,
+    },
+    { idempotencyKey: `customer-${userId}` },
+  );
 
   await Profile.findOneAndUpdate(
     { _id: userProfile._id },
@@ -87,35 +90,84 @@ function generateRequestHash(data) {
     .digest("hex");
 }
 
-async function checkAndValidateIdempotencyRecord(
-  userId,
-  idempotencyKey,
-  requestBody,
-) {
-  if (!idempotencyKey) return null;
-
-  const idempotencyRecord = await IdempotencyKey.findOne({
+async function createIdempotencyRecord(key, userId, requestHash) {
+  await IdempotencyKey.create({
+    key,
     userId,
-    key: idempotencyKey,
+    status: "pending",
+    responseBody: null,
+    requestHash,
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
   });
+}
 
-  if (!idempotencyRecord) return null;
-
+async function createIdempotency(userId, idempotencyKey, requestBody) {
+  if (!idempotencyKey) return null;
   const requestHash = generateRequestHash(requestBody);
-  const sameReq = requestHash === idempotencyRecord.requestHash;
-  if (!sameReq)
-    throw new AppError(
-      ErrorCodes.IDEMPOTENCY_KEY_ERROR,
-      "The same idempotency key used for different request body.",
-      400,
-      false,
-      { idempotencyKey },
-    );
+  try {
+    await createIdempotencyRecord(idempotencyKey, userId, requestHash);
+    //
+  } catch (error) {
+    if (error.code !== 11000) throw error;
 
-  const isExpired = new Date(idempotencyRecord.expiresAt) < new Date();
-  if (isExpired) return null;
+    const idempotencyRecord = await IdempotencyKey.findOne({
+      userId,
+      key: idempotencyKey,
+    });
 
-  return idempotencyRecord;
+    if (!idempotencyRecord) {
+      throw new AppError(
+        ErrorCodes.RETRY_LATER,
+        "Please retry later.",
+        409,
+        true,
+      );
+    }
+
+    const sameReq = requestHash === idempotencyRecord.requestHash;
+    if (!sameReq)
+      throw new AppError(
+        ErrorCodes.IDEMPOTENCY_KEY_ERROR,
+        "The same idempotency key used for different request body.",
+        400,
+        false,
+        { idempotencyKey },
+      );
+
+    if (idempotencyRecord.status === "success")
+      return idempotencyRecord.responseBody;
+
+    if (idempotencyRecord.status === "pending")
+      throw new AppError(
+        ErrorCodes.RETRY_LATER,
+        "Please retry later.",
+        400,
+        true,
+        {
+          idempotencyKey,
+        },
+      );
+
+    const now = new Date();
+    const isExpired = new Date(idempotencyRecord.expiresAt) < now;
+    if (isExpired) {
+      const updated = await IdempotencyKey.updateOne(
+        { key: idempotencyKey, userId, expiresAt: { $lt: now } },
+        {
+          $set: {
+            status: "pending",
+            responseBody: null,
+            requestHash,
+            expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+          },
+        },
+      );
+
+      if (updated.modifiedCount === 0) {
+        throw new AppError(ErrorCodes.RETRY_LATER, "Please retry later.", 409);
+      }
+    }
+  }
 }
 
 export async function createCheckout({
@@ -125,12 +177,8 @@ export async function createCheckout({
   idempotencyKey,
   requestBody,
 }) {
-  const result = await checkAndValidateIdempotencyRecord(
-    user.id,
-    idempotencyKey,
-    requestBody,
-  );
-  if (result) return result.responseBody;
+  const result = await createIdempotency(user.id, idempotencyKey, requestBody);
+  if (result) return result;
 
   const transactions = await Transaction.find({ userId: user.id }).lean();
   const userPurchases = transactions.map((transaction) => transaction.type);
@@ -174,31 +222,16 @@ export async function createCheckout({
   );
 
   if (idempotencyKey) {
-    try {
-      const requestHash = generateRequestHash(requestBody);
-      await IdempotencyKey.create({
-        key: idempotencyKey,
-        userId: user.id,
+    await IdempotencyKey.findOneAndUpdate(
+      { key: idempotencyKey, userId: user.id, status: "pending" },
+      {
         status: "success",
         responseBody: {
           url: sessionUrl,
         },
-        requestHash,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      });
-    } catch (error) {
-      if (error.code === 11000) {
-        const result = await checkAndValidateIdempotencyRecord(
-          user.id,
-          idempotencyKey,
-          requestBody,
-        );
-        if (result) return result.responseBody;
-      }
-
-      throw error;
-    }
+      },
+    );
   }
 
-  return sessionUrl;
+  return { url: sessionUrl };
 }
