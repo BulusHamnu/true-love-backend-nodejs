@@ -217,9 +217,15 @@ export async function createAndSendPasswordResetOpt(email) {
   const otpCodeHash = generateHashValue(otpCode);
   const otpCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-  user.resetPasswordVerification.otpCode = otpCodeHash;
-  user.resetPasswordVerification.otpCodeExpiresAt = otpCodeExpiresAt;
-  await user.save();
+  await User.updateOne(
+    { email },
+    {
+      $set: {
+        "resetPasswordVerification.otpCode": otpCodeHash,
+        "resetPasswordVerification.otpCodeExpiresAt": otpCodeExpiresAt,
+      },
+    },
+  );
 
   await sendResendEmail(
     email,
@@ -281,11 +287,17 @@ export async function verifyOptCodeAndIssueToken(code, email) {
   const resetTokenHash = generateHashValue(resetToken);
   const resetTokenExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-  user.resetPasswordVerification.resetToken = resetTokenHash;
-  user.resetPasswordVerification.resetTokenExpiresAt = resetTokenExpiresAt;
-  user.resetPasswordVerification.otpCode = null;
-  user.resetPasswordVerification.otpCodeExpiresAt = null;
-  await user.save();
+  await User.updateOne(
+    { email },
+    {
+      $set: {
+        "resetPasswordVerification.otpCode": null,
+        "resetPasswordVerification.otpCodeExpiresAt": null,
+        "resetPasswordVerification.resetToken": resetTokenHash,
+        "resetPasswordVerification.resetTokenExpiresAt": resetTokenExpiresAt,
+      },
+    },
+  );
 
   return resetToken;
 }
@@ -321,10 +333,16 @@ export async function resetPassword(email, password, resetToken) {
   await validateResetToken(resetToken, tokenHashValue, tokenExpiresAt);
 
   const newPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
-  user.password = newPassword;
-  user.resetPasswordVerification.resetToken = null;
-  user.resetPasswordVerification.resetTokenExpiresAt = null;
-  await user.save();
+  await User.updateOne(
+    { email },
+    {
+      $set: {
+        password: newPassword,
+        "resetPasswordVerification.resetToken": null,
+        "resetPasswordVerification.resetTokenExpiresAt": null,
+      },
+    },
+  );
 
   Logger.info("User password reset sucessful", {
     email: user.email,
