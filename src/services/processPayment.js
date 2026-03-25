@@ -7,7 +7,6 @@ import sendResendEmail from "./resend.js";
 import { Env } from "../config/index.js";
 import Logger from "../utils/logger.js";
 import selfGuidedProgram from "../models/selfguidedProgram.model.js";
-import mongoose from "mongoose";
 
 async function createSelfGuidedProgram(userId) {
   try {
@@ -15,6 +14,11 @@ async function createSelfGuidedProgram(userId) {
   } catch (error) {
     if (error.code === 11000)
       Logger.error("User already has selfGuidedProgram data.", error);
+
+    Logger.error(
+      `Failed to create selfGuidedProgram data for: ${userId}`,
+      error,
+    );
   }
 }
 
@@ -29,6 +33,7 @@ async function recordPayment({
   name,
   phone,
   receipt,
+  giveSelfGuidedAccess,
 }) {
   Logger.info("New payment received.", {
     amount: formatAmount(amount),
@@ -71,20 +76,15 @@ async function recordPayment({
     throw error;
   }
 
-  // Users unlock access to Self Guided Program module if they purchase self-guided-program but also unlock it as bonus if they purchase the coaching-program
-  if (
-    product === Env.SELF_GUIDED_PRODUCT_NAME ||
-    product === Env.COACHING_PRODUCT_NAME
-  ) {
+  if (giveSelfGuidedAccess) {
     await createSelfGuidedProgram(user._id);
   }
 }
 
-export async function processPayment(data) {
-  const userId = data.metadata?.userId
-    ? new mongoose.Types.ObjectId(data.metadata.userId)
-    : null;
-
+export async function processPayment(
+  { userId, ...data },
+  giveSelfGuidedAccess,
+) {
   await recordPayment({
     userId,
     email: data.customer_details?.email,
@@ -95,6 +95,7 @@ export async function processPayment(data) {
     name: data.customer_details?.name,
     phone: data.customer_details?.phone,
     receipt: data.receipt_url,
+    giveSelfGuidedAccess,
   });
 
   // Send confirmation email
