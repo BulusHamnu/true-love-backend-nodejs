@@ -9,11 +9,20 @@ import jwt from "jsonwebtoken";
 import EmailTemplates from "../utils/emailTemplates.js";
 import Env from "../config/index.js";
 import crypto from "crypto";
+import mongoose from "mongoose";
+
+function generateHashValue(code) {
+  return crypto.createHash("sha256").update(code).digest("hex");
+}
 
 /* Sign up user */
 export function createEmailVerificationCode() {
+  const code = generateCode(6);
+  const codeHash = generateHashValue(code);
+
   return {
-    code: generateCode(6),
+    code,
+    codeHash,
     expiresAt: new Date(Date.now() + 15 * 60 * 1000),
   };
 }
@@ -22,60 +31,65 @@ export async function createNewUser({
   provider = "local",
   email,
   fullName,
-  googleId = "",
+  googleId = null,
   idToken = "",
   password,
   age,
   phone,
 }) {
-  const userExist = await User.findOne({ email: email });
-  if (userExist)
-    throw new AppError(
-      ErrorCodes.USER_ALREADY_EXISTS,
-      "User already exist.",
-      409,
-      true,
-    );
+  // const userExist = await User.findOne({ email }).lean();
+  // if (userExist)
+  //   throw new AppError(
+  //     ErrorCodes.USER_ALREADY_EXISTS,
+  //     "User already exist.",
+  //     409,
+  //     true,
+  //   );
+
+  const hashedPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
+  const { code, expiresAt, codeHash } = createEmailVerificationCode();
 
   const isVerified = provider === "google" ? true : false;
-  const hashedPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
+  const emailVerification = isVerified ? {} : { code: codeHash, expiresAt };
+  const userGoogleIds = isVerified && googleId ? { googleId, idToken } : {};
 
-  const emailVerification =
-    provider !== "google" ? createEmailVerificationCode() : {};
+  const session = await mongoose.startSession();
+  let newUser = undefined;
+  try {
+    await session.withTransaction(async () => {
+      newUser = new User({
+        provider,
+        password: hashedPassword,
+        email,
+        emailVerification,
+        google: userGoogleIds,
+        isVerified,
+      });
+      await newUser.save({ session });
 
-  const newUser = await User.create({
-    provider,
-    password: hashedPassword,
-    email,
-    emailVerification,
-    google: {
-      googleId,
-      idToken,
-    },
-    isVerified,
-  });
+      const profile = new Profile({
+        userId: newUser._id,
+        fullName,
+        phone,
+        age,
+      });
+      await profile.save({ session });
+    });
 
-  // Create profile
-  await Profile.create({
-    userId: newUser._id,
-    fullName,
-    phone,
-    age,
-  });
-
-  Logger.info("User created sucessfully.", {
-    id: newUser._id,
-  });
+    Logger.info("User created sucessfully.", {
+      id: newUser._id,
+    });
+    //
+  } finally {
+    await session.endSession();
+  }
 
   // Send verfication email if user is not verified or not google
   if (!isVerified)
     await sendResendEmail(
       email,
       "Please verify your email address",
-      EmailTemplates.emailVerificationTemplate(
-        fullName,
-        emailVerification?.code,
-      ),
+      EmailTemplates.emailVerificationTemplate(fullName, code),
     );
 
   return {
@@ -200,11 +214,18 @@ export async function createAndSendPasswordResetOpt(email) {
     throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
 
   const otpCode = generateCode(6);
-  const otpCodeHash = await bcrypt.hash(otpCode, Env.PASSWORD_HASH_SALT);
+  const otpCodeHash = generateHashValue(otpCode);
   const otpCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
-  user.resetPasswordVerification.otpCode = otpCodeHash;
-  user.resetPasswordVerification.otpCodeExpiresAt = otpCodeExpiresAt;
-  await user.save();
+
+  await User.updateOne(
+    { email },
+    {
+      $set: {
+        "resetPasswordVerification.otpCode": otpCodeHash,
+        "resetPasswordVerification.otpCodeExpiresAt": otpCodeExpiresAt,
+      },
+    },
+  );
 
   await sendResendEmail(
     email,
@@ -214,28 +235,25 @@ export async function createAndSendPasswordResetOpt(email) {
 }
 
 /* Verify reset otp  */
-function generateResetToken() {
-  return crypto.randomBytes(16).toString("hex");
-}
-
-async function validateHashedSecret({
+function validateHashedSecret({
   value,
-  hash,
+  storedHash,
   expiresAt,
   invalidError,
   expiredError,
 }) {
-  const isValid = await bcrypt.compare(value, hash || "");
+  const hashCode = generateHashValue(value);
+  const isValid = hashCode === storedHash;
   if (!isValid) throw invalidError;
 
   const isExpired = new Date(expiresAt) < new Date();
   if (isExpired) throw expiredError;
 }
 
-async function validateResetOtpCode(code, otpHashValue, otpCodeExpiresAt) {
+function validateResetOtpCode(code, otpHashValue, otpCodeExpiresAt) {
   return validateHashedSecret({
     value: code,
-    hash: otpHashValue,
+    storedHash: otpHashValue,
     expiresAt: otpCodeExpiresAt,
     invalidError: new AppError(
       ErrorCodes.RESET_OTP_INVALID,
@@ -252,6 +270,10 @@ async function validateResetOtpCode(code, otpHashValue, otpCodeExpiresAt) {
   });
 }
 
+function generateResetToken() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
 export async function verifyOptCodeAndIssueToken(code, email) {
   const user = await User.findOne({ email });
   if (!user)
@@ -259,17 +281,23 @@ export async function verifyOptCodeAndIssueToken(code, email) {
 
   const optHashValue = user.resetPasswordVerification.otpCode;
   const optCodeExpiresAt = user.resetPasswordVerification.otpCodeExpiresAt;
-  await validateResetOtpCode(code, optHashValue, optCodeExpiresAt);
+  validateResetOtpCode(code, optHashValue, optCodeExpiresAt);
 
   const resetToken = generateResetToken();
-  const resetTokenHash = await bcrypt.hash(resetToken, Env.PASSWORD_HASH_SALT);
-  const resetTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  const resetTokenHash = generateHashValue(resetToken);
+  const resetTokenExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-  user.resetPasswordVerification.resetToken = resetTokenHash;
-  user.resetPasswordVerification.resetTokenExpiresAt = resetTokenExpiresAt;
-  user.resetPasswordVerification.otpCode = null;
-  user.resetPasswordVerification.otpCodeExpiresAt = null;
-  await user.save();
+  await User.updateOne(
+    { email },
+    {
+      $set: {
+        "resetPasswordVerification.otpCode": null,
+        "resetPasswordVerification.otpCodeExpiresAt": null,
+        "resetPasswordVerification.resetToken": resetTokenHash,
+        "resetPasswordVerification.resetTokenExpiresAt": resetTokenExpiresAt,
+      },
+    },
+  );
 
   return resetToken;
 }
@@ -278,7 +306,7 @@ export async function verifyOptCodeAndIssueToken(code, email) {
 async function validateResetToken(resetToken, tokenHashValue, tokenExpiresAt) {
   return validateHashedSecret({
     value: resetToken,
-    hash: tokenHashValue,
+    storedHash: tokenHashValue,
     expiresAt: tokenExpiresAt,
     invalidError: new AppError(
       ErrorCodes.RESET_TOKEN_INVALID,
@@ -305,10 +333,16 @@ export async function resetPassword(email, password, resetToken) {
   await validateResetToken(resetToken, tokenHashValue, tokenExpiresAt);
 
   const newPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
-  user.password = newPassword;
-  user.resetPasswordVerification.resetToken = null;
-  user.resetPasswordVerification.resetTokenExpiresAt = null;
-  await user.save();
+  await User.updateOne(
+    { email },
+    {
+      $set: {
+        password: newPassword,
+        "resetPasswordVerification.resetToken": null,
+        "resetPasswordVerification.resetTokenExpiresAt": null,
+      },
+    },
+  );
 
   Logger.info("User password reset sucessful", {
     email: user.email,
@@ -334,9 +368,7 @@ export async function sendEmailVerificationCode(user) {
       },
     );
 
-  const { code, expiresAt } = createEmailVerificationCode();
-  const codeHash = await bcrypt.hash(code, Env.PASSWORD_HASH_SALT);
-
+  const { code, expiresAt, codeHash } = createEmailVerificationCode();
   await User.findOneAndUpdate(
     { _id: user.id },
     {
@@ -355,10 +387,10 @@ export async function sendEmailVerificationCode(user) {
 }
 
 /* Verify email verification code */
-async function validateVerificationCode(code, codeHashValue, codeExpiresAt) {
+function validateVerificationCode(code, codeHashValue, codeExpiresAt) {
   return validateHashedSecret({
     value: code,
-    hash: codeHashValue,
+    storedHash: codeHashValue,
     expiresAt: codeExpiresAt,
     invalidError: new AppError(
       ErrorCodes.VERIFICATION_CODE_INVALID,
@@ -382,7 +414,7 @@ export async function verifyUserEmail(code, email) {
 
   const codeHashValue = user.emailVerification.code;
   const codeExpiresAt = user.emailVerification.expiresAt;
-  await validateVerificationCode(code, codeHashValue, codeExpiresAt);
+  validateVerificationCode(code, codeHashValue, codeExpiresAt);
 
   user.isVerified = true;
   user.emailVerification.code = null;

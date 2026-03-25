@@ -2,32 +2,38 @@ import AppError, { ErrorCodes } from "../errors/appError.js";
 import Profile from "../models/profile.model.js";
 import Env, { StripeClient } from "../config/index.js";
 import Transaction from "../models/transaction.model.js";
+import IdempotencyKey from "../models/idempotency_key.model.js";
+import crypto from "crypto";
 
 /* Create checkout function */
-// Create StripeClient customer
-export async function get0rCreateStripeCustomerId({ userId, email }) {
-  const userProfile = await Profile.findOne({ userId });
+export async function retriveOrCreateStripeCustomerId({ userId, email }) {
+  const userProfile = await Profile.findOne({ userId }).lean();
   if (userProfile.stripeCustomerId) {
     return userProfile.stripeCustomerId;
   }
 
-  const customer = await StripeClient.customers.create({
-    name: userProfile.fullName,
-    email,
-    phone: userProfile.phone,
-  });
+  const customer = await StripeClient.customers.create(
+    {
+      name: userProfile.fullName,
+      email,
+      phone: userProfile.phone,
+    },
+    { idempotencyKey: `customer-${userId}` },
+  );
 
-  userProfile.stripeCustomerId = customer.id;
-  await userProfile.save();
+  await Profile.findOneAndUpdate(
+    { _id: userProfile._id },
+    { $set: { stripeCustomerId: customer.id } },
+  );
 
   return customer.id;
 }
 
-// create StripeClient session
 export async function createStripeSession(
   stripeCustomerId,
   product,
   newDoor = false,
+  userId,
 ) {
   let priceId;
   let successUrl;
@@ -65,13 +71,116 @@ export async function createStripeSession(
     metadata: {
       site: "true-love-app",
       product,
+      userId,
     },
   });
 
   return session.url;
 }
 
-export async function createCheckout(user, product, newDoor) {
+function generateRequestHash(data) {
+  const sortedRequestData = Object.keys(data)
+    .sort()
+    .reduce((obj, key) => {
+      obj[key] = data[key];
+      return obj;
+    }, {});
+
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify(sortedRequestData))
+    .digest("hex");
+}
+
+async function createIdempotencyRecord(key, userId, requestHash) {
+  await IdempotencyKey.create({
+    key,
+    userId,
+    status: "pending",
+    responseBody: null,
+    requestHash,
+    expiresAt: new Date(Date.now() + 30 * 1000), // Pending get shorter time in case a crash happen before updating a record to success, there is no logic to recover unexpired pending record.
+  });
+}
+
+async function createIdempotency(userId, idempotencyKey, requestBody) {
+  if (!idempotencyKey) return null;
+  const requestHash = generateRequestHash(requestBody);
+  try {
+    await createIdempotencyRecord(idempotencyKey, userId, requestHash);
+    //
+  } catch (error) {
+    if (error.code !== 11000) throw error;
+
+    const idempotencyRecord = await IdempotencyKey.findOne({
+      userId,
+      key: idempotencyKey,
+    });
+
+    if (!idempotencyRecord) {
+      throw new AppError(
+        ErrorCodes.RETRY_LATER,
+        "Please retry later.",
+        409,
+        true,
+      );
+    }
+
+    const sameReq = requestHash === idempotencyRecord.requestHash;
+    if (!sameReq)
+      throw new AppError(
+        ErrorCodes.IDEMPOTENCY_KEY_ERROR,
+        "The same idempotency key used for different request body.",
+        400,
+        false,
+        { idempotencyKey },
+      );
+
+    const now = new Date();
+    const isExpired = new Date(idempotencyRecord.expiresAt) < now;
+
+    if (idempotencyRecord.status === "success" && !isExpired)
+      return idempotencyRecord.responseBody;
+
+    if (idempotencyRecord.status === "pending" && !isExpired) {
+      throw new AppError(
+        ErrorCodes.RETRY_LATER,
+        "Please retry later.",
+        400,
+        true,
+        {
+          idempotencyKey,
+        },
+      );
+    }
+
+    if (isExpired) {
+      const updated = await IdempotencyKey.updateOne(
+        { key: idempotencyKey, userId, expiresAt: { $lt: now } },
+        {
+          $set: {
+            status: "pending",
+            responseBody: null,
+            requestHash,
+            expiresAt: new Date(now.getTime() + 30 * 1000),
+          },
+        },
+      );
+
+      if (updated.modifiedCount === 0) {
+        throw new AppError(ErrorCodes.RETRY_LATER, "Please retry later.", 409);
+      }
+    }
+  }
+}
+
+export async function createCheckout({
+  user,
+  product,
+  newDoor,
+  idempotencyKey,
+  requestBody,
+}) {
   const transactions = await Transaction.find({ userId: user.id }).lean();
   const userPurchases = transactions.map((transaction) => transaction.type);
 
@@ -102,7 +211,10 @@ export async function createCheckout(user, product, newDoor) {
     );
   }
 
-  const stripeCustomerId = await get0rCreateStripeCustomerId({
+  const result = await createIdempotency(user.id, idempotencyKey, requestBody);
+  if (result) return result;
+
+  const stripeCustomerId = await retriveOrCreateStripeCustomerId({
     userId: user.id,
     email: user.email,
   });
@@ -111,7 +223,21 @@ export async function createCheckout(user, product, newDoor) {
     stripeCustomerId,
     product,
     newDoor,
+    String(user.id),
   );
 
-  return sessionUrl;
+  if (idempotencyKey) {
+    await IdempotencyKey.findOneAndUpdate(
+      { key: idempotencyKey, userId: user.id, status: "pending" },
+      {
+        status: "success",
+        responseBody: {
+          url: sessionUrl,
+        },
+        expiresAt: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+      },
+    );
+  }
+
+  return { url: sessionUrl };
 }

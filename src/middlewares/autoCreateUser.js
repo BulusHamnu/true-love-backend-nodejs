@@ -9,7 +9,7 @@ import validateAndSanitizeData from "../utils/validateAndSanitizeData.js";
 import { ErrorCodes } from "../errors/appError.js";
 
 /* Email validator */
-function validateCheckoutBody(data) {
+function validateBody(data) {
   const schema = Joi.object({
     email: Joi.string().required().email().label("email"),
   });
@@ -20,7 +20,7 @@ function validateCheckoutBody(data) {
 export default async function autoCreateUser(req, res, next) {
   const email = req.body.email;
   try {
-    const { email } = validateCheckoutBody(req.body); // Even if a user already have an account the client should send the user email for verification when making payment.
+    const { email } = validateBody(req.body); // Even if a user already have an account the client should send the user email for verification when making payment.
 
     const password = generateRandPassword();
     const newUser = await authService.createNewUser({
@@ -49,7 +49,7 @@ export default async function autoCreateUser(req, res, next) {
     next();
   } catch (error) {
     const userAlreadyExists =
-      error.code == ErrorCodes.USER_ALREADY_EXISTS || err.code === 11000;
+      error.code == ErrorCodes.USER_ALREADY_EXISTS || error.code === 11000;
 
     if (userAlreadyExists) {
       // No need to create new user if they already exists.
