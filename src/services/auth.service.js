@@ -37,14 +37,14 @@ export async function createNewUser({
   age,
   phone,
 }) {
-  const userExist = await User.findOne({ email }).lean();
-  if (userExist)
-    throw new AppError(
-      ErrorCodes.USER_ALREADY_EXISTS,
-      "User already exist.",
-      409,
-      true,
-    );
+  // const userExist = await User.findOne({ email }).lean();
+  // if (userExist)
+  //   throw new AppError(
+  //     ErrorCodes.USER_ALREADY_EXISTS,
+  //     "User already exist.",
+  //     409,
+  //     true,
+  //   );
 
   const hashedPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
   const { code, expiresAt, codeHash } = createEmailVerificationCode();

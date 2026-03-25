@@ -99,7 +99,7 @@ async function createIdempotencyRecord(key, userId, requestHash) {
     status: "pending",
     responseBody: null,
     requestHash,
-    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    expiresAt: new Date(Date.now() + 30 * 1000), // Pending get shorter time in case a crash happen before updating a record to success, there is no logic to recover unexpired pending record.
   });
 }
 
@@ -136,10 +136,13 @@ async function createIdempotency(userId, idempotencyKey, requestBody) {
         { idempotencyKey },
       );
 
-    if (idempotencyRecord.status === "success")
+    const now = new Date();
+    const isExpired = new Date(idempotencyRecord.expiresAt) < now;
+
+    if (idempotencyRecord.status === "success" && !isExpired)
       return idempotencyRecord.responseBody;
 
-    if (idempotencyRecord.status === "pending")
+    if (idempotencyRecord.status === "pending" && !isExpired) {
       throw new AppError(
         ErrorCodes.RETRY_LATER,
         "Please retry later.",
@@ -149,9 +152,8 @@ async function createIdempotency(userId, idempotencyKey, requestBody) {
           idempotencyKey,
         },
       );
+    }
 
-    const now = new Date();
-    const isExpired = new Date(idempotencyRecord.expiresAt) < now;
     if (isExpired) {
       const updated = await IdempotencyKey.updateOne(
         { key: idempotencyKey, userId, expiresAt: { $lt: now } },
@@ -160,7 +162,7 @@ async function createIdempotency(userId, idempotencyKey, requestBody) {
             status: "pending",
             responseBody: null,
             requestHash,
-            expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+            expiresAt: new Date(now.getTime() + 30 * 1000),
           },
         },
       );
@@ -232,6 +234,7 @@ export async function createCheckout({
         responseBody: {
           url: sessionUrl,
         },
+        expiresAt: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
       },
     );
   }
