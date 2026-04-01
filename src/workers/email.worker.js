@@ -2,16 +2,59 @@ import { Worker } from "bullmq";
 import Logger from "../utils/logger.js";
 import sendResendEmail from "../services/resend.js";
 import Env from "../config/index.js";
+import { formatAmount } from "../utils/helpers.js";
+import EmailTemplates from "../utils/emailTemplates.js";
 
 /* Email Worker */
 const emailWorker = new Worker(
   "email-queue",
   async (job) => {
-    const recipient = job.data.email;
-    const subject = job.data.subject;
-    const body = job.data.body;
+    if (job.name === "totur-payment-email") {
+      const recipient = job.data.email;
+      const subject = job.data.subject;
+      const toturName = job.data.toturName;
+      const amount = job.data.amount;
+      const customerEmail = job.data.customerEmail;
+      const customerName = job.data.customerName;
+      const productType = job.data.product;
 
-    await sendResendEmail(recipient, subject, body);
+      let body = undefined;
+      if (productType === Env.SELF_GUIDED_PRODUCT_NAME) {
+        body = EmailTemplates.toturSelfGuidedTemplate(
+          toturName,
+          customerName,
+          customerEmail,
+          formatAmount(amount),
+          `${new Date().toLocaleDateString()}`,
+        );
+      } else {
+        body = EmailTemplates.toturCoachingTemplate(
+          toturName,
+          customerName,
+          customerEmail,
+          formatAmount(amount),
+          `${new Date().toLocaleDateString()}`,
+        );
+      }
+
+      await sendResendEmail(recipient, subject, body);
+      //
+    } else if (job.name === "customer-payment-email") {
+      const recipient = job.data.email;
+      const subject = job.data.subject;
+      const name = job.data.name;
+
+      let body = undefined;
+      if (productType === Env.SELF_GUIDED_PRODUCT_NAME) {
+        body = EmailTemplates.customerSelfGuidedTemplate(name);
+      } else {
+        body = EmailTemplates.customerCoachingTemplate(name);
+      }
+
+      await sendResendEmail(recipient, subject, body);
+    }
+
+    // await sendResendEmail(recipient, subject, body);
   },
   {
     connection: {
