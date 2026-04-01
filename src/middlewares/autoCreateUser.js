@@ -1,8 +1,6 @@
 import User from "../models/user.model.js";
 import Joi from "joi";
 import Env from "../config/index.js";
-import EmailTemplates from "../utils/emailTemplates.js";
-import sendResendEmail from "../services/resend.js";
 import * as authService from "../services/auth.service.js";
 import { generateRandPassword, signToken } from "../utils/helpers.js";
 import validateAndSanitizeData from "../utils/validateAndSanitizeData.js";
@@ -37,16 +35,12 @@ export default async function autoCreateUser(req, res, next) {
     });
 
     // Send email with default password so user can login
-    emailQueue.add(
-      "send-email",
+    await emailQueue.add(
+      "default-password-welcome-email",
       {
         email: newUser.email,
         subject: "Welcome To True-Love App",
-        body: EmailTemplates.defaultPasswordTemplate(
-          "Cupid's chosen",
-          email,
-          password,
-        ),
+        defaultPassword: password,
       },
       {
         attempts: 3,

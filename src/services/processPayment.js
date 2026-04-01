@@ -131,6 +131,7 @@ export async function processPayment(
         email: customerEmail,
         subject: "Payment Successful",
         name: customerName,
+        productType,
       },
       {
         attempts: 3,
@@ -169,6 +170,7 @@ export async function processPayment(
         email: customerEmail,
         subject: "Payment Successful",
         name: customerName,
+        productType,
       },
       {
         attempts: 3,
