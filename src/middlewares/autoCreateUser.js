@@ -7,6 +7,7 @@ import * as authService from "../services/auth.service.js";
 import { generateRandPassword, signToken } from "../utils/helpers.js";
 import validateAndSanitizeData from "../utils/validateAndSanitizeData.js";
 import { ErrorCodes } from "../errors/appError.js";
+import emailQueue from "../queues/email.queue.js";
 
 /* Email validator */
 function validateBody(data) {
@@ -36,10 +37,24 @@ export default async function autoCreateUser(req, res, next) {
     });
 
     // Send email with default password so user can login
-    await sendResendEmail(
-      email,
-      "Welcome To True-Love App",
-      EmailTemplates.defaultPasswordTemplate("Cupid's chosen", email, password),
+    emailQueue.add(
+      "send-email",
+      {
+        email: newUser.email,
+        subject: "Welcome To True-Love App",
+        body: EmailTemplates.defaultPasswordTemplate(
+          "Cupid's chosen",
+          email,
+          password,
+        ),
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: "fixed",
+          delay: 3000,
+        },
+      },
     );
 
     // For automatic login
