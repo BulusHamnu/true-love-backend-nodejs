@@ -10,13 +10,16 @@ const emailWorker = new Worker(
   "email-queue",
   async (job) => {
     if (job.name === "totur-payment-email") {
-      const recipient = job.data.email;
-      const subject = job.data.subject;
-      const toturName = job.data.toturName;
-      const amount = job.data.amount;
-      const customerEmail = job.data.customerEmail;
-      const customerName = job.data.customerName;
-      const productType = job.data.product;
+      const data = job.data;
+      const {
+        email,
+        subject,
+        productType,
+        toturName,
+        amount,
+        customerEmail,
+        customerName,
+      } = data;
 
       let body = undefined;
       if (productType === Env.SELF_GUIDED_PRODUCT_NAME) {
@@ -37,12 +40,11 @@ const emailWorker = new Worker(
         );
       }
 
-      await sendResendEmail(recipient, subject, body);
+      await sendResendEmail(email, subject, body);
       //
     } else if (job.name === "customer-payment-email") {
-      const recipient = job.data.email;
-      const subject = job.data.subject;
-      const name = job.data.name;
+      const data = job.data;
+      const { email, subject, productType, name } = data;
 
       let body = undefined;
       if (productType === Env.SELF_GUIDED_PRODUCT_NAME) {
@@ -51,10 +53,58 @@ const emailWorker = new Worker(
         body = EmailTemplates.customerCoachingTemplate(name);
       }
 
-      await sendResendEmail(recipient, subject, body);
-    }
+      await sendResendEmail(email, subject, body);
+      //
+    } else if (job.name === "verification-email") {
+      const data = job.data;
+      const { email, subject, code, name } = data;
 
-    // await sendResendEmail(recipient, subject, body);
+      await sendResendEmail(
+        email,
+        subject,
+        EmailTemplates.emailVerificationTemplate(name, code),
+      );
+      //
+    } else if (job.name === "default-password-welcome-email") {
+      const data = job.data;
+      const { email, subject, defaultPassword } = data;
+
+      await sendResendEmail(
+        email,
+        subject,
+        EmailTemplates.defaultPasswordTemplate(
+          "Cupid's chosen",
+          recipient,
+          defaultPassword,
+        ),
+      );
+      //
+    } else if (job.name === "reset-password-email") {
+      const data = job.data;
+      const { email, subject, otpCode } = data;
+
+      await sendResendEmail(
+        email,
+        subject,
+        EmailTemplates.passwordVerificationTemplate(otpCode),
+      );
+      //
+    } else if (job.name === "password-reset-succesful-email") {
+      const data = job.data;
+      const { email, subject, name } = data;
+
+      await sendResendEmail(
+        email,
+        subject,
+        EmailTemplates.paswordResetSucessful(name),
+      );
+      //
+    } else {
+      const data = job.data;
+      const { email, subject, body } = data;
+
+      await sendResendEmail(email, subject, body);
+    }
   },
   {
     connection: {
@@ -66,13 +116,15 @@ const emailWorker = new Worker(
 
 emailWorker.on("completed", (job) => {
   Logger.info("Email was sent succesfully.", {
+    jobName: job.name,
     recipient: job.data.email,
     subject: job.data.subject,
   });
 });
 
 emailWorker.on("failed", (job) => {
-  Logger.info("An error occured while trying to send an email.", {
+  Logger.error("An error occured while trying to send an email.", {
+    jobName: job.name,
     recipient: job.data.email,
     subject: job.data.subject,
   });

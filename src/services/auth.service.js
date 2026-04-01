@@ -2,11 +2,9 @@ import User from "../models/user.model.js";
 import Profile from "../models/profile.model.js";
 import { generateCode, signToken } from "../utils/helpers.js";
 import Logger from "../utils/logger.js";
-import sendResendEmail from "./resend.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import EmailTemplates from "../utils/emailTemplates.js";
 import Env from "../config/index.js";
 import crypto from "crypto";
 import mongoose from "mongoose";
@@ -78,17 +76,18 @@ export async function createNewUser({
 
   // Send verfication email if user is not verified or not google
   if (!isVerified) {
-    emailQueue.add(
-      "send-email",
+    await emailQueue.add(
+      "verification-email",
       {
         email,
         subject: "Please verify your email address",
-        body: EmailTemplates.emailVerificationTemplate(fullName, code),
+        name: fullName,
+        code,
       },
       {
-        attempts: 2,
+        attempts: 3,
         backoff: {
-          type: "fixed",
+          type: "exponential",
           delay: 3000,
         },
       },
@@ -230,12 +229,12 @@ export async function createAndSendPasswordResetOpt(email) {
     },
   );
 
-  emailQueue.add(
-    "send-email",
+  await emailQueue.add(
+    "reset-password-email",
     {
       email,
       subject: "Reset Your Password",
-      body: EmailTemplates.passwordVerificationTemplate(otpCode),
+      otpCode,
     },
     {
       attempts: 3,
@@ -361,21 +360,11 @@ export async function resetPassword(email, password, resetToken) {
     email: user.email,
   });
 
-  emailQueue.add(
-    "send-email",
-    {
-      email: user.email,
-      subject: "Password reset sucessfully.",
-      body: EmailTemplates.paswordResetSucessful(user.fullName),
-    },
-    {
-      attempts: 2,
-      backoff: {
-        type: "exponential",
-        delay: 3000,
-      },
-    },
-  );
+  await emailQueue.add("password-reset-succesful-email", {
+    email: user.email,
+    subject: "Password reset sucessfully.",
+    name: user.fullName,
+  });
 }
 
 /* Resend verification code */
@@ -402,12 +391,13 @@ export async function sendEmailVerificationCode(user) {
     },
   );
 
-  emailQueue.add(
-    "send-email",
+  await emailQueue.add(
+    "verification-email",
     {
       email: user.email,
       subject: "Please verify your email address",
-      body: EmailTemplates.emailVerificationTemplate("Cupid's chosen", code),
+      name: user.fullName || "Cupid's chosen",
+      code,
     },
     {
       attempts: 3,
