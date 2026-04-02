@@ -363,7 +363,7 @@ export async function resetPassword(email, password, resetToken) {
   await emailQueue.add("password-reset-succesful-email", {
     email: user.email,
     subject: "Password reset sucessfully.",
-    name: user.fullName,
+    name: user.fullName || "Cupid's chosen",
   });
 }
 

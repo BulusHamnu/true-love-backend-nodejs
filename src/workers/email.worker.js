@@ -9,101 +9,111 @@ import EmailTemplates from "../utils/emailTemplates.js";
 const emailWorker = new Worker(
   "email-queue",
   async (job) => {
-    if (job.name === "totur-payment-email") {
-      const data = job.data;
-      const {
-        email,
-        subject,
-        productType,
-        toturName,
-        amount,
-        customerEmail,
-        customerName,
-      } = data;
+    const jobName = job.name;
+    const data = job.data;
 
-      let body = undefined;
-      if (productType === Env.SELF_GUIDED_PRODUCT_NAME) {
-        body = EmailTemplates.toturSelfGuidedTemplate(
+    switch (jobName) {
+      case "totur-payment-email": {
+        const {
+          email,
+          subject,
+          productType,
           toturName,
-          customerName,
+          amount,
           customerEmail,
-          formatAmount(amount),
-          `${new Date().toLocaleDateString()}`,
-        );
-      } else {
-        body = EmailTemplates.toturCoachingTemplate(
-          toturName,
           customerName,
-          customerEmail,
-          formatAmount(amount),
-          `${new Date().toLocaleDateString()}`,
-        );
+        } = data;
+
+        let body = undefined;
+        if (productType === Env.SELF_GUIDED_PRODUCT_NAME) {
+          body = EmailTemplates.toturSelfGuidedTemplate(
+            toturName,
+            customerName,
+            customerEmail,
+            formatAmount(amount),
+            `${new Date().toLocaleDateString()}`,
+          );
+        } else {
+          body = EmailTemplates.toturCoachingTemplate(
+            toturName,
+            customerName,
+            customerEmail,
+            formatAmount(amount),
+            `${new Date().toLocaleDateString()}`,
+          );
+        }
+
+        await sendResendEmail(email, subject, body);
+        break;
       }
 
-      await sendResendEmail(email, subject, body);
-      //
-    } else if (job.name === "customer-payment-email") {
-      const data = job.data;
-      const { email, subject, productType, name } = data;
+      case "customer-payment-email": {
+        const { email, subject, productType, name } = data;
 
-      let body = undefined;
-      if (productType === Env.SELF_GUIDED_PRODUCT_NAME) {
-        body = EmailTemplates.customerSelfGuidedTemplate(name);
-      } else {
-        body = EmailTemplates.customerCoachingTemplate(name);
+        let body = undefined;
+        if (productType === Env.SELF_GUIDED_PRODUCT_NAME) {
+          body = EmailTemplates.customerSelfGuidedTemplate(name);
+        } else {
+          body = EmailTemplates.customerCoachingTemplate(name);
+        }
+
+        await sendResendEmail(email, subject, body);
+        break;
       }
 
-      await sendResendEmail(email, subject, body);
-      //
-    } else if (job.name === "verification-email") {
-      const data = job.data;
-      const { email, subject, code, name } = data;
+      case "verification-email": {
+        const { email, subject, code, name } = data;
 
-      await sendResendEmail(
-        email,
-        subject,
-        EmailTemplates.emailVerificationTemplate(name, code),
-      );
-      //
-    } else if (job.name === "default-password-welcome-email") {
-      const data = job.data;
-      const { email, subject, defaultPassword } = data;
+        await sendResendEmail(
+          email,
+          subject,
+          EmailTemplates.emailVerificationTemplate(name, code),
+        );
+        break;
+      }
 
-      await sendResendEmail(
-        email,
-        subject,
-        EmailTemplates.defaultPasswordTemplate(
-          "Cupid's chosen",
-          recipient,
-          defaultPassword,
-        ),
-      );
-      //
-    } else if (job.name === "reset-password-email") {
-      const data = job.data;
-      const { email, subject, otpCode } = data;
+      case "default-password-welcome-email": {
+        const { email, subject, defaultPassword } = data;
 
-      await sendResendEmail(
-        email,
-        subject,
-        EmailTemplates.passwordVerificationTemplate(otpCode),
-      );
-      //
-    } else if (job.name === "password-reset-succesful-email") {
-      const data = job.data;
-      const { email, subject, name } = data;
+        await sendResendEmail(
+          email,
+          subject,
+          EmailTemplates.defaultPasswordTemplate(
+            "Cupid's chosen",
+            email,
+            defaultPassword,
+          ),
+        );
+        break;
+      }
 
-      await sendResendEmail(
-        email,
-        subject,
-        EmailTemplates.paswordResetSucessful(name),
-      );
-      //
-    } else {
-      const data = job.data;
-      const { email, subject, body } = data;
+      case "reset-password-email": {
+        const { email, subject, otpCode } = data;
 
-      await sendResendEmail(email, subject, body);
+        await sendResendEmail(
+          email,
+          subject,
+          EmailTemplates.passwordVerificationTemplate(otpCode),
+        );
+        break;
+      }
+
+      case "password-reset-succesful-email": {
+        const { email, subject, name } = data;
+
+        await sendResendEmail(
+          email,
+          subject,
+          EmailTemplates.paswordResetSucessful(name),
+        );
+        break;
+      }
+
+      default: {
+        const { email, subject, body } = data;
+        await sendResendEmail(email, subject, body);
+        break;
+      }
     }
   },
   {
@@ -123,7 +133,7 @@ emailWorker.on("completed", (job) => {
 });
 
 emailWorker.on("failed", (job) => {
-  Logger.error("An error occured while trying to send an email.", {
+  Logger.error("An error occured while sending email.", {
     jobName: job.name,
     recipient: job.data.email,
     subject: job.data.subject,
