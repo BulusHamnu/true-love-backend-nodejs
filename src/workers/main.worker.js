@@ -5,9 +5,9 @@ import Env from "../config/index.js";
 import { formatAmount } from "../utils/helpers.js";
 import EmailTemplates from "../utils/emailTemplates.js";
 
-/* Email Worker */
-const emailWorker = new Worker(
-  "email-queue",
+/* Main queue worker */
+const mainWorker = new Worker(
+  "main-queue",
   async (job) => {
     const jobName = job.name;
     const data = job.data;
@@ -110,9 +110,7 @@ const emailWorker = new Worker(
       }
 
       default: {
-        const { email, subject, body } = data;
-        await sendResendEmail(email, subject, body);
-        break;
+        throw new Error(`Unknown job - ${job.name}`);
       }
     }
   },
@@ -121,23 +119,18 @@ const emailWorker = new Worker(
       host: Env.REDIS_HOST,
       port: Number(Env.REDIS_PORT),
     },
+    concurrency: 5,
   },
 );
 
-emailWorker.on("completed", (job) => {
-  Logger.info("Email was sent succesfully.", {
-    jobName: job.name,
-    recipient: job.data.email,
-    subject: job.data.subject,
-  });
+mainWorker.on("completed", (job) => {
+  const data = job.data;
+  Logger.info(`${job.name} - job was executed successfully`, data);
 });
 
-emailWorker.on("failed", (job) => {
-  Logger.error("An error occured while sending email.", {
-    jobName: job.name,
-    recipient: job.data.email,
-    subject: job.data.subject,
-  });
+mainWorker.on("failed", (job) => {
+  const data = job.data;
+  Logger.error(`An error occured while executing - ${job.name} job.`, data);
 });
 
-export default emailWorker;
+export default mainWorker;

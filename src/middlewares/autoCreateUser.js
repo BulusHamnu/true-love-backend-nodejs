@@ -5,7 +5,7 @@ import * as authService from "../services/auth.service.js";
 import { generateRandPassword, signToken } from "../utils/helpers.js";
 import validateAndSanitizeData from "../utils/validateAndSanitizeData.js";
 import { ErrorCodes } from "../errors/appError.js";
-import emailQueue from "../queues/email.queue.js";
+import mainQueue from "../queues/main.queue.js";
 
 /* Email validator */
 function validateBody(data) {
@@ -35,7 +35,7 @@ export default async function autoCreateUser(req, res, next) {
     });
 
     // Send email with default password so user can login
-    await emailQueue.add(
+    await mainQueue.add(
       "default-password-welcome-email",
       {
         email: newUser.email,
@@ -43,6 +43,8 @@ export default async function autoCreateUser(req, res, next) {
         defaultPassword: password,
       },
       {
+        removeOnComplete: 100,
+        removeOnFail: 50,
         attempts: 3,
         backoff: {
           type: "fixed",

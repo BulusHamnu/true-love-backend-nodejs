@@ -5,7 +5,7 @@ import Transaction from "../models/transaction.model.js";
 import { Env } from "../config/index.js";
 import Logger from "../utils/logger.js";
 import selfGuidedProgram from "../models/selfguidedProgram.model.js";
-import emailQueue from "../queues/email.queue.js";
+import mainQueue from "../queues/main.queue.js";
 
 async function createSelfGuidedProgram(userId) {
   try {
@@ -105,7 +105,7 @@ export async function processPayment(
   const amount = data.amount_subtotal;
 
   if (data.metadata.product === Env.SELF_GUIDED_PRODUCT_NAME) {
-    await emailQueue.add(
+    await mainQueue.add(
       "totur-payment-email",
       {
         email: toturEmail,
@@ -117,6 +117,8 @@ export async function processPayment(
         productType,
       },
       {
+        removeOnComplete: 100,
+        removeOnFail: 50,
         attempts: 3,
         backoff: {
           type: "exponential",
@@ -125,7 +127,7 @@ export async function processPayment(
       },
     );
     //
-    await emailQueue.add(
+    await mainQueue.add(
       "customer-payment-email",
       {
         email: customerEmail,
@@ -134,6 +136,8 @@ export async function processPayment(
         productType,
       },
       {
+        removeOnComplete: 100,
+        removeOnFail: 50,
         attempts: 3,
         backoff: {
           type: "exponential",
@@ -144,7 +148,7 @@ export async function processPayment(
   }
 
   if (data.metadata.product === Env.COACHING_PRODUCT_NAME) {
-    await emailQueue.add(
+    await mainQueue.add(
       "totur-payment-email",
       {
         email: toturEmail,
@@ -156,6 +160,8 @@ export async function processPayment(
         productType,
       },
       {
+        removeOnComplete: 100,
+        removeOnFail: 50,
         attempts: 3,
         backoff: {
           type: "exponential",
@@ -164,7 +170,7 @@ export async function processPayment(
       },
     );
     //
-    await emailQueue.add(
+    await mainQueue.add(
       "customer-payment-email",
       {
         email: customerEmail,
@@ -173,6 +179,8 @@ export async function processPayment(
         productType,
       },
       {
+        removeOnComplete: 100,
+        removeOnFail: 50,
         attempts: 3,
         backoff: {
           type: "exponential",

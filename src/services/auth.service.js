@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import Env from "../config/index.js";
 import crypto from "crypto";
 import mongoose from "mongoose";
-import emailQueue from "../queues/email.queue.js";
+import mainQueue from "../queues/main.queue.js";
 
 function generateHashValue(code) {
   return crypto.createHash("sha256").update(code).digest("hex");
@@ -76,7 +76,7 @@ export async function createNewUser({
 
   // Send verfication email if user is not verified or not google
   if (!isVerified) {
-    await emailQueue.add(
+    await mainQueue.add(
       "verification-email",
       {
         email,
@@ -85,6 +85,8 @@ export async function createNewUser({
         code,
       },
       {
+        removeOnComplete: 100,
+        removeOnFail: 50,
         attempts: 3,
         backoff: {
           type: "exponential",
@@ -229,7 +231,7 @@ export async function createAndSendPasswordResetOpt(email) {
     },
   );
 
-  await emailQueue.add(
+  await mainQueue.add(
     "reset-password-email",
     {
       email,
@@ -237,6 +239,8 @@ export async function createAndSendPasswordResetOpt(email) {
       otpCode,
     },
     {
+      removeOnComplete: 100,
+      removeOnFail: 50,
       attempts: 3,
       backoff: {
         type: "fixed",
@@ -360,11 +364,18 @@ export async function resetPassword(email, password, resetToken) {
     email: user.email,
   });
 
-  await emailQueue.add("password-reset-succesful-email", {
-    email: user.email,
-    subject: "Password reset sucessfully.",
-    name: user.fullName || "Cupid's chosen",
-  });
+  await mainQueue.add(
+    "password-reset-succesful-email",
+    {
+      email: user.email,
+      subject: "Password reset sucessfully.",
+      name: user.fullName || "Cupid's chosen",
+    },
+    {
+      removeOnComplete: 100,
+      removeOnFail: 50,
+    },
+  );
 }
 
 /* Resend verification code */
@@ -391,7 +402,7 @@ export async function sendEmailVerificationCode(user) {
     },
   );
 
-  await emailQueue.add(
+  await mainQueue.add(
     "verification-email",
     {
       email: user.email,
@@ -400,6 +411,8 @@ export async function sendEmailVerificationCode(user) {
       code,
     },
     {
+      removeOnComplete: 100,
+      removeOnFail: 50,
       attempts: 3,
       backoff: {
         type: "fixed",
