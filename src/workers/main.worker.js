@@ -7,11 +7,13 @@ import EmailTemplates from "../utils/emailTemplates.js";
 import * as cleanUpService from "../services/cleanup.service.js";
 import connectDb from "../config/db.js";
 
+// Connect to db
 (async () => {
   await connectDb();
 })();
 
 /* Main queue worker */
+const connection = Env.REDIS_CONNECTION;
 const mainWorker = new Worker(
   "main-queue",
   async (job) => {
@@ -126,10 +128,7 @@ const mainWorker = new Worker(
     }
   },
   {
-    connection: {
-      host: Env.REDIS_HOST,
-      port: Number(Env.REDIS_PORT),
-    },
+    connection,
     concurrency: 5,
   },
 );

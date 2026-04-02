@@ -2,11 +2,9 @@ import { Queue } from "bullmq";
 import Env from "../config/index.js";
 
 /* Email Queue */
+const connection = Env.REDIS_CONNECTION;
 const mainQueue = new Queue("main-queue", {
-  connection: {
-    host: Env.REDIS_HOST,
-    port: Number(Env.REDIS_PORT),
-  },
+  connection,
 });
 
 export default mainQueue;
