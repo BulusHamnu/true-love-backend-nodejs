@@ -20,6 +20,8 @@ const port = Env.PORT;
 const app = express();
 import enableMaintenanceMode from "./middlewares/enableMaintenanceMode.js";
 import intiateCronJobs from "./crons/cleanup.cron.js";
+import { Worker } from "bullmq";
+import { mainWorkerProcessor } from "./workers/main.worker.js";
 
 /* Middleware */
 app.use(helmet());
@@ -65,6 +67,24 @@ app.use(errorHandler);
 // Intiate database and cron jobs
 await connectDb();
 await intiateCronJobs();
+
+/* Main queue worker */
+// I can't afford render background worker
+const connection = Env.REDIS_CONNECTION;
+const mainWorker = new Worker("main-queue", mainWorkerProcessor, {
+  connection,
+  concurrency: 5,
+});
+
+mainWorker.on("completed", (job) => {
+  const data = job.data;
+  Logger.info(`${job.name} - job was executed successfully`, data);
+});
+
+mainWorker.on("failed", (job) => {
+  const data = job.data;
+  Logger.error(`An error occured while executing - ${job.name} job.`, data);
+});
 
 // Start the server
 app.listen(port, async () => {
