@@ -4,6 +4,12 @@ import sendResendEmail from "../services/resend.js";
 import Env from "../config/index.js";
 import { formatAmount } from "../utils/helpers.js";
 import EmailTemplates from "../utils/emailTemplates.js";
+import * as cleanUpService from "../services/cleanup.service.js";
+import connectDb from "../config/db.js";
+
+(async () => {
+  await connectDb();
+})();
 
 /* Main queue worker */
 const mainWorker = new Worker(
@@ -106,6 +112,11 @@ const mainWorker = new Worker(
           subject,
           EmailTemplates.paswordResetSucessful(name),
         );
+        break;
+      }
+
+      case "idempontencykeys-cleanup": {
+        await cleanUpService.cleanUpOldIdempotencyKeyRecords();
         break;
       }
 

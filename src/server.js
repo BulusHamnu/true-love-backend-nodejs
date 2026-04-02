@@ -19,6 +19,7 @@ import errorHandler from "./middlewares/errorHandler.js";
 const port = Env.PORT;
 const app = express();
 import enableMaintenanceMode from "./middlewares/enableMaintenanceMode.js";
+import intiateCronJobs from "./crons/cleanup.cron.js";
 
 /* Middleware */
 app.use(helmet());
@@ -61,8 +62,11 @@ app.use("/api/public", publicRoutes);
 /* Error handler */
 app.use(errorHandler);
 
+// Intiate database and cron jobs
+await connectDb();
+await intiateCronJobs();
+
 // Start the server
 app.listen(port, async () => {
-  await connectDb();
   Logger.info(`Server listening on: http://localhost:${port}`);
 });
