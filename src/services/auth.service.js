@@ -2,14 +2,13 @@ import User from "../models/user.model.js";
 import Profile from "../models/profile.model.js";
 import { generateCode, signToken } from "../utils/helpers.js";
 import Logger from "../utils/logger.js";
-import sendResendEmail from "./resend.js";
 import AppError, { ErrorCodes } from "../errors/appError.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import EmailTemplates from "../utils/emailTemplates.js";
 import Env from "../config/index.js";
 import crypto from "crypto";
 import mongoose from "mongoose";
+import mainQueue from "../queues/main.queue.js";
 
 function generateHashValue(code) {
   return crypto.createHash("sha256").update(code).digest("hex");
@@ -37,15 +36,6 @@ export async function createNewUser({
   age,
   phone,
 }) {
-  // const userExist = await User.findOne({ email }).lean();
-  // if (userExist)
-  //   throw new AppError(
-  //     ErrorCodes.USER_ALREADY_EXISTS,
-  //     "User already exist.",
-  //     409,
-  //     true,
-  //   );
-
   const hashedPassword = await bcrypt.hash(password, Env.PASSWORD_HASH_SALT);
   const { code, expiresAt, codeHash } = createEmailVerificationCode();
 
@@ -85,12 +75,26 @@ export async function createNewUser({
   }
 
   // Send verfication email if user is not verified or not google
-  if (!isVerified)
-    await sendResendEmail(
-      email,
-      "Please verify your email address",
-      EmailTemplates.emailVerificationTemplate(fullName, code),
+  if (!isVerified) {
+    await mainQueue.add(
+      "verification-email",
+      {
+        email,
+        subject: "Please verify your email address",
+        name: fullName,
+        code,
+      },
+      {
+        removeOnComplete: 100,
+        removeOnFail: 50,
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 3000,
+        },
+      },
     );
+  }
 
   return {
     id: newUser._id,
@@ -227,10 +231,22 @@ export async function createAndSendPasswordResetOpt(email) {
     },
   );
 
-  await sendResendEmail(
-    email,
-    "Reset Your Password",
-    EmailTemplates.passwordVerificationTemplate(otpCode),
+  await mainQueue.add(
+    "reset-password-email",
+    {
+      email,
+      subject: "Reset Your Password",
+      otpCode,
+    },
+    {
+      removeOnComplete: 100,
+      removeOnFail: 50,
+      attempts: 3,
+      backoff: {
+        type: "fixed",
+        delay: 3000,
+      },
+    },
   );
 }
 
@@ -348,10 +364,17 @@ export async function resetPassword(email, password, resetToken) {
     email: user.email,
   });
 
-  await sendResendEmail(
-    user.email,
-    "Password reset sucessfully.",
-    EmailTemplates.paswordResetSucessful(user.fullName),
+  await mainQueue.add(
+    "password-reset-succesful-email",
+    {
+      email: user.email,
+      subject: "Password reset sucessfully.",
+      name: user.fullName || "Cupid's chosen",
+    },
+    {
+      removeOnComplete: 100,
+      removeOnFail: 50,
+    },
   );
 }
 
@@ -379,10 +402,23 @@ export async function sendEmailVerificationCode(user) {
     },
   );
 
-  await sendResendEmail(
-    user.email,
-    "Please verify your email address",
-    EmailTemplates.emailVerificationTemplate("Cupid's chosen", code),
+  await mainQueue.add(
+    "verification-email",
+    {
+      email: user.email,
+      subject: "Please verify your email address",
+      name: user.fullName || "Cupid's chosen",
+      code,
+    },
+    {
+      removeOnComplete: 100,
+      removeOnFail: 50,
+      attempts: 3,
+      backoff: {
+        type: "fixed",
+        delay: 3000,
+      },
+    },
   );
 }
 

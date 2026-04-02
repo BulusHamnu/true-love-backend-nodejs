@@ -55,5 +55,17 @@ export const Env = {
   MONGO_DATABASE_HOST: process.env.MONGO_DATABASE_HOST || "",
   MONGO_DATABASE_NAME: process.env.MONGO_DATABASE_NAME || "",
   MONGO_DATABASE_URI: process.env.MONGO_DATABASE_URI || "",
+
+  REDIS_HOST: process.env.REDIS_HOST || "127.0.0.1",
+  REDIS_PORT: process.env.REDIS_PORT || 6379,
+  REDIS_URL: process.env.REDIS_URL || "",
+
+  REDIS_CONNECTION: process.env.REDIS_URL
+    ? { url: process.env.REDIS_URL }
+    : {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+      },
 };
+
 export default Env;
