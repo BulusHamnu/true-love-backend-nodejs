@@ -14,7 +14,7 @@ import cors from "cors";
 const dirname = import.meta.dirname;
 import cookieParser from "cookie-parser";
 import Logger from "./utils/logger.js";
-import publicRoutes from "./routes/public.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 import errorHandler from "./middlewares/errorHandler.js";
 const port = Env.PORT;
 const app = express();
@@ -59,7 +59,7 @@ app.use("/api/checkouts", checkOutRoutes);
 app.use("/api/webhooks", webhooksRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/self-guided-program", selfGuidedRoutes);
-app.use("/api/public", publicRoutes);
+app.use("/api/admin", adminRoutes);
 
 /* Error handler */
 app.use(errorHandler);
@@ -68,8 +68,7 @@ app.use(errorHandler);
 await connectDb();
 await intiateCronJobs();
 
-/* Main queue worker */
-// I can't afford render background worker
+/* Start worker */
 const connection = Env.REDIS_CONNECTION;
 const mainWorker = new Worker("main-queue", mainWorkerProcessor, {
   connection,

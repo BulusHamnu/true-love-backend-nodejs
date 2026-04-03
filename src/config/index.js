@@ -37,6 +37,7 @@ export const Env = {
   TRUE_LOVE_GOOGLE_CLIENT_SECRET: process.env.TRUE_LOVE_GOOGLE_CLIENT_SECRET,
   TRUE_LOVE_GOOGLE_CLIENT_ID: process.env.TRUE_LOVE_GOOGLE_CLIENT_ID,
   OPEN_API_KEY: process.env.OPEN_API_KEY,
+  ADMIN_ACCESS_KEY: process.env.ADMIN_ACCESS_KEY,
 
   LOGIN_COOKIE_OPTS: {
     secure: process.env.NODE_ENV === "production",

@@ -1,7 +1,20 @@
 import Profile from "../models/profile.model.js";
+import Env from "../config/index.js";
+import AppError, { ErrorCodes } from "../errors/appError.js";
+
+function validateApiKey(apiKey) {
+  const storedAccessKey = Env.ADMIN_ACCESS_KEY;
+  const isValid = apiKey === storedAccessKey;
+
+  if (!apiKey || !isValid)
+    throw new AppError(ErrorCodes.UNAUTHORIZED, "Unauthorized.", 401, true);
+}
 
 const getAppStats = async (req, res, next) => {
   try {
+    const apiKey = req.headers["x-api-key"] || null;
+    validateApiKey(apiKey);
+
     const totalUsers = await Profile.find(); //.countDocuments();
     const date = new Date();
 
