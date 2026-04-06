@@ -46,6 +46,7 @@ app.set("trust proxy", true);
 app.use((req, res, next) => {
   // skip json parsing for stripe webhook route
   if (req.originalUrl === "/api/webhooks/stripe") {
+    console.log("Passing raw body...");
     return next();
   }
   express.json()(req, res, next);
