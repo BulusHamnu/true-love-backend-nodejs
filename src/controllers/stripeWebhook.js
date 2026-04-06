@@ -11,7 +11,6 @@ export default async function stripeWebhookHandler(req, res) {
   try {
     const rawBody = req.body;
     const stripeSig = req.headers["stripe-signature"];
-    console.log({ rawBody, stripeSig });
 
     if (!stripeSig) {
       throw new AppError(

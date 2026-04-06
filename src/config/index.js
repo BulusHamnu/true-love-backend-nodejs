@@ -51,6 +51,7 @@ export const Env = {
   PORT: process.env.PORT,
   BACKEND_URL: process.env.BACKEND_URL || "",
   FRONTEND_URL: process.env.FRONTEND_URL || "",
+  NODE_ENV: process.env.NODE_ENV || "development",
 
   MAINTENANCE_MODE: process.env.MAINTENANCE_MODE || "false",
   MONGO_DATABASE_HOST: process.env.MONGO_DATABASE_HOST || "",
