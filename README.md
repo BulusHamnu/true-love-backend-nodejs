@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is the backend system for the True Love app, a production platform used for relationship coaching programs and digital products.
+This repository contains the original Node.js backend implementation for the True Love app, a production platform used for relationship coaching programs and digital products.
 
 I was responsible for building and improving the backend system, including authentication, payments, and system reliability. The frontend was built using Lovable, while I was responsible for designing and implementing the backend system.
 
@@ -91,6 +91,8 @@ I was responsible for building and improving the backend system, including authe
 
 - Used transactions to maintain data integrity
 
-## Live Demo
+## Project Status
 
-Link: [True-love-app](https://true-love.app/)
+This repository reflects the original backend architecture and implementation created for the production [True-love-app](https://true-love.app/).
+
+The project workflow later transitioned into a Lovable-based setup for easier internal iteration and maintenance, so this repository is no longer the actively maintained production source.
