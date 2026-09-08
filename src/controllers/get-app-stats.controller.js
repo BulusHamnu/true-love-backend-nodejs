@@ -48,7 +48,7 @@ const getAppStats = async (req, res, next) => {
 
     res.status(200).json({
       status: true,
-      message: "App stats retrived successfully.",
+      message: "App stats retrieved successfully.",
       data: stats,
     });
   } catch (error) {

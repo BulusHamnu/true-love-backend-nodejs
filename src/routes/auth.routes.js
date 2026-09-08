@@ -1,7 +1,7 @@
 import express from "express";
 import * as authController from "../controllers/auth/auth.controller.js";
 import * as googleAuthController from "../controllers/auth/googleOauth.controller.js";
-import withAuth from "../middlewares/withAuth.js";
+import withAuth from "../middlewares/requiredAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 
 const router = express.Router();

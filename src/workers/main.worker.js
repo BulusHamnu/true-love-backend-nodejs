@@ -131,6 +131,8 @@ export const mainWorkerProcessor = async (job) => {
 //   concurrency: 5,
 // });
 
+// mainWorker.on("ready", () => Logger.info("Worker is ready"));
+
 // mainWorker.on("completed", (job) => {
 //   const data = job.data;
 //   Logger.info(`${job.name} - job was executed successfully`, data);

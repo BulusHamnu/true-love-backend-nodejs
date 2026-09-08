@@ -1,6 +1,6 @@
 import express from "express";
 import * as transactionController from "../controllers/transaction.controller.js";
-import withAuth from "../middlewares/withAuth.js";
+import withAuth from "../middlewares/requiredAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 
 const router = express.Router();

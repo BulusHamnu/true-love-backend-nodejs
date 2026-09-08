@@ -95,7 +95,7 @@ export async function getReflectionMessageHandler(req, res, next) {
 
     res.status(200).json({
       status: true,
-      message: "Reflection message retrived successfully",
+      message: "Reflection message retrieved successfully",
       data: message,
     });
   } catch (error) {

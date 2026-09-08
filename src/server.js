@@ -23,7 +23,7 @@ import intiateCronJobs from "./crons/cleanup.cron.js";
 import { Worker } from "bullmq";
 import { mainWorkerProcessor } from "./workers/main.worker.js";
 
-/* Middleware */
+/* Middlewares */
 app.use(helmet());
 app.use(express.static(path.join(dirname, "../public")));
 app.use(
@@ -74,6 +74,8 @@ const mainWorker = new Worker("main-queue", mainWorkerProcessor, {
   connection,
   concurrency: 5,
 });
+
+mainWorker.on("ready", () => Logger.info("Worker is ready"));
 
 mainWorker.on("completed", (job) => {
   const data = job.data;

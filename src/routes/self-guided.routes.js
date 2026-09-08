@@ -1,8 +1,8 @@
 import express from "express";
 import * as selfGuidedController from "../controllers/self-guided.controller.js";
-import withAuth from "../middlewares/withAuth.js";
+import withAuth from "../middlewares/requiredAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
-import requiredVerifiedEmail from "../middlewares/requiredVerifiedEmail.js";
+import requiredVerifiedEmail from "../middlewares/requireVerifiedEmail.js";
 
 const router = express.Router();
 

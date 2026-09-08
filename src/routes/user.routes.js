@@ -1,6 +1,6 @@
 import express from "express";
 import * as profileController from "../controllers/user.controller.js";
-import withAuth from "../middlewares/withAuth.js";
+import withAuth from "../middlewares/requiredAuth.js";
 import rateLimter from "../middlewares/rateLimiter.js";
 
 const router = express.Router();

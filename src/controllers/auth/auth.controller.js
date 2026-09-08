@@ -79,7 +79,7 @@ export async function login(req, res, next) {
         password,
       });
 
-    clearRefreshToken(res); // Util function to clear all user cookies as a refresh because we changed the auth system. Will remove later
+    // clearRefreshToken(res); // Util function to clear all user cookies as a refresh because we changed the auth system. Will remove later
 
     res.cookie("refreshToken", refreshToken, Env.LOGIN_COOKIE_OPTS);
     res.status(200).json({

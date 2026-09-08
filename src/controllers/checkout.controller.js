@@ -26,6 +26,7 @@ export async function createCheckOutHandler(req, res, next) {
   try {
     const user = req.user;
     const idempotencyKey = req.headers["idempotency-key"];
+    
     validateIdempotencyKey(idempotencyKey);
 
     const { product, newDoor } = validateCheckoutBody(req.body);
