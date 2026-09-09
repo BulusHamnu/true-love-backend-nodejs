@@ -7,7 +7,7 @@ export async function getSelfGuidedProgramHandler(req, res, next) {
   try {
     const userId = req.user.id;
     const userSelfGuidedDetails =
-      await selfGuidedService.retriveUserSelfGuidedProgram(userId);
+      await selfGuidedService.retrieveUserSelfGuidedProgram(userId);
 
     res.status(200).json({
       status: true,

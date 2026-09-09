@@ -2,8 +2,22 @@ import AppError, { ErrorCodes } from "../errors/appError.js";
 import sendReflectionMessageToGPT from "./openai.js";
 import selfGuidedProgram from "../models/selfguidedProgram.model.js";
 
-/* Retrive user Self Guided Program  */
-export async function retriveUserSelfGuidedProgram(userId) {
+export async function createSelfGuidedProgram(userId) {
+  try {
+    await selfGuidedProgram.create({ userId });
+  } catch (error) {
+    if (error.code === 11000)
+      Logger.error("User already has selfGuidedProgram data.", error);
+
+    Logger.error(
+      `Failed to create selfGuidedProgram data for: ${userId}`,
+      error,
+    );
+  }
+}
+
+/* Retrieve user Self Guided Program  */
+export async function retrieveUserSelfGuidedProgram(userId) {
   const selfGuidedExists = await selfGuidedProgram.findOne({ userId }).lean();
 
   if (!selfGuidedExists)
@@ -18,7 +32,7 @@ export async function retriveUserSelfGuidedProgram(userId) {
 
 /* Update selfGuided program progress */
 export async function updateSelfGuidedProgress(userId, currentWeek) {
-  const selfGuidedDetails = await retriveUserSelfGuidedProgram(userId);
+  const selfGuidedDetails = await retrieveUserSelfGuidedProgram(userId);
   const updatedSelfGuidedDetails = await selfGuidedProgram
     .findOneAndUpdate(
       {
@@ -34,7 +48,7 @@ export async function updateSelfGuidedProgress(userId, currentWeek) {
 
 /* Get a single reflection message */
 export async function getReflectionMessage(userId, weekNumber) {
-  const selfGuidedDetails = await retriveUserSelfGuidedProgram(userId);
+  const selfGuidedDetails = await retrieveUserSelfGuidedProgram(userId);
   const reflectionMessages = selfGuidedDetails.reflections;
 
   const message = reflectionMessages.find(

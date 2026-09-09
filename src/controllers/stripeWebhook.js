@@ -19,7 +19,7 @@ export default async function stripeWebhookHandler(req, res) {
         {
           status: 400,
           isOperational: true,
-        }
+        },
       );
     }
 
@@ -57,6 +57,7 @@ export default async function stripeWebhookHandler(req, res) {
       product === Env.COACHING_PRODUCT_NAME;
 
     await processPayment({ userId, ...eventObj }, giveSelfGuidedAccess);
+
     res.status(200).send("Event received.");
   } catch (error) {
     if (error.code === "DUPLICATE_PAYEMNT_INTENT")
@@ -69,4 +70,4 @@ export default async function stripeWebhookHandler(req, res) {
     Logger.error("An error occured while processing stripe webhook.", error);
     res.status(400).send("An error occured.");
   }
-} 
+}

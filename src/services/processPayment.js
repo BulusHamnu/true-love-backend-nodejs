@@ -4,22 +4,8 @@ import AppError, { ErrorCodes } from "../errors/appError.js";
 import Transaction from "../models/transaction.model.js";
 import { Env } from "../config/index.js";
 import Logger from "../utils/logger.js";
-import selfGuidedProgram from "../models/selfguidedProgram.model.js";
 import mainQueue from "../queues/main.queue.js";
-
-async function createSelfGuidedProgram(userId) {
-  try {
-    await selfGuidedProgram.create({ userId });
-  } catch (error) {
-    if (error.code === 11000)
-      Logger.error("User already has selfGuidedProgram data.", error);
-
-    Logger.error(
-      `Failed to create selfGuidedProgram data for: ${userId}`,
-      error,
-    );
-  }
-}
+import { createSelfGuidedProgram } from "./selfGuidedProgram.service.js";
 
 /* Process stripe payment */
 async function recordPayment({
