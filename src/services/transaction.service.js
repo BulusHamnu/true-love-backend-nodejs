@@ -11,8 +11,7 @@ export async function retrieveTransaction(userId, transactionId) {
     throw new AppError(
       ErrorCodes.TRANSACTION_NOT_FOUND,
       "Transaction not found.",
-      404,
-      true,
+      { status: 404, isOperational: true },
     );
 
   return transaction;

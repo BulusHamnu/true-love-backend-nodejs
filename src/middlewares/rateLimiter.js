@@ -32,8 +32,10 @@ const rateLimter = (time, limit) => {
       throw new AppError(
         ErrorCodes.RATE_LIMIT_EXCEEDED,
         "Too many request, please try again later.",
-        403,
-        true,
+        {
+          status: 429,
+          isOperational: true,
+        }
       );
     },
     keyGenerator: (req, res) => {

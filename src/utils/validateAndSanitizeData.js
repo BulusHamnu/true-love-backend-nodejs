@@ -13,13 +13,12 @@ export default function validateAndSanitizeData(data, schema) {
       const errField = err.path[0];
       details[errField] = err.message;
     }
-    throw new AppError(
-      ErrorCodes.VALIDATION_ERROR,
-      "Validation failed.",
-      400,
-      true,
+    
+    throw new AppError(ErrorCodes.VALIDATION_ERROR, "Validation failed.", {
+      status: 400,
+      isOperational: true,
       details,
-    );
+    });
   }
 
   return sanitizeData(value);

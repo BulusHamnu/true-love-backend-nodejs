@@ -65,9 +65,8 @@ export async function processGoogleCallbackReq(state, code) {
   if (!payload)
     throw new AppError(
       ErrorCodes.UNEXPECTED_ERROR,
-      "Unable to retrive google id token.",
-      500,
-      false,
+      "Unable to retreive google id token.",
+      { status: 500, isOperational: false },
     );
 
   let user = null;
@@ -87,33 +86,28 @@ export async function processGoogleCallbackReq(state, code) {
   } else if (state === "login") {
     user = await User.findOne({ email: payload.email }).lean();
     if (!user)
-      throw new AppError(
-        ErrorCodes.USER_NOT_FOUND,
-        "User not found.",
-        404,
-        true,
-      );
+      throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", {
+        status: 404,
+        isOperational: true,
+      });
 
     if (user.provider !== "google") {
       throw new AppError(
         ErrorCodes.GOOGLE_NOT_LINKED,
         "Google not linked to this account.",
-        401,
-        true,
+        { status: 401, isOperational: true },
       );
     }
 
     user.id = user._id; // To be able to access 'id' when signing the tokens.
   } else {
-    throw new AppError(
-      ErrorCodes.UNEXPECTED_ERROR,
-      "State mismatch.",
-      500,
-      false,
-      { state },
-    );
+    throw new AppError(ErrorCodes.UNEXPECTED_ERROR, "State mismatch.", {
+      status: 500,
+      isOperational: false,
+      details: { state },
+    });
   }
-
+ 
   const accessToken = signToken({
     email: user.email,
     id: user.id,

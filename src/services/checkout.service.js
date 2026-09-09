@@ -118,12 +118,10 @@ async function createIdempotency(userId, idempotencyKey, requestBody) {
     });
 
     if (!idempotencyRecord) {
-      throw new AppError(
-        ErrorCodes.RETRY_LATER,
-        "Please retry later.",
-        409,
-        true,
-      );
+      throw new AppError(ErrorCodes.RETRY_LATER, "Please retry later.", {
+        status: 409,
+        isOperational: true,
+      });
     }
 
     const sameReq = requestHash === idempotencyRecord.requestHash;
@@ -131,9 +129,11 @@ async function createIdempotency(userId, idempotencyKey, requestBody) {
       throw new AppError(
         ErrorCodes.IDEMPOTENCY_KEY_ERROR,
         "The same idempotency key used for different request body.",
-        400,
-        false,
-        { idempotencyKey },
+        {
+          status: 400,
+          isOperational: false,
+          details: { key: idempotencyKey },
+        },
       );
 
     const now = new Date();
@@ -143,15 +143,11 @@ async function createIdempotency(userId, idempotencyKey, requestBody) {
       return idempotencyRecord.responseBody;
 
     if (idempotencyRecord.status === "pending" && !isExpired) {
-      throw new AppError(
-        ErrorCodes.RETRY_LATER,
-        "Please retry later.",
-        400,
-        true,
-        {
-          idempotencyKey,
-        },
-      );
+      throw new AppError(ErrorCodes.RETRY_LATER, "Please retry later.", {
+        status: 400,
+        isOperational: true,
+        details: { key: idempotencyKey },
+      });
     }
 
     if (isExpired) {
@@ -168,7 +164,11 @@ async function createIdempotency(userId, idempotencyKey, requestBody) {
       );
 
       if (updated.modifiedCount === 0) {
-        throw new AppError(ErrorCodes.RETRY_LATER, "Please retry later.", 409);
+        throw new AppError(ErrorCodes.RETRY_LATER, "Please retry later.", {
+          status: 409,
+          isOperational: true,
+          details: { key: idempotencyKey },
+        });
       }
     }
   }
@@ -192,9 +192,11 @@ export async function createCheckout({
     throw new AppError(
       ErrorCodes.SELFGUIDED_ALREADY_PURCHASED,
       "User already paid for the Self-guided Program.",
-      409,
-      true,
-      { email: user.email, paidForSelfGuidedProgram: true },
+      {
+        status: 409,
+        isOperational: true,
+        details: { email: user.email, paidForSelfGuidedProgram: true },
+      },
     );
   }
 
@@ -205,9 +207,11 @@ export async function createCheckout({
     throw new AppError(
       ErrorCodes.COACHING_ALREADY_PURCHASED,
       "User already paid for the Coaching Program.",
-      409,
-      true,
-      { email: user.email, paidForCoachingProgram: true },
+      {
+        status: 409,
+        isOperational: true,
+        details: { email: user.email, paidForCoachingProgram: true },
+      },
     );
   }
 

@@ -16,8 +16,10 @@ export default async function stripeWebhookHandler(req, res) {
       throw new AppError(
         ErrorCodes.STRIPE_SIGNATURE_NOT_FOUND,
         "Stripe signature not found",
-        400,
-        true,
+        {
+          status: 400,
+          isOperational: true,
+        }
       );
     }
 
@@ -64,7 +66,7 @@ export default async function stripeWebhookHandler(req, res) {
       await createSelfGuidedProgram(userId);
     }
 
-    Logger.error(error);
+    Logger.error("An error occured while processing stripe webhook.", error);
     res.status(400).send("An error occured.");
   }
-}
+} 

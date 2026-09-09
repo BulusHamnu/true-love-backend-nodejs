@@ -17,8 +17,11 @@ function validateIdempotencyKey(idempotencyKey) {
     throw new AppError(
       ErrorCodes.IDEMPOTENCY_KEY_INVALID,
       "Idempotency key must not be less than 100 or greater than 255 character long.",
-      400,
-      false,
+     {
+        status: 400,
+        isOperational: true,
+        details: { key: idempotencyKey },
+     }
     );
 }
 
@@ -30,6 +33,7 @@ export async function createCheckOutHandler(req, res, next) {
     validateIdempotencyKey(idempotencyKey);
 
     const { product, newDoor } = validateCheckoutBody(req.body);
+    
     Logger.info(`${product} checkout initiated`, {
       customerEmail: user.email,
     });

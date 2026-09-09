@@ -4,9 +4,9 @@ import chalk from "chalk";
 
 /* Logger setup */
 const myFormat = format.printf(
-  ({ level, message, timestamp, stack, ...meta }) => {
+  ({ level, message, timestamp, stack, cause, ...meta }) => {
     if (stack)
-      return `[${chalk.blueBright(timestamp)}] ${level}: ${message} ${chalk.red(stack)} `;
+      return `[${chalk.blueBright(timestamp)}] ${level}: ${message} ${chalk.red(stack)} ${cause ? `\nCause By: ${chalk.yellow(cause)}` : ""}`;
 
     return `[${chalk.blueBright(timestamp)}] ${level}: ${message} ${
       Object.keys(meta).length > 0 ? JSON.stringify(meta) : ""

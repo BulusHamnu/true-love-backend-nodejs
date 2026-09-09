@@ -7,7 +7,10 @@ function validateApiKey(apiKey) {
   const isValid = apiKey === storedAccessKey;
 
   if (!apiKey || !isValid)
-    throw new AppError(ErrorCodes.UNAUTHORIZED, "Unauthorized.", 401, true);
+    throw new AppError(ErrorCodes.UNAUTHORIZED, "Unauthorized.",{
+      status: 401,
+      isOperational: true,
+    });
 }
 
 const getAppStats = async (req, res, next) => {

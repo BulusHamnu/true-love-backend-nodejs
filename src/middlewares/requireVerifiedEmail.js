@@ -5,7 +5,10 @@ export default function requiredVerifiedEmail(req, res, next) {
   const user = req.user;
   if (!user) {
     return next(
-      new AppError(ErrorCodes.UNAUTHENTICATED, "Not authenticated", 401, true),
+      new AppError(ErrorCodes.UNAUTHENTICATED, "Not authenticated", {
+        status: 401,
+        isOperational: true,
+      }),
     );
   }
 
@@ -14,8 +17,10 @@ export default function requiredVerifiedEmail(req, res, next) {
       new AppError(
         ErrorCodes.EMAIL_NOT_VERIFIED,
         "Email not verified.",
-        403,
-        true,
+        {
+          status: 403,
+          isOperational: true,
+        },
       ),
     );
   }

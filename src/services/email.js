@@ -22,7 +22,7 @@ export const sendEmail = async (to, subject, html) => {
     });
     return true;
   } catch (error) {
-    logger.error(error);
+    logger.error(`Error sending email to: ${to}`, error);
     return false;
   }
 };

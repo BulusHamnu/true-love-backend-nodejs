@@ -44,8 +44,8 @@ export const ErrorCodes = {
 
 /* App custom error */
 class AppError extends Error {
-  constructor(code, message, status, isOperational, details = null) {
-    super(message);
+  constructor(code, message, { status, isOperational, details = null, cause = null}) {
+    super(message, { cause } );
     ((this.code = code),
       (this.message = message),
       (this.status = Number(status)),

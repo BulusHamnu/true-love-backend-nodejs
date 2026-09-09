@@ -44,12 +44,10 @@ async function recordPayment({
 
   const user = await User.findOne({ _id: userId }).lean();
   if (!user) {
-    throw new AppError(
-      ErrorCodes.USER_NOT_FOUND,
-      "User not found.",
-      404,
-      false,
-    );
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", {
+      status: 404,
+      isOperational: true,
+    });
   }
 
   // Record transaction as source of truth.
@@ -64,15 +62,18 @@ async function recordPayment({
     });
   } catch (error) {
     if (error.code === 11000) {
-      throw new AppError(
-        "DUPLICATE_PAYEMNT_INTENT",
-        "Duplicate transaction.",
-        409,
-        false,
-      );
+      throw new AppError("DUPLICATE_PAYEMNT_INTENT", "Duplicate transaction.", {
+        status: 409,
+        isOperational: false,
+        cause: error,
+      });
     }
 
-    throw error;
+    throw new AppError(
+      ErrorCodes.UNEXPECTED_ERROR,
+      "Failed to record transaction.",
+      { status: 500, isOperational: false, cause: error },
+    );
   }
 
   if (giveSelfGuidedAccess) {

@@ -10,8 +10,10 @@ export default async function (req, res, next) {
       throw new AppError(
         ErrorCodes.UNAUTHENTICATED,
         "No token provided. Unauthenticated.",
-        401,
-        true,
+        {
+          status: 401,
+          isOperational: true,
+        },
       );
     }
 
@@ -20,19 +22,19 @@ export default async function (req, res, next) {
       throw new AppError(
         ErrorCodes.ACCESS_TOKEN_INVALID,
         "Invalid token. Unauthorized.",
-        401,
-        true,
+        {
+          status: 401,
+          isOperational: true,
+        },
       );
     }
 
     const authUser = await User.findOne({ _id: tokenPayload.id }).lean();
     if (!authUser) {
-      throw new AppError(
-        ErrorCodes.UNAUTHENTICATED,
-        "Unauthenticated.",
-        401,
-        true,
-      );
+      throw new AppError(ErrorCodes.UNAUTHENTICATED, "Unauthenticated.", {
+        status: 401,
+        isOperational: true,
+      });
     }
 
     req.user = { id: authUser._id, ...authUser };
@@ -42,8 +44,11 @@ export default async function (req, res, next) {
       throw new AppError(
         ErrorCodes.ACCESS_TOKEN_EXPIRED,
         "Token expired. Please log in.",
-        401,
-        true,
+        {
+          status: 401,
+          isOperational: true,
+          cause: error,
+        },
       );
     }
 
@@ -51,11 +56,24 @@ export default async function (req, res, next) {
       throw new AppError(
         ErrorCodes.ACCESS_TOKEN_INVALID,
         "Invalid token. Unauthorized..",
-        401,
-        true,
+        {
+          status: 401,
+          isOperational: true,
+          cause: error,
+        },
       );
     }
 
-    next(error);
+    next(
+      new AppError(
+        ErrorCodes.UNEXPECTED_ERROR,
+        "Failed to authenticate user.",
+        {
+          status: 500,
+          isOperational: false,
+          cause: error,
+        },
+      ),
+    );
   }
 }

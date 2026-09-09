@@ -4,6 +4,7 @@ import Logger from "../utils/logger.js";
 /* Error handler */
 const errorHandler = (err, req, res, next) => {
   Logger.error("An error ocurred.", err);
+
   if (err instanceof AppError) {
     return res.status(err.status).json({
       status: false,

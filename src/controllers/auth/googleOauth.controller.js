@@ -51,8 +51,11 @@ export async function googleCallbackHandler(req, res) {
       throw new AppError(
         error,
         "An error occured in google prompt screen.",
-        500,
-        false,
+        {
+          status: 500,
+          isOperational: false,
+          cause: error,
+        }
       );
 
     const { accessToken, refreshToken } = await processGoogleCallbackReq(

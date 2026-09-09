@@ -31,12 +31,15 @@ export async function signup(req, res, next) {
         throw new AppError(
           ErrorCodes.USER_ALREADY_EXISTS,
           "User already exist.",
-          409,
-          true,
+          { status: 409, isOperational: true, cause: error },
         );
       }
 
-      throw error;
+      throw new AppError(
+        ErrorCodes.UNEXPECTED_ERROR,
+        "Failed to create user.",
+        { status: 500, isOperational: false, cause: error },
+      );
     }
 
     res.status(201).json({
@@ -114,7 +117,7 @@ export async function logout(req, res, next) {
     res.clearCookie("refreshToken", Env.LOGIN_COOKIE_OPTS);
     res.status(200).json({
       status: true,
-      message: "User logout sucessfully",
+      message: "User logout sucessfully.",
     });
   } catch (error) {
     next(error);

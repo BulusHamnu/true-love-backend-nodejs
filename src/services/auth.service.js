@@ -115,16 +115,16 @@ export async function validatePasswordAndSignTokens({ email, password }) {
       throw new AppError(
         ErrorCodes.PASSWORD_INCORRECT,
         "Incorect password, please login with Google or reset your password.",
-        401,
-        true,
+        {
+          status: 401,
+          isOperational: true,
+        },
       );
 
-    throw new AppError(
-      ErrorCodes.PASSWORD_INCORRECT,
-      "Incorect password",
-      401,
-      true,
-    );
+    throw new AppError(ErrorCodes.PASSWORD_INCORRECT, "Incorect password", {
+      status: 401,
+      isOperational: true,
+    });
   }
 
   const accessToken = signToken({
@@ -163,22 +163,18 @@ export async function refreshAccessToken(refreshToken) {
 
     const tokenPayload = jwt.verify(refreshToken, Env.REFRESH_TOKEN_SECRET_KEY);
     if (tokenPayload.type !== "refreshToken") {
-      throw new AppError(
-        ErrorCodes.REFRESH_TOKEN_INVALID,
-        "Unauthorized.",
-        401,
-        true,
-      );
+      throw new AppError(ErrorCodes.REFRESH_TOKEN_INVALID, "Unauthorized.", {
+        status: 401,
+        isOperational: true,
+      });
     }
 
     const user = await User.findOne({ _id: tokenPayload.id });
     if (!user) {
-      throw new AppError(
-        ErrorCodes.USER_NOT_FOUND,
-        "User not found.",
-        404,
-        true,
-      );
+      throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", {
+        status: 404,
+        isOperational: true,
+      });
     }
 
     const accessToken = signToken({
@@ -193,8 +189,11 @@ export async function refreshAccessToken(refreshToken) {
       throw new AppError(
         ErrorCodes.REFRESH_TOKEN_EXPIRED,
         "Session has expired, please log in..",
-        401,
-        true,
+        {
+          status: 401,
+          isOperational: true,
+          cause: error,
+        },
       );
     }
 
@@ -202,12 +201,23 @@ export async function refreshAccessToken(refreshToken) {
       throw new AppError(
         ErrorCodes.REFRESH_TOKEN_INVALID,
         "Session has expired, please log in.",
-        401,
-        true,
+        {
+          status: 401,
+          isOperational: true,
+          cause: error,
+        },
       );
     }
 
-    throw error;
+    throw new AppError(
+      ErrorCodes.UNEXPECTED_ERROR,
+      "An unexpected error occured while refreshing access token.",
+      {
+        status: 500,
+        isOperational: false,
+        cause: error,
+      },
+    );
   }
 }
 
@@ -215,7 +225,10 @@ export async function refreshAccessToken(refreshToken) {
 export async function createAndSendPasswordResetOpt(email) {
   const user = await User.findOne({ email });
   if (!user)
-    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", {
+      status: 404,
+      isOperational: true,
+    });
 
   const otpCode = generateCode(6);
   const otpCodeHash = generateHashValue(otpCode);
@@ -274,15 +287,15 @@ function validateResetOtpCode(code, otpHashValue, otpCodeExpiresAt) {
     invalidError: new AppError(
       ErrorCodes.RESET_OTP_INVALID,
       "Code is invalid.",
-      400,
-      true,
+      {
+        status: 400,
+        isOperational: true,
+      },
     ),
-    expiredError: new AppError(
-      ErrorCodes.RESET_OTP_EXPIRED,
-      "Code expired.",
-      400,
-      true,
-    ),
+    expiredError: new AppError(ErrorCodes.RESET_OTP_EXPIRED, "Code expired.", {
+      status: 400,
+      isOperational: true,
+    }),
   });
 }
 
@@ -293,7 +306,10 @@ function generateResetToken() {
 export async function verifyOptCodeAndIssueToken(code, email) {
   const user = await User.findOne({ email });
   if (!user)
-    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", {
+      status: 404,
+      isOperational: true,
+    });
 
   const optHashValue = user.resetPasswordVerification.otpCode;
   const optCodeExpiresAt = user.resetPasswordVerification.otpCodeExpiresAt;
@@ -327,14 +343,18 @@ async function validateResetToken(resetToken, tokenHashValue, tokenExpiresAt) {
     invalidError: new AppError(
       ErrorCodes.RESET_TOKEN_INVALID,
       "Token is invalid.",
-      400,
-      true,
+      {
+        status: 400,
+        isOperational: true,
+      },
     ),
     expiredError: new AppError(
       ErrorCodes.RESET_TOKEN_EXPIRED,
       "Token expired.",
-      400,
-      true,
+      {
+        status: 400,
+        isOperational: true,
+      },
     ),
   });
 }
@@ -342,7 +362,10 @@ async function validateResetToken(resetToken, tokenHashValue, tokenExpiresAt) {
 export async function resetPassword(email, password, resetToken) {
   const user = await User.findOne({ email });
   if (!user)
-    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", {
+      status: 404,
+      isOperational: true,
+    });
 
   const tokenHashValue = user.resetPasswordVerification.resetToken;
   const tokenExpiresAt = user.resetPasswordVerification.resetTokenExpiresAt;
@@ -384,10 +407,12 @@ export async function sendEmailVerificationCode(user) {
     throw new AppError(
       ErrorCodes.EMAIL_ALREADY_VERIFIED,
       "User already verified.",
-      400,
-      true,
       {
-        isVerified: user.isVerified,
+        status: 400,
+        isOperational: true,
+        details: {
+          isVerified: user.isVerified,
+        },
       },
     );
 
@@ -431,14 +456,18 @@ function validateVerificationCode(code, codeHashValue, codeExpiresAt) {
     invalidError: new AppError(
       ErrorCodes.VERIFICATION_CODE_INVALID,
       "Code is invalid",
-      400,
-      true,
+      {
+        status: 400,
+        isOperational: true,
+      },
     ),
     expiredError: new AppError(
       ErrorCodes.VERIFICATION_CODE_EXPIRED,
       "Code expired.",
-      400,
-      true,
+      {
+        status: 400,
+        isOperational: true,
+      },
     ),
   });
 }
@@ -446,7 +475,10 @@ function validateVerificationCode(code, codeHashValue, codeExpiresAt) {
 export async function verifyUserEmail(code, email) {
   const user = await User.findOne({ email });
   if (!user)
-    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", {
+      status: 404,
+      isOperational: true,
+    });
 
   const codeHashValue = user.emailVerification.code;
   const codeExpiresAt = user.emailVerification.expiresAt;

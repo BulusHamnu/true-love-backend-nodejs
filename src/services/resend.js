@@ -13,16 +13,15 @@ async function sendResendEmail(to, subject, html) {
   });
 
   if (k.error)
-    throw new AppError(
-      ErrorCodes.EMAIL_DELIVERY_FAILED,
-      k.error?.message,
-      500,
-      false,
-      {
+    throw new AppError(ErrorCodes.EMAIL_DELIVERY_FAILED, k.error?.message, {
+      status: 500,
+      isOperational: false,
+      cause: k.error,
+      details: {
         to,
         subject,
       },
-    );
+    });
 }
 
 export default sendResendEmail;

@@ -10,8 +10,7 @@ export async function retriveUserSelfGuidedProgram(userId) {
     throw new AppError(
       ErrorCodes.SELF_GUIDED_ACCESS_DENIED,
       "You do not have access to the self-guided program.",
-      403,
-      true,
+      { status: 403, isOperational: true },
     );
 
   return selfGuidedExists;
@@ -41,14 +40,17 @@ export async function getReflectionMessage(userId, weekNumber) {
   const message = reflectionMessages.find(
     (reflection) => reflection.week === Number(weekNumber),
   );
+
   if (!message)
     throw new AppError(
       ErrorCodes.REFLECTION_MESSAGE_NOT_FOUND,
       "Reflection message not found.",
-      404,
-      true,
       {
-        week: weekNumber,
+        status: 404,
+        isOperational: true,
+        details: {
+          week: weekNumber,
+        },
       },
     );
 
