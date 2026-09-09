@@ -23,38 +23,36 @@ async function verifyIdToken(idToken) {
 
 /* Process google callback function */
 async function exchangeCodeForUserToken(accessCode) {
-  let response = null;
-
-  const makeRequest = async () => {
-    return await axios.post(
-      Env.GOOGLE_TOKEN_REQUEST_URL,
-      qs.stringify({
-        code: accessCode,
-        client_id: Env.TRUE_LOVE_GOOGLE_CLIENT_ID,
-        client_secret: Env.TRUE_LOVE_GOOGLE_CLIENT_SECRET,
-        grant_type: "authorization_code",
-        redirect_uri: `${Env.BACKEND_URL}/api/auth/google/callback`,
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+  for (const attempt = 1; attempt < 3; attempt++) {
+    try {
+      return await axios.post(
+        Env.GOOGLE_TOKEN_REQUEST_URL,
+        qs.stringify({
+          code: accessCode,
+          client_id: Env.TRUE_LOVE_GOOGLE_CLIENT_ID,
+          client_secret: Env.TRUE_LOVE_GOOGLE_CLIENT_SECRET,
+          grant_type: "authorization_code",
+          redirect_uri: `${Env.BACKEND_URL}/api/auth/google/callback`,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
         },
-      },
-    );
-  };
+      );
+    } catch (error) {
+      if (attempt === 3) {
+        throw new AppError(
+          ErrorCodes.UNEXPECTED_ERROR,
+          "An error occured while making request to retreive google token.",
+          { status: 500, isOperational: false, cause: error },
+        );
+      }
 
-  try {
-    response = await makeRequest(accessCode);
-  } catch (error) {
-    Logger.error(
-      "An error occured while making request to retrive google token, trying again.",
-      error,
-    );
-    // Todo: add delay here
-    response = await makeRequest(accessCode);
+      Logger.info(`Attempt ${attempt} failed, retrying in 1s...`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
   }
-
-  return response;
 }
 
 export async function processGoogleCallbackReq(state, code) {
@@ -107,7 +105,7 @@ export async function processGoogleCallbackReq(state, code) {
       details: { state },
     });
   }
- 
+
   const accessToken = signToken({
     email: user.email,
     id: user.id,

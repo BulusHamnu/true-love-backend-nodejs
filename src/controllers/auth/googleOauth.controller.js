@@ -32,7 +32,7 @@ export async function retriveGoogleOauthUrl(req, res, next) {
     const redirectLink = Env.GOOGLE_OAUTH2_ENDPOINT + "?" + params.toString();
     res.status(200).json({
       status: true,
-      message: "Google Oauth2 url retrived successfully.",
+      message: "Google Oauth2 url retrieved successfully.",
       data: { url: redirectLink },
     });
   } catch (error) {
@@ -48,15 +48,11 @@ export async function googleCallbackHandler(req, res) {
     flow = state;
 
     if (error || !code)
-      throw new AppError(
-        error,
-        "An error occured in google prompt screen.",
-        {
-          status: 500,
-          isOperational: false,
-          cause: error,
-        }
-      );
+      throw new AppError(error, "An error occured in google prompt screen.", {
+        status: 500,
+        isOperational: false,
+        cause: error,
+      });
 
     const { accessToken, refreshToken } = await processGoogleCallbackReq(
       state,
