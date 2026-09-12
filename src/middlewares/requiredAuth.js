@@ -64,16 +64,6 @@ export default async function (req, res, next) {
       );
     }
 
-    next(
-      new AppError(
-        ErrorCodes.UNEXPECTED_ERROR,
-        "Failed to authenticate user.",
-        {
-          status: 500,
-          isOperational: false,
-          cause: error,
-        },
-      ),
-    );
+    next(error);
   }
 }

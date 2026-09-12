@@ -161,7 +161,10 @@ export async function validatePasswordAndSignTokens({ email, password }) {
 export async function refreshAccessToken(refreshToken) {
   try {
     if (!refreshToken) {
-      throw new AppError(ErrorCodes.UNAUTHORIZED, "Unauthorized.", 401, true);
+      throw new AppError(ErrorCodes.UNAUTHORIZED, "Unauthorized.", {
+        status: 401,
+        isOperational: true,
+      });
     }
 
     const tokenPayload = jwt.verify(refreshToken, Env.REFRESH_TOKEN_SECRET_KEY);
@@ -212,15 +215,7 @@ export async function refreshAccessToken(refreshToken) {
       );
     }
 
-    throw new AppError(
-      ErrorCodes.UNEXPECTED_ERROR,
-      "An unexpected error occured while refreshing access token.",
-      {
-        status: 500,
-        isOperational: false,
-        cause: error,
-      },
-    );
+    throw error;
   }
 }
 
