@@ -23,10 +23,12 @@ export default async function stripeWebhookHandler(req, res) {
       );
     }
 
-    const webhookSecret =
-      Env.NODE_ENV === "production"
-        ? Env.STRIPE_WEBHOOK_SECRET_KEY_LIVE
-        : Env.STRIPE_WEBHOOK_SECRET_KEY_TEST;
+    // Using Stripe TEST key - backend migrated to Lovable, old backend still in prod but not used
+    const webhookSecret = Env.STRIPE_WEBHOOK_SECRET_KEY_TEST;
+    // const webhookSecret =
+    //   Env.NODE_ENV === "production"
+    //     ? Env.STRIPE_WEBHOOK_SECRET_KEY_LIVE
+    //     : Env.STRIPE_WEBHOOK_SECRET_KEY_TEST;
 
     let event = StripeClient.webhooks.constructEvent(
       rawBody,

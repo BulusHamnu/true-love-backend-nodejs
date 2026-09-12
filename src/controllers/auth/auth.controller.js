@@ -87,7 +87,7 @@ export async function login(req, res, next) {
     res.cookie("refreshToken", refreshToken, Env.LOGIN_COOKIE_OPTS);
     res.status(200).json({
       status: true,
-      message: "Login sucessful.",
+      message: "Login successful.",
       data: { user, accessToken },
     });
   } catch (error) {
