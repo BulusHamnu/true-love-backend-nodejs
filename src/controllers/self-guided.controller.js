@@ -1,18 +1,24 @@
 import Joi from "joi";
 import * as selfGuidedService from "../services/selfGuidedProgram.service.js";
 import validateAndSanitizeData from "../utils/validateAndSanitizeData.js";
+import {
+  mapSelfGuidedToResponse,
+  mapReflectionMsgToRes,
+} from "../mappers/selfguided.mapper.js";
 
 /* Get self-guided-program handler */
 export async function getSelfGuidedProgramHandler(req, res, next) {
   try {
     const userId = req.user.id;
+
     const userSelfGuidedDetails =
       await selfGuidedService.retrieveUserSelfGuidedProgram(userId);
+    const selfGuidedRes = mapSelfGuidedToResponse(userSelfGuidedDetails);
 
     res.status(200).json({
       status: true,
-      message: "Self Guided Program retrieved sucessfully",
-      data: userSelfGuidedDetails,
+      message: "Self Guided Program retrieved successfully.",
+      data: selfGuidedRes,
     });
   } catch (error) {
     next(error);
@@ -40,11 +46,12 @@ export async function updateSelfGuidedProgramHandler(req, res, next) {
       userId,
       currentWeek,
     );
+    const updatedSelfGuidedRes = mapSelfGuidedToResponse(updatedSelfGuided);
 
     res.status(200).json({
       status: true,
-      message: "Self Guided Program updated sucessfully.",
-      data: updatedSelfGuided,
+      message: "Self Guided Program updated successfully.",
+      data: updatedSelfGuidedRes,
     });
   } catch (error) {
     next(error);
@@ -71,11 +78,12 @@ export async function reflectionMessageHandler(req, res, next) {
       weekNumber,
       message,
     });
+    const newMessageRes = mapReflectionMsgToRes(newMessage);
 
     res.status(200).json({
       status: true,
       message: "Reflection message posted successfully.",
-      data: newMessage,
+      data: newMessageRes,
     });
   } catch (error) {
     next(error);
@@ -92,11 +100,12 @@ export async function getReflectionMessageHandler(req, res, next) {
       userId,
       weekNumber,
     );
+    const messageRes = mapReflectionMsgToRes(message);
 
     res.status(200).json({
       status: true,
       message: "Reflection message retrieved successfully",
-      data: message,
+      data: messageRes,
     });
   } catch (error) {
     next(error);
