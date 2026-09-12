@@ -107,7 +107,10 @@ export async function createNewUser({
 export async function validatePasswordAndSignTokens({ email, password }) {
   const user = await User.findOne({ email: email });
   if (!user)
-    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", 404, true);
+    throw new AppError(ErrorCodes.USER_NOT_FOUND, "User not found.", {
+      status: 404,
+      isOperational: true,
+    });
 
   const passwordCorrect = await bcrypt.compare(password, user.password);
   if (!passwordCorrect) {
