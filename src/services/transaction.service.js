@@ -17,6 +17,6 @@ export async function retrieveTransaction(userId, transactionId) {
   return transaction;
 }
 
-export async function getAllTransaction(userId) {
+export async function retrieveTransactions(userId) {
   return await Transaction.find({ userId });
 }
