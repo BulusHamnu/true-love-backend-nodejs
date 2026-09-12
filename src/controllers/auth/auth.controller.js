@@ -132,6 +132,7 @@ function validateForgetPasswordBody(data) {
 
   return validateAndSanitizeData(data, schema);
 }
+
 export async function forgetPassword(req, res, next) {
   try {
     const { email } = validateForgetPasswordBody(req.body);
@@ -139,7 +140,7 @@ export async function forgetPassword(req, res, next) {
 
     res.status(200).json({
       status: true,
-      message: "Password reset email was sent sucessfully.",
+      message: "Password reset email was sent successfully.",
     });
   } catch (error) {
     next(error);
@@ -152,6 +153,7 @@ function validateCodeBody(data) {
     code: Joi.string().required().length(6),
     email: authValidator.emailField,
   });
+
   return validateAndSanitizeData(data, schema);
 }
 
@@ -185,7 +187,7 @@ export async function resetPassword(req, res, next) {
 
     res.status(200).json({
       status: true,
-      message: "Password was reset sucessfully.",
+      message: "Password was reset successfully.",
     });
   } catch (error) {
     next(error);
@@ -202,7 +204,7 @@ export async function resendEmaiVerificationCode(req, res, next) {
 
     res.status(200).json({
       status: true,
-      message: "Email was sent sucessfully.",
+      message: "Email was sent successfully.",
     });
   } catch (error) {
     next(error);

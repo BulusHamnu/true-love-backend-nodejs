@@ -1,22 +1,12 @@
 import Profile from "../models/profile.model.js";
 
 /* Get user profile */
-export async function getProfile(user) {
-  const userProfile = await Profile.findOne({ userId: user.id }).lean();
-
-  return {
-    id: user.id,
-    email: user.email,
-    isVerified: user.isVerified,
-    isActive: user.isActive,
-    role: user.role,
-    provider: user.provider,
-    ...userProfile,
-  };
+export async function getProfile(userId) {
+  return await Profile.findOne({ userId }).lean();
 }
 
 /* Update user profile */
-export async function updateProfile(user, updates) {
+export async function updateProfile(userId, updates) {
   const allowedFields = ["fullName", "phone", "age"];
   // Update only allowed fields
   Object.keys(updates).forEach((key) => {
@@ -25,18 +15,10 @@ export async function updateProfile(user, updates) {
   });
 
   const updatedProfile = await Profile.findOneAndUpdate(
-    { userId: user.id },
+    { userId },
     { $set: { ...updates } },
     { new: true },
   ).lean();
 
-  return {
-    id: user.id,
-    email: user.email,
-    isVerified: user.isVerified,
-    isActive: user.isActive,
-    role: user.role,
-    provider: user.provider,
-    ...updatedProfile,
-  };
+  return updatedProfile;
 }
